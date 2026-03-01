@@ -1,0 +1,9 @@
+databaseChangeLog:
+  - changeSet:
+      id: fix_preferred_currency_column_type
+      author: tech-lead
+      comments: Change preferred_currency from CHAR(3) to VARCHAR(3) for JPA compatibility
+      changes:
+        - sql:
+            sql: |
+              ALTER TABLE finance_tracker.users ALTER COLUMN preferred_currency TYPE VARCHAR(3);

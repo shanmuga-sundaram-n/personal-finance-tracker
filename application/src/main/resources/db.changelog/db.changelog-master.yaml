@@ -38,3 +38,7 @@ databaseChangeLog:
   - include:
       file: changes/010_create_budgets_table.yml
       relativeToChangelogFile: true
+
+  - include:
+      file: changes/011_fix_preferred_currency_column_type.yml
+      relativeToChangelogFile: true
