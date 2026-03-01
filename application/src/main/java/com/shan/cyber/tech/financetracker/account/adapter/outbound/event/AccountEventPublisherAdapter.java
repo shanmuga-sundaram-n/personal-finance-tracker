@@ -1,16 +1,16 @@
-package com.shan.cyber.tech.financetracker.identity.adapter.outbound.event;
+package com.shan.cyber.tech.financetracker.account.adapter.outbound.event;
 
-import com.shan.cyber.tech.financetracker.identity.domain.port.outbound.IdentityEventPublisherPort;
+import com.shan.cyber.tech.financetracker.account.domain.port.outbound.AccountEventPublisherPort;
 import com.shan.cyber.tech.financetracker.shared.adapter.outbound.event.SpringEventPublisherAdapter;
 import com.shan.cyber.tech.financetracker.shared.domain.event.DomainEvent;
 import org.springframework.stereotype.Component;
 
 @Component
-public class IdentityEventPublisherAdapter implements IdentityEventPublisherPort {
+public class AccountEventPublisherAdapter implements AccountEventPublisherPort {
 
     private final SpringEventPublisherAdapter delegate;
 
-    public IdentityEventPublisherAdapter(SpringEventPublisherAdapter delegate) {
+    public AccountEventPublisherAdapter(SpringEventPublisherAdapter delegate) {
         this.delegate = delegate;
     }
 

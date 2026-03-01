@@ -1,0 +1,10 @@
+databaseChangeLog:
+  - changeSet:
+      id: fix_char_columns_to_varchar
+      author: tech-lead
+      comments: Change CHAR columns to VARCHAR for JPA/Hibernate compatibility
+      changes:
+        - sql:
+            sql: |
+              ALTER TABLE finance_tracker.accounts ALTER COLUMN currency TYPE VARCHAR(3);
+              ALTER TABLE finance_tracker.accounts ALTER COLUMN account_number_last4 TYPE VARCHAR(4);
