@@ -1,8 +1,0 @@
-databaseChangeLog:
-  - include:
-      file: changes/001_create_schema.yml
-      relativeToChangelogFile: true
-
-  - include:
-      file: changes/002_create_user_and_session_tables.yml
-      relativeToChangelogFile: true

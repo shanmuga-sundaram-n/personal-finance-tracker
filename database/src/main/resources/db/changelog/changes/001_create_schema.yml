@@ -1,9 +1,0 @@
-databaseChangeLog:
-  - changeSet:
-      id: create_table_users
-      author: Shanmuga Sundaram Natarajan
-      comments: Create users table and its sequence
-      changes:
-        - sql:
-            sql: |
-              CREATE SCHEMA IF NOT EXISTS finance_tracker;

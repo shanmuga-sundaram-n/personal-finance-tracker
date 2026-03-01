@@ -1,9 +1,44 @@
 spring:
+  application:
+    name: personal-finance-tracker
   datasource:
     url: jdbc:postgresql://localhost:49883/personal-finance-tracker
     username: pft-app-user
     password: pft-app-user-secret
-    driverClassName: org.postgresql.Driver
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      connection-timeout: 20000
+      maximum-pool-size: 10
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        default_schema: finance_tracker
+        format_sql: true
+    show-sql: false
+    open-in-view: false
   liquibase:
-    change-log: classpath:changelog/db.changelog-master.yaml
-    default-schema: personal_finance_tracker
+    change-log: classpath:db.changelog/db.changelog-master.yaml
+    default-schema: finance_tracker
+    liquibase-schema: public
+
+server:
+  port: 8080
+  error:
+    include-message: never
+    include-binding-errors: never
+
+app:
+  session:
+    duration-days: 7
+  auth:
+    rate-limit:
+      max-attempts: 5
+      window-minutes: 5
+  pagination:
+    default-size: 30
+    max-size: 100
+  cors:
+    allowed-origins: http://localhost:5173

@@ -1,0 +1,41 @@
+databaseChangeLog:
+  - changeSet:
+      id: create_account_types_table
+      author: tech-lead
+      comments: Create account_types reference table with seed data
+      changes:
+        - sql:
+            sql: |
+              CREATE TABLE finance_tracker.account_types (
+                id SMALLINT PRIMARY KEY,
+                code VARCHAR(30) UNIQUE NOT NULL,
+                name VARCHAR(100) NOT NULL,
+                allows_negative_balance BOOLEAN NOT NULL,
+                is_liability BOOLEAN NOT NULL,
+                description TEXT
+              );
+              INSERT INTO finance_tracker.account_types (id, code, name, allows_negative_balance, is_liability) VALUES
+                (1, 'CHECKING',       'Checking Account', true,  false),
+                (2, 'SAVINGS',        'Savings Account',  false, false),
+                (3, 'CREDIT_CARD',    'Credit Card',      true,  true),
+                (4, 'INVESTMENT',     'Investment',       false, false),
+                (5, 'LOAN',           'Loan',             true,  true),
+                (6, 'CASH',           'Cash',             false, false),
+                (7, 'DIGITAL_WALLET', 'Digital Wallet',   true,  false);
+
+  - changeSet:
+      id: create_category_types_table
+      author: tech-lead
+      comments: Create category_types reference table with seed data
+      changes:
+        - sql:
+            sql: |
+              CREATE TABLE finance_tracker.category_types (
+                id SMALLINT PRIMARY KEY,
+                code VARCHAR(20) UNIQUE NOT NULL,
+                name VARCHAR(50) NOT NULL
+              );
+              INSERT INTO finance_tracker.category_types (id, code, name) VALUES
+                (1, 'INCOME',   'Income'),
+                (2, 'EXPENSE',  'Expense'),
+                (3, 'TRANSFER', 'Transfer');

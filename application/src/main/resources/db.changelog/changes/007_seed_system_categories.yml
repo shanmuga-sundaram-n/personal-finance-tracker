@@ -1,0 +1,72 @@
+databaseChangeLog:
+  - changeSet:
+      id: seed_system_categories
+      author: tech-lead
+      comments: Seed system categories (user_id=NULL, is_system=true)
+      changes:
+        - sql:
+            sql: |
+              -- EXPENSE parent categories (category_type_id = 2)
+              INSERT INTO finance_tracker.categories (id, category_type_id, name, is_system, icon) VALUES
+                (nextval('finance_tracker.categories_id_seq'), 2, 'Housing',          true, 'home'),
+                (nextval('finance_tracker.categories_id_seq'), 2, 'Transportation',   true, 'car'),
+                (nextval('finance_tracker.categories_id_seq'), 2, 'Food',             true, 'utensils'),
+                (nextval('finance_tracker.categories_id_seq'), 2, 'Utilities',        true, 'zap'),
+                (nextval('finance_tracker.categories_id_seq'), 2, 'Healthcare',       true, 'heart-pulse'),
+                (nextval('finance_tracker.categories_id_seq'), 2, 'Entertainment',    true, 'gamepad-2'),
+                (nextval('finance_tracker.categories_id_seq'), 2, 'Shopping',         true, 'shopping-bag'),
+                (nextval('finance_tracker.categories_id_seq'), 2, 'Personal Care',    true, 'sparkles'),
+                (nextval('finance_tracker.categories_id_seq'), 2, 'Education',        true, 'graduation-cap'),
+                (nextval('finance_tracker.categories_id_seq'), 2, 'Travel',           true, 'plane'),
+                (nextval('finance_tracker.categories_id_seq'), 2, 'Pets',             true, 'paw-print'),
+                (nextval('finance_tracker.categories_id_seq'), 2, 'Subscriptions',    true, 'repeat'),
+                (nextval('finance_tracker.categories_id_seq'), 2, 'Insurance',        true, 'shield'),
+                (nextval('finance_tracker.categories_id_seq'), 2, 'Taxes',            true, 'landmark'),
+                (nextval('finance_tracker.categories_id_seq'), 2, 'Fees & Charges',   true, 'receipt'),
+                (nextval('finance_tracker.categories_id_seq'), 2, 'Miscellaneous',    true, 'more-horizontal');
+
+              -- INCOME parent categories (category_type_id = 1)
+              INSERT INTO finance_tracker.categories (id, category_type_id, name, is_system, icon) VALUES
+                (nextval('finance_tracker.categories_id_seq'), 1, 'Salary',           true, 'briefcase'),
+                (nextval('finance_tracker.categories_id_seq'), 1, 'Freelance',        true, 'laptop'),
+                (nextval('finance_tracker.categories_id_seq'), 1, 'Investment Income',true, 'trending-up'),
+                (nextval('finance_tracker.categories_id_seq'), 1, 'Rental Income',    true, 'building'),
+                (nextval('finance_tracker.categories_id_seq'), 1, 'Gifts Received',   true, 'gift'),
+                (nextval('finance_tracker.categories_id_seq'), 1, 'Government Benefits', true, 'landmark'),
+                (nextval('finance_tracker.categories_id_seq'), 1, 'Other Income',     true, 'plus-circle');
+
+              -- TRANSFER parent categories (category_type_id = 3)
+              INSERT INTO finance_tracker.categories (id, category_type_id, name, is_system, icon) VALUES
+                (nextval('finance_tracker.categories_id_seq'), 3, 'Account Transfer', true, 'arrow-left-right');
+
+              -- EXPENSE child categories
+              INSERT INTO finance_tracker.categories (id, category_type_id, parent_category_id, name, is_system, icon)
+              SELECT nextval('finance_tracker.categories_id_seq'), 2, p.id, child.name, true, child.icon
+              FROM (VALUES
+                ('Housing', 'Rent', 'home'),
+                ('Housing', 'Mortgage', 'home'),
+                ('Housing', 'Property Tax', 'home'),
+                ('Housing', 'Home Maintenance', 'wrench'),
+                ('Transportation', 'Fuel', 'fuel'),
+                ('Transportation', 'Public Transit', 'bus'),
+                ('Transportation', 'Car Maintenance', 'wrench'),
+                ('Transportation', 'Parking', 'square-parking'),
+                ('Food', 'Groceries', 'shopping-cart'),
+                ('Food', 'Restaurants', 'utensils-crossed'),
+                ('Food', 'Coffee & Drinks', 'coffee'),
+                ('Utilities', 'Electricity', 'zap'),
+                ('Utilities', 'Water', 'droplets'),
+                ('Utilities', 'Internet', 'wifi'),
+                ('Utilities', 'Phone', 'phone'),
+                ('Healthcare', 'Doctor', 'stethoscope'),
+                ('Healthcare', 'Pharmacy', 'pill'),
+                ('Healthcare', 'Dental', 'smile'),
+                ('Entertainment', 'Movies & Shows', 'film'),
+                ('Entertainment', 'Games', 'gamepad-2'),
+                ('Entertainment', 'Music', 'music'),
+                ('Entertainment', 'Books', 'book-open'),
+                ('Shopping', 'Clothing', 'shirt'),
+                ('Shopping', 'Electronics', 'monitor'),
+                ('Shopping', 'Home & Garden', 'flower-2')
+              ) AS child(parent_name, name, icon)
+              JOIN finance_tracker.categories p ON p.name = child.parent_name AND p.is_system = true AND p.parent_category_id IS NULL;

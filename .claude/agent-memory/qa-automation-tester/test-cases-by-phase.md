@@ -1,0 +1,966 @@
+# Test Cases by Development Phase — Personal Finance Tracker
+**Author**: QA Automation Tester
+**Date**: 2026-03-01
+**Status**: Authoritative — full-stack-dev writes exactly these test classes and methods
+
+---
+
+## How to Read This Document
+
+For each phase, test cases are listed as:
+- **Class**: the full relative path and class name
+- **Method**: the exact `@Test` method name to write
+- **Layer**: D=Domain Unit, P=Persistence Adapter, C=Controller, I=Integration, A=Architecture
+- **Rule Ref**: the rule ID from `brief-for-qa-tester.md` (R1-001, R2-001, etc.)
+
+---
+
+## Phase 0: Bug Fixes and Smoke Tests
+
+**Goal**: Verify the application starts, migrations run, and schema is correct before any new feature code.
+
+### Class: `acceptance/src/test/java/.../smoke/ApplicationStartupTest.java`
+
+Layer: I (Integration)
+
+```
+should_start_application_context_without_errors
+should_expose_health_endpoint_at_actuator_path
+should_apply_all_liquibase_changesets_without_errors
+```
+
+### Class: `acceptance/src/test/java/.../smoke/LiquibaseSchemaTest.java`
+
+Layer: I (Integration) — queries `information_schema` directly
+
+```
+should_have_finance_tracker_schema_in_database
+should_have_users_table_with_correct_columns
+should_have_sessions_table_with_correct_columns
+should_have_users_table_under_finance_tracker_schema_not_public_schema
+should_have_sessions_unique_constraint_on_token
+should_have_sessions_foreign_key_to_users
+```
+
+**Setup requirement**: The Testcontainers PostgreSQL singleton (defined in `TestContainersConfig.java`) must be available. Liquibase runs as part of application startup with the corrected `change-log` path and `default-schema: finance_tracker`.
+
+---
+
+## Phase 1: Foundation + Shared Kernel
+
+### Class: `application/src/test/java/.../shared/domain/model/MoneyTest.java`
+
+Layer: D
+
+```
+// Construction
+should_create_money_with_valid_amount_and_currency
+should_reject_null_amount_on_construction
+should_reject_null_currency_on_construction
+should_reject_blank_currency_on_construction
+should_reject_currency_not_three_characters
+
+// Arithmetic
+should_add_two_money_values_with_same_currency
+should_throw_when_adding_money_with_different_currencies
+should_subtract_money_values_with_same_currency
+should_throw_when_subtracting_money_with_different_currencies
+should_negate_money_value
+
+// Comparison
+should_return_true_for_isNegative_when_amount_is_negative
+should_return_false_for_isNegative_when_amount_is_zero
+should_return_false_for_isNegative_when_amount_is_positive
+should_return_true_for_isPositive_when_amount_is_positive
+should_return_false_for_isPositive_when_amount_is_zero
+
+// Precision (R1-001, R1-002, R1-003)
+should_add_0_1_and_0_2_and_get_exactly_0_30_not_floating_point_error
+should_store_amount_with_4_decimal_precision
+should_preserve_4_decimal_places_in_internal_representation
+
+// Zero
+should_create_zero_money_with_given_currency
+```
+
+### Class: `application/src/test/java/.../shared/domain/model/DateRangeTest.java`
+
+Layer: D
+
+```
+should_create_date_range_with_start_and_end
+should_create_date_range_with_null_end_date
+should_reject_end_date_before_start_date
+should_return_true_for_contains_when_date_is_within_range
+should_return_false_for_contains_when_date_is_before_start
+should_return_false_for_contains_when_date_is_after_end
+should_return_true_for_overlaps_when_ranges_overlap
+should_return_false_for_overlaps_when_ranges_do_not_overlap
+should_handle_open_ended_range_with_null_end
+```
+
+### Class: `application/src/test/java/.../shared/domain/model/UserIdTest.java`
+
+Layer: D
+
+```
+should_create_user_id_with_valid_positive_value
+should_reject_zero_value_for_user_id
+should_reject_negative_value_for_user_id
+should_reject_null_value_for_user_id
+```
+
+(Same test pattern applies to `AccountIdTest`, `CategoryIdTest`, `BudgetIdTest`, `TransactionIdTest`)
+
+### Class: `application/src/test/java/.../architecture/HexagonalArchitectureTest.java`
+
+Layer: A
+
+```
+domain_classes_must_not_import_spring_framework
+domain_classes_must_not_import_jakarta_persistence
+domain_classes_must_not_import_jackson
+domain_classes_must_not_import_hibernate
+account_domain_must_not_import_transaction_domain
+account_domain_must_not_import_category_domain
+account_domain_must_not_import_budget_domain
+transaction_domain_must_not_import_account_domain
+transaction_domain_must_not_import_budget_domain
+budget_domain_must_not_import_transaction_domain
+category_domain_must_not_import_transaction_domain
+controllers_must_not_call_domain_services_directly
+controllers_must_only_call_inbound_ports
+domain_services_must_not_be_annotated_with_spring_service
+domain_model_classes_must_not_be_annotated_with_entity
+```
+
+### Class: `application/src/test/java/.../identity/adapter/inbound/web/SessionAuthFilterTest.java`
+
+Layer: C
+
+```
+should_allow_request_to_register_endpoint_without_token
+should_allow_request_to_login_endpoint_without_token
+should_reject_request_without_authorization_header_with_401
+should_reject_request_with_malformed_authorization_header_with_401
+should_reject_request_with_expired_token_with_401
+should_set_user_id_in_security_context_when_valid_token_provided
+should_clear_security_context_after_request_completes
+should_return_401_with_UNAUTHORIZED_error_code_in_body
+```
+
+### Class: `application/src/test/java/.../shared/adapter/inbound/web/GlobalExceptionHandlerTest.java`
+
+Layer: C
+
+```
+should_return_422_with_VALIDATION_ERROR_for_MethodArgumentNotValidException
+should_return_404_with_NOT_FOUND_error_code_for_ResourceNotFoundException
+should_return_409_with_CONFLICT_error_code_for_DuplicateResourceException
+should_return_422_with_domain_error_code_for_DomainException
+should_return_403_with_FORBIDDEN_for_ForbiddenOperationException
+should_return_401_with_UNAUTHORIZED_for_UnauthorizedException
+should_return_500_with_INTERNAL_ERROR_for_unhandled_exception
+should_include_timestamp_as_ISO8601_in_error_response
+should_include_request_path_in_error_response
+should_include_status_integer_matching_http_status_in_error_response
+should_include_errors_array_for_validation_failures_with_field_details
+should_omit_errors_array_for_non_validation_errors
+```
+
+---
+
+## Phase 3: Authentication and Identity (F-001)
+
+### Class: `application/src/test/java/.../identity/domain/service/IdentityCommandServiceTest.java`
+
+Layer: D
+
+```
+// Registration
+should_save_user_with_hashed_password_when_registration_succeeds
+should_throw_DuplicateUsernameException_when_username_already_exists
+should_throw_DuplicateEmailException_when_email_already_exists
+should_publish_UserRegistered_event_after_successful_registration
+
+// Authentication
+should_return_login_result_with_token_when_credentials_are_correct
+should_throw_InvalidCredentialsException_when_password_does_not_match
+should_throw_InvalidCredentialsException_when_user_not_found_by_username
+should_throw_InvalidCredentialsException_when_user_is_inactive
+should_throw_RateLimitExceededException_when_rate_limit_is_exceeded
+should_reset_rate_limit_on_successful_login
+should_record_failed_attempt_on_wrong_password
+
+// Logout
+should_delete_session_by_token_on_logout
+```
+
+### Class: `application/src/test/java/.../identity/adapter/inbound/web/AuthControllerTest.java`
+
+Layer: C
+
+```
+// POST /api/v1/auth/register
+should_return_201_with_user_profile_when_registration_valid
+should_return_201_with_location_header_pointing_to_user_resource
+should_return_422_when_username_is_blank
+should_return_422_when_email_format_is_invalid
+should_return_422_when_password_shorter_than_8_characters
+should_return_422_when_first_name_is_missing
+should_return_422_with_field_level_errors_array
+should_return_409_when_username_already_taken
+should_return_409_when_email_already_taken
+
+// POST /api/v1/auth/login
+should_return_200_with_token_and_expiry_when_login_successful
+should_return_401_when_password_incorrect
+should_return_429_when_rate_limit_exceeded
+should_not_reveal_which_field_caused_login_failure
+
+// POST /api/v1/auth/logout
+should_return_204_on_successful_logout
+
+// GET /api/v1/auth/me
+should_return_200_with_user_profile_for_authenticated_user
+should_not_include_password_hash_in_user_profile_response
+```
+
+### Class: `acceptance/src/test/java/.../integration/auth/AuthIntegrationTest.java`
+
+Layer: I | Rule Refs: R7-001 through R7-010
+
+```
+should_register_login_and_access_protected_endpoint
+should_return_409_on_duplicate_email_registration
+should_return_409_on_duplicate_username_registration
+should_return_401_when_accessing_protected_endpoint_without_token
+should_return_401_when_accessing_protected_endpoint_with_expired_token
+should_return_401_on_wrong_password_login
+should_return_401_with_generic_message_not_revealing_which_field_failed
+should_return_401_after_logout_using_same_token
+should_return_429_after_6_failed_login_attempts_from_same_ip
+should_allow_login_after_rate_limit_window_expires
+should_return_404_for_cross_user_account_access
+should_not_expose_password_hash_in_any_response
+should_reject_sql_injection_in_username_field_with_401
+should_reject_sql_injection_in_password_field_with_401
+```
+
+---
+
+## Phase 4: Account Management (F-002)
+
+### Class: `application/src/test/java/.../account/domain/model/AccountTest.java`
+
+Layer: D
+
+```
+// debit()
+should_decrease_balance_when_account_debited
+should_throw_InsufficientFundsException_when_savings_debited_below_zero
+should_throw_InsufficientFundsException_when_cash_debited_below_zero
+should_allow_negative_balance_when_checking_account_debited
+should_allow_negative_balance_when_digital_wallet_account_debited
+should_increase_balance_when_credit_card_debited
+
+// credit()
+should_increase_balance_when_account_credited
+should_decrease_balance_when_credit_card_credited
+
+// canDebit()
+should_return_true_when_checking_account_can_go_negative
+should_return_false_when_savings_account_would_go_negative
+should_return_false_when_cash_account_would_go_negative
+
+// deactivate()
+should_set_isActive_to_false_on_deactivate
+
+// rename()
+should_update_name_on_rename
+
+// isLiability()
+should_return_true_for_credit_card_account
+should_return_true_for_loan_account
+should_return_false_for_checking_account
+should_return_false_for_savings_account
+```
+
+### Class: `application/src/test/java/.../account/domain/service/AccountCommandServiceTest.java`
+
+Layer: D
+
+```
+// createAccount
+should_save_account_when_all_inputs_are_valid
+should_throw_MaxAccountsExceededException_when_user_has_20_active_accounts
+should_throw_DuplicateAccountNameException_when_name_already_exists_for_user
+should_throw_when_account_type_code_is_invalid
+should_publish_AccountCreated_event_on_successful_creation
+
+// applyDebit
+should_debit_account_and_save_when_sufficient_balance
+should_throw_InsufficientFundsException_when_savings_would_go_negative
+should_throw_AccountNotFoundException_when_account_not_found
+
+// applyCredit
+should_credit_account_and_save
+should_throw_AccountNotFoundException_when_account_not_found
+
+// deactivateAccount
+should_deactivate_account_and_save
+should_throw_AccountNotFoundException_when_account_not_found
+should_publish_AccountDeactivated_event
+```
+
+### Class: `application/src/test/java/.../account/adapter/outbound/persistence/AccountPersistenceAdapterTest.java`
+
+Layer: P
+
+```
+should_persist_and_retrieve_account_by_id_and_owner
+should_return_empty_when_account_belongs_to_different_user
+should_find_only_active_accounts_by_owner
+should_not_include_inactive_accounts_in_findActiveByOwner
+should_count_active_accounts_for_owner
+should_find_account_by_owner_and_name_case_insensitively
+should_return_empty_when_name_belongs_to_different_user
+should_update_current_balance_correctly_on_save
+```
+
+### Class: `application/src/test/java/.../account/adapter/inbound/web/AccountControllerTest.java`
+
+Layer: C
+
+```
+// POST /api/v1/accounts
+should_return_201_with_account_dto_when_created
+should_return_201_with_location_header
+should_return_422_when_name_is_blank
+should_return_422_when_account_type_code_is_null
+should_return_422_when_initial_balance_is_null
+should_return_422_when_currency_is_not_3_characters
+should_return_409_when_duplicate_account_name
+should_return_422_when_max_accounts_exceeded
+should_return_response_with_computed_balance_not_user_submitted_balance
+
+// GET /api/v1/accounts
+should_return_200_with_list_of_active_accounts
+should_return_200_with_empty_list_when_no_accounts
+
+// GET /api/v1/accounts/{id}
+should_return_200_with_account_for_valid_id
+should_return_404_when_account_not_found_for_user
+
+// PUT /api/v1/accounts/{id}
+should_return_200_with_updated_account
+
+// DELETE /api/v1/accounts/{id}
+should_return_204_on_deactivation
+
+// GET /api/v1/accounts/net-worth
+should_return_200_with_net_worth_summary
+```
+
+### Class: `acceptance/src/test/java/.../integration/account/AccountIntegrationTest.java`
+
+Layer: I | Rule Refs: R8-001 through R8-007
+
+```
+should_create_account_and_retrieve_with_correct_balance
+should_return_409_when_account_name_duplicated_case_insensitively_for_same_user
+should_return_422_when_21st_account_created
+should_not_set_current_balance_from_api_input
+should_set_initial_balance_as_starting_current_balance
+should_exclude_deactivated_account_from_list_response
+should_calculate_net_worth_correctly_with_assets_and_liabilities
+should_return_404_when_user_b_accesses_user_a_account
+```
+
+### Class: `acceptance/src/test/java/.../integration/account/AccountBalanceIntegrationTest.java`
+
+Layer: I | Rule Refs: R2-001 through R2-011
+
+```
+should_update_checking_balance_to_negative_on_expense
+should_reject_expense_on_savings_account_that_would_go_negative
+should_reject_expense_on_cash_account_with_zero_balance
+should_allow_checking_account_to_go_negative_on_expense
+should_increase_balance_on_income_transaction
+should_reflect_all_transactions_in_current_balance
+should_recalculate_balance_after_transaction_edit
+should_recalculate_balance_after_transaction_delete
+should_increase_credit_card_balance_on_expense
+should_decrease_credit_card_balance_on_income_payment
+should_verify_current_balance_matches_ledger_sum_after_each_operation
+```
+
+---
+
+## Phase 5: Category Management (F-003)
+
+### Class: `application/src/test/java/.../category/domain/service/CategoryCommandServiceTest.java`
+
+Layer: D
+
+```
+// createCategory
+should_save_category_when_valid_inputs
+should_throw_HierarchyDepthExceededException_when_creating_child_under_child
+should_throw_CategoryTypeMismatchException_when_child_type_differs_from_parent
+should_throw_DuplicateCategoryException_when_name_exists_at_same_level_for_user
+
+// updateCategory
+should_update_name_icon_color_for_user_owned_category
+should_throw_SystemCategoryModificationException_when_editing_system_category
+should_throw_CategoryNotFoundException_when_category_not_found
+
+// deactivateCategory
+should_deactivate_category_when_no_transactions
+should_throw_CategoryHasTransactionsException_when_category_has_transactions
+should_throw_SystemCategoryModificationException_when_deleting_system_category
+```
+
+### Class: `application/src/test/java/.../category/adapter/outbound/persistence/CategoryPersistenceAdapterTest.java`
+
+Layer: P
+
+```
+should_find_categories_visible_to_user_including_system_categories
+should_not_return_categories_belonging_to_another_user
+should_find_category_by_owner_and_parent_and_name_case_insensitively
+should_find_category_and_descendant_ids_for_parent_category
+should_return_true_for_hasTransactions_when_category_has_transactions
+should_return_false_for_hasTransactions_when_category_has_no_transactions
+```
+
+### Class: `application/src/test/java/.../category/adapter/inbound/web/CategoryControllerTest.java`
+
+Layer: C
+
+```
+// POST /api/v1/categories
+should_return_201_when_custom_category_created
+should_return_201_with_location_header
+should_return_422_when_name_is_blank
+should_return_422_when_category_type_code_is_null
+should_return_422_when_hierarchy_depth_exceeded
+should_return_422_when_child_type_mismatches_parent
+should_return_409_when_duplicate_name_at_same_level
+
+// GET /api/v1/categories
+should_return_system_and_user_categories_combined
+
+// PUT /api/v1/categories/{id}
+should_return_403_when_editing_system_category
+should_return_200_with_updated_category
+
+// DELETE /api/v1/categories/{id}
+should_return_403_when_deleting_system_category
+should_return_409_when_category_has_transactions
+should_return_204_on_successful_deactivation
+```
+
+### Class: `acceptance/src/test/java/.../integration/category/CategoryIntegrationTest.java`
+
+Layer: I | Rule Refs: R6-001 through R6-008
+
+```
+should_return_system_categories_in_list_for_new_user
+should_create_custom_expense_category
+should_create_custom_category_under_existing_parent
+should_return_422_when_creating_three_level_deep_hierarchy
+should_return_422_when_child_category_type_differs_from_parent
+should_return_409_when_duplicate_category_name_at_same_level
+should_return_409_when_duplicate_name_is_case_insensitive_match
+should_return_201_when_two_users_create_same_category_name
+should_return_403_when_deleting_system_category
+should_return_403_when_editing_system_category
+should_return_409_when_deleting_category_with_transactions
+```
+
+---
+
+## Phase 6: Transaction Entry (F-004) and Transfers (F-005)
+
+### Class: `application/src/test/java/.../transaction/domain/service/TransactionCommandServiceTest.java`
+
+Layer: D | Rule Refs: R4-001 through R4-011
+
+```
+// createTransaction
+should_save_transaction_and_call_account_balance_port_on_success
+should_throw_InvalidTransactionDateException_when_date_is_31_days_in_future
+should_throw_InvalidTransactionDateException_when_date_is_more_than_10_years_ago
+should_accept_transaction_date_exactly_30_days_in_future
+should_accept_transaction_date_exactly_10_years_ago
+should_accept_transaction_date_today
+should_throw_when_category_type_mismatches_transaction_type
+should_throw_when_category_not_visible_to_user
+should_call_applyDebit_on_account_balance_port_for_expense
+should_call_applyCredit_on_account_balance_port_for_income
+should_publish_TransactionCreated_event
+
+// updateTransaction
+should_reverse_old_balance_effect_and_apply_new_on_amount_change
+should_handle_account_change_by_reversing_on_old_and_applying_on_new
+should_publish_TransactionAmountChanged_event
+
+// deleteTransaction
+should_call_appropriate_reverse_on_account_balance_port
+should_publish_TransactionDeleted_event
+should_throw_when_trying_to_delete_a_transfer_leg_via_transaction_delete
+```
+
+### Class: `application/src/test/java/.../transaction/domain/service/TransferCommandServiceTest.java`
+
+Layer: D | Rule Refs: R3-001 through R3-009
+
+```
+// createTransfer
+should_save_two_transaction_rows_when_transfer_created
+should_call_canDebit_before_executing_transfer
+should_throw_when_source_account_would_go_negative
+should_throw_SameAccountTransferException_when_source_and_destination_are_equal
+should_link_both_legs_with_same_transfer_pair_id
+should_publish_TransferCreated_event
+
+// deleteTransfer
+should_delete_both_legs_when_either_leg_id_provided
+should_reverse_both_account_balances_on_transfer_delete
+
+// updateTransfer
+should_update_amount_on_both_legs
+should_recalculate_both_account_balances_on_amount_change
+```
+
+### Class: `application/src/test/java/.../transaction/adapter/outbound/persistence/TransactionPersistenceAdapterTest.java`
+
+Layer: P
+
+```
+should_persist_and_retrieve_transaction_by_id_and_owner
+should_return_empty_when_transaction_belongs_to_different_user
+should_filter_transactions_by_date_range
+should_filter_transactions_by_account_id
+should_filter_transactions_by_category_id
+should_filter_transactions_by_transaction_type
+should_filter_transactions_by_min_amount
+should_filter_transactions_by_max_amount
+should_return_paginated_results_most_recent_first_by_default
+should_update_transfer_pair_id_correctly
+```
+
+### Class: `application/src/test/java/.../transaction/adapter/inbound/web/TransactionControllerTest.java`
+
+Layer: C
+
+```
+// POST /api/v1/transactions
+should_return_201_with_transaction_dto_when_created
+should_return_201_with_location_header
+should_return_422_when_amount_is_zero
+should_return_422_when_amount_is_negative
+should_return_422_when_account_id_is_null
+should_return_422_when_category_id_is_null
+should_return_422_when_transaction_date_is_null
+should_return_422_when_date_too_far_in_future
+should_return_422_when_date_too_far_in_past
+should_return_422_when_savings_account_would_go_negative
+should_return_404_when_account_belongs_to_other_user
+should_include_account_name_and_category_name_in_response
+
+// GET /api/v1/transactions
+should_return_paginated_list_with_pagination_metadata
+should_return_200_with_empty_content_when_no_transactions
+
+// DELETE /api/v1/transactions/{id}
+should_return_422_when_attempting_to_delete_transfer_leg_via_transaction_endpoint
+```
+
+### Class: `application/src/test/java/.../transaction/adapter/inbound/web/TransferControllerTest.java`
+
+Layer: C
+
+```
+should_return_201_with_transfer_response_containing_both_legs
+should_return_422_when_source_and_destination_are_same_account
+should_return_422_when_amount_is_zero
+should_return_422_when_from_account_is_null
+should_return_422_when_to_account_is_null
+should_return_204_when_deleting_transfer_by_either_leg_id
+```
+
+### Class: `acceptance/src/test/java/.../integration/transaction/TransactionIntegrationTest.java`
+
+Layer: I | Rule Refs: R4-001 through R4-011
+
+```
+should_create_expense_transaction_and_update_account_balance
+should_create_income_transaction_and_increase_account_balance
+should_return_422_when_amount_is_zero
+should_return_422_when_amount_is_negative
+should_return_422_when_transaction_date_31_days_in_future
+should_return_422_when_transaction_date_10_years_and_1_day_ago
+should_accept_transaction_date_exactly_30_days_in_future
+should_accept_transaction_date_exactly_10_years_ago
+should_accept_transaction_date_today
+should_return_422_when_savings_account_expense_would_go_negative
+should_return_422_when_cash_account_at_zero_balance_gets_expense
+should_return_422_when_account_is_inactive
+should_return_422_when_income_category_used_for_expense_type
+should_return_404_when_account_belongs_to_another_user
+should_store_and_display_amount_with_4_decimal_precision
+should_update_balance_correctly_after_edit
+should_restore_balance_correctly_after_delete
+should_verify_current_balance_matches_ledger_sum
+should_return_paginated_transaction_list_with_correct_metadata
+should_return_empty_list_when_page_beyond_results
+```
+
+### Class: `acceptance/src/test/java/.../integration/transaction/TransactionFilterIntegrationTest.java`
+
+Layer: I
+
+```
+should_filter_by_date_range
+should_filter_by_account_id
+should_filter_by_category_id
+should_filter_by_transaction_type
+should_filter_by_min_amount
+should_filter_by_max_amount
+should_combine_multiple_filters
+should_sort_by_date_descending_by_default
+```
+
+### Class: `acceptance/src/test/java/.../integration/transaction/TransferIntegrationTest.java`
+
+Layer: I | Rule Refs: R3-001 through R3-009
+
+```
+should_create_transfer_and_produce_exactly_2_transaction_rows
+should_link_both_legs_with_same_transfer_pair_id
+should_update_both_account_balances_correctly_on_transfer
+should_return_422_when_savings_account_would_go_negative_from_transfer
+should_return_422_when_source_and_destination_are_same_account
+should_return_422_or_404_when_destination_account_belongs_to_different_user
+should_delete_both_legs_when_transfer_out_leg_is_deleted
+should_delete_both_legs_when_transfer_in_leg_is_deleted
+should_restore_both_account_balances_when_transfer_deleted
+should_update_both_legs_on_transfer_edit
+should_recalculate_both_balances_on_transfer_amount_edit
+should_verify_transfer_pair_symmetry_in_database
+```
+
+---
+
+## Phase 7: Budget Creation and Tracking (F-007)
+
+### Class: `application/src/test/java/.../budget/domain/model/BudgetTest.java`
+
+Layer: D
+
+```
+// evaluateStatus
+should_return_ON_TRACK_when_spending_below_75_percent
+should_return_WARNING_when_spending_between_75_and_99_percent
+should_return_OVER_BUDGET_when_spending_equals_or_exceeds_100_percent
+should_return_ON_TRACK_when_50_percent_spent
+should_return_WARNING_when_80_percent_spent
+should_return_OVER_BUDGET_when_100_percent_spent
+should_return_OVER_BUDGET_when_110_percent_spent
+
+// isThresholdBreached
+should_return_true_when_spending_meets_alert_threshold
+should_return_false_when_spending_below_alert_threshold
+should_return_false_when_no_alert_threshold_configured
+
+// computePeriodRange
+should_compute_correct_monthly_period_for_given_date
+should_compute_correct_weekly_period_for_given_start_date
+should_compute_correct_quarterly_period_for_q1
+should_compute_correct_quarterly_period_for_q4
+should_compute_correct_annually_period_for_given_year
+should_use_start_and_end_dates_directly_for_custom_period
+
+// updateLimit, updateAlertThreshold, deactivate
+should_update_limit_amount
+should_update_alert_threshold_percentage
+should_set_isActive_to_false_on_deactivate
+```
+
+### Class: `application/src/test/java/.../budget/domain/model/BudgetPeriodTypeTest.java`
+
+Layer: D
+
+```
+should_compute_monthly_range_as_first_to_last_day_of_month
+should_compute_monthly_range_for_february_in_leap_year
+should_compute_monthly_range_for_february_in_non_leap_year
+should_compute_weekly_range_as_7_day_window_from_start
+should_compute_quarterly_range_for_each_quarter
+should_compute_annual_range_as_jan_1_to_dec_31
+```
+
+### Class: `application/src/test/java/.../budget/domain/service/BudgetCommandServiceTest.java`
+
+Layer: D | Rule Refs: R5-001 through R5-012
+
+```
+// createBudget
+should_save_budget_when_all_inputs_valid
+should_throw_InvalidBudgetCategoryException_when_category_type_is_TRANSFER
+should_throw_DuplicateBudgetException_when_active_budget_exists_for_same_category_and_period
+should_throw_when_CUSTOM_period_missing_end_date
+should_throw_when_budget_amount_is_zero
+should_publish_budget_created_event
+
+// updateBudget
+should_update_limit_and_alert_threshold
+should_throw_BudgetNotFoundException_when_budget_not_found
+
+// deactivateBudget
+should_deactivate_budget
+should_throw_when_budget_belongs_to_different_user
+```
+
+### Class: `application/src/test/java/.../budget/adapter/outbound/persistence/BudgetSpendCalculationAdapterTest.java`
+
+Layer: P | Rule Refs: R5-003
+
+```
+should_calculate_spend_for_direct_category_transactions_only
+should_include_child_category_transactions_in_parent_category_spend
+should_exclude_income_transactions_from_expense_spend
+should_exclude_transfer_transactions_from_spend
+should_only_count_transactions_within_date_range
+should_return_zero_when_no_transactions_in_period
+should_exclude_transactions_on_inactive_accounts
+```
+
+### Class: `application/src/test/java/.../budget/adapter/inbound/web/BudgetControllerTest.java`
+
+Layer: C
+
+```
+// POST /api/v1/budgets
+should_return_201_when_budget_created
+should_return_422_when_amount_is_zero
+should_return_422_when_CUSTOM_period_missing_end_date
+should_return_422_when_alert_threshold_is_0
+should_return_422_when_alert_threshold_exceeds_100
+should_return_201_when_alert_threshold_is_75
+should_return_422_when_TRANSFER_category_used
+should_return_409_when_duplicate_active_budget_for_category_and_period
+
+// GET /api/v1/budgets/{id}/summary
+should_return_200_with_spent_remaining_percentage_and_status
+should_return_ON_TRACK_status_in_budget_summary
+should_return_WARNING_status_in_budget_summary
+should_return_OVER_BUDGET_status_in_budget_summary
+```
+
+### Class: `acceptance/src/test/java/.../integration/budget/BudgetIntegrationTest.java`
+
+Layer: I | Rule Refs: R5-001 through R5-012
+
+```
+should_create_monthly_budget_and_retrieve_summary
+should_return_409_when_second_active_budget_for_same_category_and_period_created
+should_return_422_when_TRANSFER_category_used_for_budget
+should_return_422_when_CUSTOM_period_budget_created_without_end_date
+should_return_422_when_budget_amount_is_zero
+should_return_422_when_alert_threshold_pct_is_zero
+should_return_422_when_alert_threshold_pct_is_101
+should_return_201_when_alert_threshold_pct_is_100
+should_allow_transaction_even_when_budget_is_exceeded
+should_show_OVER_BUDGET_status_after_budget_exceeded
+should_include_budget_status_ON_TRACK_WARNING_OVER_BUDGET_correctly
+should_deactivate_budget_and_exclude_from_active_list
+should_edit_budget_amount_and_reflect_in_summary
+```
+
+### Class: `acceptance/src/test/java/.../integration/budget/BudgetSpendCalculationIntegrationTest.java`
+
+Layer: I | Rule Refs: R5-003
+
+```
+should_include_child_category_transactions_in_budget_spend
+should_exclude_transactions_outside_budget_period
+should_exclude_income_transactions_from_expense_budget_calculation
+should_calculate_spend_as_zero_when_no_transactions_in_period
+should_update_spend_in_real_time_as_transactions_are_added
+```
+
+---
+
+## Phase 8: Dashboard and Net Worth (F-006)
+
+### Class: `application/src/test/java/.../reporting/adapter/outbound/persistence/DashboardReadAdapterTest.java`
+
+Layer: P
+
+```
+should_calculate_total_assets_excluding_liability_accounts
+should_calculate_total_liabilities_from_liability_accounts
+should_calculate_net_worth_as_assets_minus_liabilities
+should_calculate_current_month_income_correctly
+should_calculate_current_month_expense_correctly
+should_return_top_5_expense_categories_for_current_month
+should_return_accounts_with_balances_sorted_by_type_then_name
+should_only_return_data_for_requested_user
+```
+
+### Class: `application/src/test/java/.../reporting/adapter/inbound/web/DashboardControllerTest.java`
+
+Layer: C
+
+```
+should_return_200_with_full_dashboard_view
+should_include_net_worth_total_assets_total_liabilities
+should_include_current_month_income_and_expense
+should_include_top_5_expense_categories
+should_include_account_balances_list
+should_return_401_without_auth_token
+```
+
+### Class: `acceptance/src/test/java/.../integration/reporting/DashboardIntegrationTest.java`
+
+Layer: I
+
+```
+should_return_correct_net_worth_with_mixed_account_types
+should_return_current_month_income_and_expense_totals
+should_return_net_cash_flow_as_income_minus_expense
+should_return_top_5_expense_categories_for_current_month
+should_return_empty_top_categories_for_new_user
+should_return_zero_balances_for_user_with_no_transactions
+should_only_return_data_for_authenticated_user
+should_return_accounts_sorted_by_type_then_name
+```
+
+---
+
+## Regression Smoke Test Suite (Run on Every Build)
+
+### Class: `acceptance/src/test/java/.../regression/RegressionSmokeTest.java`
+
+Layer: I | Rule Refs: Domain brief Section 7
+
+These 8 tests form the mandatory regression suite. They must pass on every build regardless of which feature is being developed.
+
+```
+// Smoke test 1: Full auth flow
+should_allow_user_to_register_login_and_reach_dashboard
+
+// Smoke test 2: Ledger check
+should_verify_account_balance_equals_initial_balance_plus_sum_of_transactions
+
+// Smoke test 3: Transfer atomicity
+should_verify_transfer_creates_exactly_2_rows_and_updates_both_balances
+
+// Smoke test 4: SAVINGS overdraft protection
+should_reject_expense_on_savings_account_that_would_cause_negative_balance
+
+// Smoke test 5: Cross-user isolation
+should_return_404_when_user_b_reads_user_a_account
+should_return_404_when_user_b_reads_user_a_transaction
+should_return_404_when_user_b_reads_user_a_budget
+
+// Smoke test 6: Budget child-category spend
+should_include_child_category_transactions_in_parent_budget_spend
+
+// Smoke test 7: Duplicate account name
+should_reject_duplicate_account_name_for_same_user
+
+// Smoke test 8: Zero amount rejection
+should_reject_transaction_with_amount_zero_for_any_account_type
+```
+
+---
+
+## Security Test Suite
+
+### Class: `acceptance/src/test/java/.../security/AuthorizationIntegrationTest.java`
+
+Layer: I | Rule Refs: R7-001 through R7-010, Security tests from Section 5
+
+```
+// IDOR tests
+should_return_404_enumerating_account_ids_as_different_user
+should_return_404_enumerating_transaction_ids_as_different_user
+should_return_404_enumerating_category_ids_as_different_user
+should_return_404_enumerating_budget_ids_as_different_user
+
+// Token tests
+should_return_401_with_no_authorization_header
+should_return_401_with_malformed_bearer_token
+should_return_401_with_random_non_existent_token
+should_return_401_after_token_is_logged_out
+
+// Password / profile exposure
+should_not_expose_password_hash_in_get_me_response
+should_not_expose_token_in_any_response_except_login
+```
+
+### Class: `acceptance/src/test/java/.../security/SqlInjectionTest.java`
+
+Layer: I | Rule Refs: R7-010
+
+```
+should_return_401_not_error_when_sql_injection_in_username_on_login
+should_return_401_not_error_when_sql_injection_in_password_on_login
+should_return_422_not_error_when_sql_injection_in_transaction_description
+should_return_safe_response_when_sql_injection_in_merchant_name
+should_return_422_not_error_when_xss_payload_in_description_field
+should_store_xss_payload_as_plain_text_and_return_it_safely
+```
+
+---
+
+## Edge Case Tests
+
+### Class: `acceptance/src/test/java/.../integration/transaction/TransactionEdgeCaseTest.java`
+
+Layer: I | Rule Refs: Domain brief Section 2.1–2.5
+
+```
+// Amount boundary values
+should_accept_amount_of_0_0001
+should_accept_amount_of_9999999999_9999
+should_accept_5_decimal_places_stored_to_4_precision
+
+// Date edge cases
+should_accept_transaction_date_exactly_today
+should_accept_transaction_date_exactly_10_years_ago_today
+should_reject_transaction_date_10_years_and_1_day_ago
+should_accept_transaction_date_exactly_30_days_from_today
+should_reject_transaction_date_31_days_from_today
+should_reject_transaction_date_feb_29_on_non_leap_year
+should_accept_transaction_date_feb_29_on_leap_year
+
+// Pagination edge cases
+should_return_200_with_empty_content_when_no_transactions
+should_return_200_with_empty_content_when_page_beyond_available
+should_return_422_or_clamp_when_size_exceeds_100
+should_return_422_when_size_is_zero
+```
+
+### Class: `acceptance/src/test/java/.../integration/account/AccountEdgeCaseTest.java`
+
+Layer: I | Rule Refs: Domain brief Section 2.1
+
+```
+// Username boundary
+should_accept_username_of_exactly_3_characters
+should_reject_username_of_2_characters
+should_accept_username_of_exactly_50_characters
+should_reject_username_of_51_characters
+
+// Description length
+should_accept_description_of_500_characters
+should_reject_description_of_501_characters
+
+// Initial balance for liability accounts
+should_accept_positive_initial_balance_for_credit_card
+```

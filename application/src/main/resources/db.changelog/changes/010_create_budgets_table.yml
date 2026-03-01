@@ -1,0 +1,32 @@
+databaseChangeLog:
+  - changeSet:
+      id: create_budgets_table
+      author: tech-lead
+      comments: Create budgets table with unique constraint on active budgets per user/category/period
+      changes:
+        - sql:
+            sql: |
+              CREATE SEQUENCE finance_tracker.budgets_id_seq START 1 INCREMENT BY 1;
+              CREATE TABLE finance_tracker.budgets (
+                id BIGINT DEFAULT nextval('finance_tracker.budgets_id_seq') PRIMARY KEY,
+                user_id BIGINT NOT NULL,
+                category_id BIGINT NOT NULL,
+                period_type VARCHAR(20) NOT NULL,
+                amount NUMERIC(19,4) NOT NULL,
+                start_date DATE NOT NULL,
+                end_date DATE,
+                rollover_enabled BOOLEAN NOT NULL DEFAULT false,
+                alert_threshold_pct SMALLINT,
+                is_active BOOLEAN NOT NULL DEFAULT true,
+                created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+                updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+                created_by BIGINT,
+                updated_by BIGINT,
+                CONSTRAINT fk_budgets_user FOREIGN KEY (user_id) REFERENCES finance_tracker.users(id),
+                CONSTRAINT fk_budgets_category FOREIGN KEY (category_id) REFERENCES finance_tracker.categories(id),
+                CONSTRAINT chk_budgets_amount CHECK (amount > 0),
+                CONSTRAINT chk_budgets_period CHECK (period_type IN ('WEEKLY','MONTHLY','QUARTERLY','ANNUALLY','CUSTOM')),
+                CONSTRAINT chk_budgets_alert_pct CHECK (alert_threshold_pct IS NULL OR alert_threshold_pct BETWEEN 1 AND 100)
+              );
+              CREATE UNIQUE INDEX idx_budget_unique_active
+                ON finance_tracker.budgets(user_id, category_id, period_type) WHERE is_active = true;
