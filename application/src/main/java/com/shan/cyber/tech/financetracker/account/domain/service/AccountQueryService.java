@@ -46,11 +46,11 @@ public class AccountQueryService implements GetAccountsQuery {
         Money totalLiabilities = Money.zero(currency);
 
         for (Account account : accounts) {
-            Money balance = account.getCurrentBalance();
+            BigDecimal amount = account.getCurrentBalance().amount();
             if (account.isLiability()) {
-                totalLiabilities = totalLiabilities.add(Money.of(balance.amount().abs(), currency));
+                totalLiabilities = totalLiabilities.add(Money.of(amount.abs(), currency));
             } else {
-                totalAssets = totalAssets.add(balance);
+                totalAssets = totalAssets.add(Money.of(amount, currency));
             }
         }
 

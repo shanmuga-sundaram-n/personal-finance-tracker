@@ -27,7 +27,7 @@ public class AccountJpaEntity extends AuditableJpaEntity {
     @Column(name = "user_id", nullable = false)
     private Long userId;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "account_type_id", nullable = false)
     private AccountTypeJpaEntity accountType;
 
