@@ -46,3 +46,7 @@ databaseChangeLog:
   - include:
       file: changes/012_fix_char_columns_to_varchar.yml
       relativeToChangelogFile: true
+
+  - include:
+      file: changes/013_add_currency_to_budgets.yml
+      relativeToChangelogFile: true

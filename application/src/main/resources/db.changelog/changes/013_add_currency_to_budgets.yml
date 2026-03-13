@@ -1,0 +1,12 @@
+databaseChangeLog:
+  - changeSet:
+      id: add_currency_to_budgets
+      author: tech-lead
+      comments: Add currency column to budgets table for Money value object consistency
+      changes:
+        - sql:
+            sql: |
+              ALTER TABLE finance_tracker.budgets
+                ADD COLUMN currency VARCHAR(3) NOT NULL DEFAULT 'USD';
+              ALTER TABLE finance_tracker.budgets
+                ADD CONSTRAINT chk_budgets_currency CHECK (currency ~ '^[A-Z]{3}$');

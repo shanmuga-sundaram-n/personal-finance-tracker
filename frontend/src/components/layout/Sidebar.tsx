@@ -1,14 +1,14 @@
 import { NavLink } from 'react-router-dom'
-import { LayoutDashboard, Wallet } from 'lucide-react'
+import { LayoutDashboard, Wallet, Tag, ArrowLeftRight, PieChart, BarChart3 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 const navItems = [
   { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { to: '/accounts', label: 'Accounts', icon: Wallet },
-  // { to: '/categories', label: 'Categories', icon: Tag },
-  // { to: '/transactions', label: 'Transactions', icon: ArrowLeftRight },
-  // { to: '/budgets', label: 'Budgets', icon: PieChart },
-  // { to: '/reports', label: 'Reports', icon: BarChart3 },
+  { to: '/categories', label: 'Categories', icon: Tag },
+  { to: '/transactions', label: 'Transactions', icon: ArrowLeftRight },
+  { to: '/budgets', label: 'Budgets', icon: PieChart },
+  { to: '/reports', label: 'Reports', icon: BarChart3 },
 ]
 
 export function Sidebar({ className }: { className?: string }) {
