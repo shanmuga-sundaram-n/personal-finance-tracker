@@ -19,7 +19,7 @@ const createTransactionSchema = z.object({
   accountId: z.string().min(1, 'Account is required'),
   categoryId: z.string().min(1, 'Category is required'),
   amount: z.string().min(1, 'Amount is required').refine((v) => !isNaN(Number(v)) && Number(v) > 0, 'Must be a positive number'),
-  type: z.enum(['INCOME', 'EXPENSE'], { required_error: 'Type is required' }),
+  type: z.enum(['INCOME', 'EXPENSE'], { error: 'Type is required' }),
   transactionDate: z.string().min(1, 'Date is required'),
   description: z.string().max(500).optional().or(z.literal('')),
   merchantName: z.string().max(200).optional().or(z.literal('')),
