@@ -50,6 +50,14 @@ public class User {
         this.lastName = Objects.requireNonNull(lastName, "lastName must not be null");
     }
 
+    public void updateProfile(String firstName, String lastName, String preferredCurrency) {
+        this.firstName = Objects.requireNonNull(firstName, "firstName must not be null");
+        this.lastName = Objects.requireNonNull(lastName, "lastName must not be null");
+        if (preferredCurrency == null || preferredCurrency.length() != 3)
+            throw new IllegalArgumentException("preferredCurrency must be a 3-letter ISO 4217 code");
+        this.preferredCurrency = preferredCurrency;
+    }
+
     public void updatePreferredCurrency(String currency) {
         this.preferredCurrency = Objects.requireNonNull(currency, "currency must not be null");
     }

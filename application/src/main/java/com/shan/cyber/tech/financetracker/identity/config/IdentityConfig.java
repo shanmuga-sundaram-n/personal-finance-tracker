@@ -6,8 +6,10 @@ import com.shan.cyber.tech.financetracker.identity.domain.port.outbound.LoginRat
 import com.shan.cyber.tech.financetracker.identity.domain.port.outbound.PasswordHasherPort;
 import com.shan.cyber.tech.financetracker.identity.domain.port.outbound.SessionPersistencePort;
 import com.shan.cyber.tech.financetracker.identity.domain.port.outbound.UserPersistencePort;
+import com.shan.cyber.tech.financetracker.identity.domain.port.inbound.UpdateUserProfileUseCase;
 import com.shan.cyber.tech.financetracker.identity.domain.service.IdentityCommandService;
 import com.shan.cyber.tech.financetracker.identity.domain.service.IdentityQueryService;
+import com.shan.cyber.tech.financetracker.identity.domain.service.UpdateUserProfileService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
@@ -33,6 +35,11 @@ public class IdentityConfig {
     @Bean
     public IdentityQueryService identityQueryService(UserPersistencePort userPersistencePort) {
         return new IdentityQueryService(userPersistencePort);
+    }
+
+    @Bean
+    public UpdateUserProfileUseCase updateUserProfileUseCase(UserPersistencePort userPersistencePort) {
+        return new UpdateUserProfileService(userPersistencePort);
     }
 
     @Bean

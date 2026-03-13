@@ -7,6 +7,7 @@ import { toast } from 'sonner'
 import { createAccount } from '@/api/accounts.api'
 import { ApiClientError } from '@/api/client'
 import { ACCOUNT_TYPES } from '@/constants/account-types'
+import { useAuth } from '@/hooks/useAuth'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -32,6 +33,7 @@ type CreateAccountForm = z.infer<typeof createAccountSchema>
 export function CreateAccountPage() {
   const navigate = useNavigate()
   const [error, setError] = useState<string | null>(null)
+  const { user } = useAuth()
 
   const {
     register,
@@ -41,7 +43,7 @@ export function CreateAccountPage() {
   } = useForm<CreateAccountForm>({
     resolver: zodResolver(createAccountSchema),
     defaultValues: {
-      currency: 'USD',
+      currency: user?.preferredCurrency ?? 'USD',
       initialBalance: '0',
     },
   })
@@ -116,8 +118,7 @@ export function CreateAccountPage() {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="currency">Currency</Label>
-                <Input id="currency" placeholder="USD" {...register('currency')} />
-                {errors.currency && <p className="text-sm text-destructive">{errors.currency.message}</p>}
+                <Input id="currency" readOnly {...register('currency')} className="bg-muted cursor-not-allowed" />
               </div>
             </div>
 

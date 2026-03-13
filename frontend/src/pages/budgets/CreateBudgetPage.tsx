@@ -8,6 +8,7 @@ import { createBudget } from '@/api/budgets.api'
 import { ApiClientError } from '@/api/client'
 import { useCategories } from '@/hooks/useCategories'
 import { BUDGET_PERIODS } from '@/constants/budget-periods'
+import { useAuth } from '@/hooks/useAuth'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -19,6 +20,7 @@ const createBudgetSchema = z.object({
   categoryId: z.string().min(1, 'Category is required'),
   periodType: z.string().min(1, 'Period is required'),
   amount: z.string().min(1, 'Amount is required').refine((v) => !isNaN(Number(v)) && Number(v) > 0, 'Must be a positive number'),
+  currency: z.string().regex(/^[A-Z]{3}$/, 'Must be a 3-letter ISO code'),
   startDate: z.string().min(1, 'Start date is required'),
   endDate: z.string().optional().or(z.literal('')),
   rolloverEnabled: z.boolean(),
@@ -31,6 +33,7 @@ export function CreateBudgetPage() {
   const navigate = useNavigate()
   const [error, setError] = useState<string | null>(null)
   const { categories } = useCategories('EXPENSE')
+  const { user } = useAuth()
 
   const {
     register,
@@ -44,6 +47,7 @@ export function CreateBudgetPage() {
       startDate: new Date().toISOString().split('T')[0],
       rolloverEnabled: false,
       periodType: 'MONTHLY',
+      currency: user?.preferredCurrency ?? 'USD',
     },
   })
 
@@ -58,7 +62,7 @@ export function CreateBudgetPage() {
         categoryId: parseInt(data.categoryId, 10),
         periodType: data.periodType as 'WEEKLY' | 'MONTHLY' | 'QUARTERLY' | 'ANNUALLY' | 'CUSTOM',
         amount: parseFloat(data.amount),
-        currency: 'USD',
+        currency: data.currency,
         startDate: data.startDate,
         endDate: data.endDate || undefined,
         rolloverEnabled: data.rolloverEnabled,
@@ -134,10 +138,15 @@ export function CreateBudgetPage() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="startDate">Start Date</Label>
-                <Input id="startDate" type="date" {...register('startDate')} />
-                {errors.startDate && <p className="text-sm text-destructive">{errors.startDate.message}</p>}
+                <Label htmlFor="currency">Currency</Label>
+                <Input id="currency" readOnly {...register('currency')} className="bg-muted cursor-not-allowed" />
               </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="startDate">Start Date</Label>
+              <Input id="startDate" type="date" {...register('startDate')} />
+              {errors.startDate && <p className="text-sm text-destructive">{errors.startDate.message}</p>}
             </div>
 
             {selectedPeriod === 'CUSTOM' && (

@@ -2,6 +2,7 @@ import { createContext, useCallback, useEffect, useState, type ReactNode } from 
 import type { UserProfile } from '@/types/auth.types'
 import type { LoginRequest, RegisterRequest } from '@/types/auth.types'
 import * as authApi from '@/api/auth.api'
+import type { UpdateProfileRequest } from '@/api/auth.api'
 import { hasToken, setOnUnauthorized } from '@/api/client'
 
 interface AuthContextValue {
@@ -10,6 +11,7 @@ interface AuthContextValue {
   login: (data: LoginRequest) => Promise<void>
   register: (data: RegisterRequest) => Promise<UserProfile>
   logout: () => Promise<void>
+  updateProfile: (data: UpdateProfileRequest) => Promise<void>
 }
 
 export const AuthContext = createContext<AuthContextValue | null>(null)
@@ -51,8 +53,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null)
   }, [])
 
+  const updateProfile = useCallback(async (data: UpdateProfileRequest) => {
+    const updated = await authApi.updateProfile(data)
+    setUser(updated)
+  }, [])
+
   return (
-    <AuthContext.Provider value={{ user, isLoading, login, register, logout }}>
+    <AuthContext.Provider value={{ user, isLoading, login, register, logout, updateProfile }}>
       {children}
     </AuthContext.Provider>
   )

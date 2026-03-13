@@ -1,4 +1,6 @@
+import { useContext } from 'react'
 import { cn } from '@/lib/utils'
+import { AuthContext } from '@/contexts/AuthContext'
 
 interface MoneyDisplayProps {
   amount: string
@@ -7,11 +9,14 @@ interface MoneyDisplayProps {
   className?: string
 }
 
-export function MoneyDisplay({ amount, currency = 'USD', colored = false, className }: MoneyDisplayProps) {
+export function MoneyDisplay({ amount, currency, colored = false, className }: MoneyDisplayProps) {
+  const auth = useContext(AuthContext)
+  const resolvedCurrency = currency ?? auth?.user?.preferredCurrency ?? 'USD'
+
   const numericAmount = parseFloat(amount)
   const formatted = new Intl.NumberFormat('en-US', {
     style: 'currency',
-    currency,
+    currency: resolvedCurrency,
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   }).format(numericAmount)

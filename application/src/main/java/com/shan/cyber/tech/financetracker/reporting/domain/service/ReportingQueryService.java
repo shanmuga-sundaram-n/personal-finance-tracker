@@ -10,6 +10,7 @@ import com.shan.cyber.tech.financetracker.reporting.domain.port.outbound.Account
 import com.shan.cyber.tech.financetracker.reporting.domain.port.outbound.BudgetSummaryPort;
 import com.shan.cyber.tech.financetracker.reporting.domain.port.outbound.NetWorthSummary;
 import com.shan.cyber.tech.financetracker.reporting.domain.port.outbound.TransactionSummaryPort;
+import com.shan.cyber.tech.financetracker.reporting.domain.port.outbound.UserPreferencesPort;
 import com.shan.cyber.tech.financetracker.shared.domain.model.UserId;
 
 import java.math.BigDecimal;
@@ -23,18 +24,22 @@ public class ReportingQueryService implements GetDashboardQuery, GetSpendingRepo
     private final AccountQueryPort accountQueryPort;
     private final TransactionSummaryPort transactionSummaryPort;
     private final BudgetSummaryPort budgetSummaryPort;
+    private final UserPreferencesPort userPreferencesPort;
 
     public ReportingQueryService(AccountQueryPort accountQueryPort,
                                   TransactionSummaryPort transactionSummaryPort,
-                                  BudgetSummaryPort budgetSummaryPort) {
+                                  BudgetSummaryPort budgetSummaryPort,
+                                  UserPreferencesPort userPreferencesPort) {
         this.accountQueryPort = accountQueryPort;
         this.transactionSummaryPort = transactionSummaryPort;
         this.budgetSummaryPort = budgetSummaryPort;
+        this.userPreferencesPort = userPreferencesPort;
     }
 
     @Override
     public DashboardView getDashboard(UserId userId) {
         NetWorthSummary netWorth = accountQueryPort.getNetWorth(userId);
+        String preferredCurrency = userPreferencesPort.getPreferredCurrency(userId);
 
         YearMonth currentMonth = YearMonth.now();
         LocalDate monthStart = currentMonth.atDay(1);
@@ -48,7 +53,7 @@ public class ReportingQueryService implements GetDashboardQuery, GetSpendingRepo
                 netWorth.netWorth(),
                 netWorth.totalAssets(),
                 netWorth.totalLiabilities(),
-                netWorth.currency(),
+                preferredCurrency,
                 income.toPlainString(),
                 expense.toPlainString(),
                 netCashFlow.toPlainString(),

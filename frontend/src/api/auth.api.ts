@@ -1,6 +1,12 @@
 import { api, storeToken, clearToken } from './client'
 import type { LoginRequest, LoginResponse, RegisterRequest, UserProfile } from '@/types/auth.types'
 
+export interface UpdateProfileRequest {
+  firstName: string
+  lastName: string
+  preferredCurrency: string
+}
+
 export async function login(data: LoginRequest): Promise<UserProfile> {
   const res = await api.post<LoginResponse>('/api/v1/auth/login', data)
   storeToken(res.token, res.expiresAt)
@@ -21,4 +27,8 @@ export async function logout(): Promise<void> {
 
 export async function getProfile(): Promise<UserProfile> {
   return api.get<UserProfile>('/api/v1/auth/me')
+}
+
+export async function updateProfile(data: UpdateProfileRequest): Promise<UserProfile> {
+  return api.put<UserProfile>('/api/v1/users/me', data)
 }
