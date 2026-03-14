@@ -26,22 +26,62 @@ function periodLabel(code: string): string {
   return BUDGET_PERIODS.find((p) => p.code === code)?.name ?? code
 }
 
-function progressColor(percent: number): string {
-  if (percent >= 90) return 'bg-red-500'
-  if (percent >= 70) return 'bg-yellow-500'
-  return 'bg-green-500'
-}
-
-function progressTrackColor(percent: number): string {
-  if (percent >= 90) return 'bg-red-100 dark:bg-red-950'
-  if (percent >= 70) return 'bg-yellow-100 dark:bg-yellow-950'
-  return 'bg-green-100 dark:bg-green-950'
+function gaugeColor(percent: number): string {
+  if (percent >= 90) return '#ef4444'
+  if (percent >= 70) return '#eab308'
+  return '#22c55e'
 }
 
 function amountColor(percent: number): string {
   if (percent >= 90) return 'text-red-600 dark:text-red-400'
   if (percent >= 70) return 'text-yellow-600 dark:text-yellow-400'
   return 'text-green-600 dark:text-green-400'
+}
+
+function RadialProgress({ percent, size = 76 }: { percent: number; size?: number }) {
+  const strokeWidth = 7
+  const radius = (size - strokeWidth) / 2
+  const circumference = 2 * Math.PI * radius
+  const clamped = Math.min(percent, 100)
+  const offset = circumference - (clamped / 100) * circumference
+  const color = gaugeColor(percent)
+
+  return (
+    <div className="relative flex shrink-0 items-center justify-center" style={{ width: size, height: size }}>
+      <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
+        {/* Track */}
+        <circle
+          cx={size / 2}
+          cy={size / 2}
+          r={radius}
+          fill="none"
+          stroke="currentColor"
+          strokeWidth={strokeWidth}
+          className="text-muted/60"
+        />
+        {/* Progress arc */}
+        <circle
+          cx={size / 2}
+          cy={size / 2}
+          r={radius}
+          fill="none"
+          stroke={color}
+          strokeWidth={strokeWidth}
+          strokeLinecap="round"
+          strokeDasharray={circumference}
+          strokeDashoffset={offset}
+          transform={`rotate(-90 ${size / 2} ${size / 2})`}
+          style={{ transition: 'stroke-dashoffset 0.5s ease' }}
+        />
+      </svg>
+      <span
+        className="absolute text-[11px] font-bold tabular-nums"
+        style={{ color }}
+      >
+        {clamped.toFixed(0)}%
+      </span>
+    </div>
+  )
 }
 
 export function BudgetsListPage() {
@@ -74,6 +114,10 @@ export function BudgetsListPage() {
 
   if (error) return <ErrorAlert message={error} />
 
+  const totalBudgeted = budgets.reduce((sum, b) => sum + parseFloat(b.amount || '0'), 0)
+  const totalSpent = budgets.reduce((sum, b) => sum + parseFloat(b.spentAmount || '0'), 0)
+  const currency = budgets[0]?.currency ?? ''
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -93,11 +137,37 @@ export function BudgetsListPage() {
           </CardContent>
         </Card>
       ) : (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {budgets.map((budget) => {
-            const percent = Math.min(budget.percentUsed, 100)
-            return (
-              <Card key={budget.id}>
+        <>
+          {/* Summary stats bar */}
+          <div className="grid gap-4 md:grid-cols-3">
+            <Card>
+              <CardContent className="pt-6">
+                <p className="text-sm text-muted-foreground">Total Budgets</p>
+                <p className="mt-1 text-2xl font-bold">{budgets.length}</p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="pt-6">
+                <p className="text-sm text-muted-foreground">Total Budgeted</p>
+                <p className="mt-1 text-2xl font-bold">
+                  {totalBudgeted.toFixed(2)}{currency && <span className="ml-1 text-base font-normal text-muted-foreground">{currency}</span>}
+                </p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="pt-6">
+                <p className="text-sm text-muted-foreground">Total Spent</p>
+                <p className={`mt-1 text-2xl font-bold ${totalSpent > totalBudgeted ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400'}`}>
+                  {totalSpent.toFixed(2)}{currency && <span className="ml-1 text-base font-normal text-muted-foreground">{currency}</span>}
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Budget cards grid */}
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {budgets.map((budget) => (
+              <Card key={budget.id} className="transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md">
                 <CardHeader className="pb-3">
                   <div className="flex items-start justify-between">
                     <div>
@@ -121,50 +191,41 @@ export function BudgetsListPage() {
                     </div>
                   </div>
                 </CardHeader>
-                <CardContent className="space-y-3">
-                  {/* Progress bar */}
-                  <div className="space-y-1">
-                    <div className={`h-3 w-full rounded-full ${progressTrackColor(budget.percentUsed)}`}>
-                      <div
-                        className={`h-3 rounded-full transition-all ${progressColor(budget.percentUsed)}`}
-                        style={{ width: `${percent}%` }}
-                      />
+                <CardContent>
+                  <div className="flex items-center gap-4">
+                    {/* Text stats on the left */}
+                    <div className="flex-1 space-y-2">
+                      <div className="flex justify-between text-sm">
+                        <span className="text-muted-foreground">Spent</span>
+                        <span className={`font-medium ${amountColor(budget.percentUsed)}`}>
+                          {budget.spentAmount} {budget.currency}
+                        </span>
+                      </div>
+                      <div className="flex justify-between text-sm">
+                        <span className="text-muted-foreground">Budget</span>
+                        <span className="font-medium">
+                          {budget.amount} {budget.currency}
+                        </span>
+                      </div>
+                      <div className="flex justify-between text-sm">
+                        <span className="text-muted-foreground">Remaining</span>
+                        <span className={`font-medium ${Number(budget.remainingAmount) < 0 ? 'text-red-600' : ''}`}>
+                          {budget.remainingAmount} {budget.currency}
+                        </span>
+                      </div>
+                      <div className="text-xs text-muted-foreground">
+                        {budget.startDate} — {budget.endDate ?? '∞'}
+                      </div>
                     </div>
-                    <div className="flex justify-between text-sm">
-                      <span className={amountColor(budget.percentUsed)}>
-                        {budget.spentAmount} {budget.currency} spent
-                      </span>
-                      <span className="text-muted-foreground">
-                        {budget.amount} {budget.currency}
-                      </span>
-                    </div>
-                  </div>
 
-                  {/* Remaining */}
-                  <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">Remaining</span>
-                    <span className={`font-medium ${Number(budget.remainingAmount) < 0 ? 'text-red-600' : ''}`}>
-                      {budget.remainingAmount} {budget.currency}
-                    </span>
-                  </div>
-
-                  {/* Usage percentage */}
-                  <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">Used</span>
-                    <span className={`font-medium ${amountColor(budget.percentUsed)}`}>
-                      {budget.percentUsed.toFixed(1)}%
-                    </span>
-                  </div>
-
-                  {/* Period dates */}
-                  <div className="text-xs text-muted-foreground">
-                    {budget.startDate} — {budget.endDate ?? '∞'}
+                    {/* Radial gauge on the right */}
+                    <RadialProgress percent={budget.percentUsed} />
                   </div>
                 </CardContent>
               </Card>
-            )
-          })}
-        </div>
+            ))}
+          </div>
+        </>
       )}
 
       {/* Delete Dialog */}

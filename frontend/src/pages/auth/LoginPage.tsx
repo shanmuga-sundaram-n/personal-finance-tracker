@@ -49,11 +49,11 @@ export function LoginPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center p-4">
-      <Card className="w-full max-w-md">
+    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-background via-muted/40 to-primary/5 p-4">
+      <Card className="w-full max-w-md shadow-xl">
         <CardHeader className="text-center">
-          <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
-            <Wallet className="h-6 w-6 text-primary" />
+          <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-600 shadow-lg shadow-blue-600/25">
+            <Wallet className="h-7 w-7 text-white" />
           </div>
           <CardTitle className="text-2xl">Welcome back</CardTitle>
           <CardDescription>Sign in to your account</CardDescription>
@@ -82,7 +82,7 @@ export function LoginPage() {
             </Button>
             <p className="text-center text-sm text-muted-foreground">
               Don't have an account?{' '}
-              <Link to="/register" className="text-primary hover:underline">
+              <Link to="/register" className="text-blue-600 dark:text-blue-400 hover:underline">
                 Sign up
               </Link>
             </p>

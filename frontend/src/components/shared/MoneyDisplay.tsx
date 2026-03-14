@@ -7,17 +7,30 @@ interface MoneyDisplayProps {
   currency?: string
   colored?: boolean
   className?: string
+  /** Explicit sign prefix to prepend, e.g. '+' or '-' */
+  sign?: string
+  /** Strip trailing .00 when the amount is a whole number */
+  trimDecimals?: boolean
 }
 
-export function MoneyDisplay({ amount, currency, colored = false, className }: MoneyDisplayProps) {
+export function MoneyDisplay({
+  amount,
+  currency,
+  colored = false,
+  className,
+  sign,
+  trimDecimals = false,
+}: MoneyDisplayProps) {
   const auth = useContext(AuthContext)
   const resolvedCurrency = currency ?? auth?.user?.preferredCurrency ?? 'USD'
 
   const numericAmount = parseFloat(amount)
+  const isWhole = Number.isInteger(numericAmount)
+
   const formatted = new Intl.NumberFormat('en-US', {
     style: 'currency',
     currency: resolvedCurrency,
-    minimumFractionDigits: 2,
+    minimumFractionDigits: trimDecimals && isWhole ? 0 : 2,
     maximumFractionDigits: 2,
   }).format(numericAmount)
 
@@ -30,7 +43,7 @@ export function MoneyDisplay({ amount, currency, colored = false, className }: M
         className
       )}
     >
-      {formatted}
+      {sign}{formatted}
     </span>
   )
 }

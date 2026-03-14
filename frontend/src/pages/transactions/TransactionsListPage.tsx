@@ -9,6 +9,7 @@ import { deleteTransaction } from '@/api/transactions.api'
 import { TRANSACTION_TYPE_OPTIONS } from '@/constants/transaction-types'
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner'
 import { ErrorAlert } from '@/components/shared/ErrorAlert'
+import { TransactionAmount } from '@/components/shared/TransactionAmount'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
@@ -25,51 +26,20 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
 import type { Transaction } from '@/types/transaction.types'
+import { typeBadgeVariant, typeLabel, rowBorderClass } from '@/lib/transactionUtils'
 
-function typeBadgeVariant(type: string): 'default' | 'destructive' | 'outline' | 'secondary' {
-  switch (type) {
-    case 'INCOME': return 'default'
-    case 'EXPENSE': return 'destructive'
-    case 'TRANSFER_IN': return 'outline'
-    case 'TRANSFER_OUT': return 'secondary'
-    default: return 'outline'
+function getPageNumbers(current: number, total: number): (number | '...')[] {
+  if (total <= 7) {
+    return Array.from({ length: total }, (_, i) => i)
   }
-}
-
-function typeLabel(type: string): string {
-  switch (type) {
-    case 'INCOME': return 'Income'
-    case 'EXPENSE': return 'Expense'
-    case 'TRANSFER_IN': return 'Transfer In'
-    case 'TRANSFER_OUT': return 'Transfer Out'
-    default: return type
+  const pages: (number | '...')[] = [0]
+  if (current > 2) pages.push('...')
+  for (let i = Math.max(1, current - 1); i <= Math.min(total - 2, current + 1); i++) {
+    pages.push(i)
   }
-}
-
-function amountColor(type: string): string {
-  switch (type) {
-    case 'INCOME':
-    case 'TRANSFER_IN':
-      return 'text-green-600'
-    case 'EXPENSE':
-    case 'TRANSFER_OUT':
-      return 'text-red-600'
-    default:
-      return ''
-  }
-}
-
-function amountPrefix(type: string): string {
-  switch (type) {
-    case 'INCOME':
-    case 'TRANSFER_IN':
-      return '+'
-    case 'EXPENSE':
-    case 'TRANSFER_OUT':
-      return '-'
-    default:
-      return ''
-  }
+  if (current < total - 3) pages.push('...')
+  pages.push(total - 1)
+  return pages
 }
 
 export function TransactionsListPage() {
@@ -108,6 +78,8 @@ export function TransactionsListPage() {
 
   if (error) return <ErrorAlert message={error} />
 
+  const pageNumbers = getPageNumbers(page, totalPages)
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -130,14 +102,14 @@ export function TransactionsListPage() {
 
       {/* Filters */}
       <Card>
-        <CardContent className="flex flex-wrap items-end gap-4 pt-6">
+        <CardContent className="grid grid-cols-2 items-end gap-3 pt-6 md:grid-cols-3 lg:grid-cols-5">
           <div className="space-y-1">
             <label className="text-sm font-medium">Account</label>
             <Select
               value={filters.accountId ? String(filters.accountId) : 'all'}
               onValueChange={(v) => setFilters((prev) => ({ ...prev, accountId: v === 'all' ? undefined : Number(v), page: 0 }))}
             >
-              <SelectTrigger className="w-[180px]">
+              <SelectTrigger className="w-full">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -157,7 +129,7 @@ export function TransactionsListPage() {
               value={filters.categoryId ? String(filters.categoryId) : 'all'}
               onValueChange={(v) => setFilters((prev) => ({ ...prev, categoryId: v === 'all' ? undefined : Number(v), page: 0 }))}
             >
-              <SelectTrigger className="w-[180px]">
+              <SelectTrigger className="w-full">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -177,7 +149,7 @@ export function TransactionsListPage() {
               value={filters.type || 'ALL'}
               onValueChange={(v) => setFilters((prev) => ({ ...prev, type: v === 'ALL' ? undefined : v, page: 0 }))}
             >
-              <SelectTrigger className="w-[160px]">
+              <SelectTrigger className="w-full">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -194,7 +166,7 @@ export function TransactionsListPage() {
             <label className="text-sm font-medium">From</label>
             <Input
               type="date"
-              className="w-[160px]"
+              className="w-full"
               value={filters.from || ''}
               onChange={(e) => setFilters((prev) => ({ ...prev, from: e.target.value || undefined, page: 0 }))}
             />
@@ -204,7 +176,7 @@ export function TransactionsListPage() {
             <label className="text-sm font-medium">To</label>
             <Input
               type="date"
-              className="w-[160px]"
+              className="w-full"
               value={filters.to || ''}
               onChange={(e) => setFilters((prev) => ({ ...prev, to: e.target.value || undefined, page: 0 }))}
             />
@@ -213,6 +185,12 @@ export function TransactionsListPage() {
       </Card>
 
       {/* Table */}
+      <div className="relative">
+      {isLoading && transactions.length > 0 && (
+        <div className="absolute inset-0 z-10 flex items-center justify-center rounded-xl bg-background/60 backdrop-blur-sm">
+          <LoadingSpinner size="lg" />
+        </div>
+      )}
       <Card>
         <CardContent className="p-0">
           {transactions.length === 0 ? (
@@ -222,7 +200,7 @@ export function TransactionsListPage() {
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full">
-                <thead>
+                <thead className="sticky top-0 z-10 bg-background">
                   <tr className="border-b text-left text-sm text-muted-foreground">
                     <th className="px-4 py-3 font-medium">Date</th>
                     <th className="px-4 py-3 font-medium">Description</th>
@@ -235,7 +213,7 @@ export function TransactionsListPage() {
                 </thead>
                 <tbody>
                   {transactions.map((tx) => (
-                    <tr key={tx.id} className="border-b last:border-0 hover:bg-accent/50">
+                    <tr key={tx.id} className={`border-b last:border-0 hover:bg-accent/50 ${rowBorderClass(tx.type)}`}>
                       <td className="px-4 py-3 text-sm">{tx.transactionDate}</td>
                       <td className="px-4 py-3">
                         <div className="text-sm font-medium">{tx.description || tx.merchantName || '—'}</div>
@@ -248,8 +226,13 @@ export function TransactionsListPage() {
                       <td className="px-4 py-3">
                         <Badge variant={typeBadgeVariant(tx.type)}>{typeLabel(tx.type)}</Badge>
                       </td>
-                      <td className={`px-4 py-3 text-right text-sm font-medium ${amountColor(tx.type)}`}>
-                        {amountPrefix(tx.type)}{tx.amount} {tx.currency}
+                      <td className="px-4 py-3 text-right">
+                        <TransactionAmount
+                          amount={tx.amount}
+                          currency={tx.currency}
+                          type={tx.type}
+                          className="text-sm font-medium"
+                        />
                       </td>
                       <td className="px-4 py-3">
                         <div className="flex gap-1">
@@ -273,21 +256,37 @@ export function TransactionsListPage() {
           )}
         </CardContent>
       </Card>
+      </div>
 
       {/* Pagination */}
       {totalPages > 1 && (
         <div className="flex items-center justify-between">
           <p className="text-sm text-muted-foreground">
-            Showing page {page + 1} of {totalPages} ({totalElements} total)
+            Page {page + 1} of {totalPages} ({totalElements} total)
           </p>
-          <div className="flex gap-2">
+          <div className="flex items-center gap-1">
             <Button variant="outline" size="sm" disabled={page === 0} onClick={() => goToPage(page - 1)}>
-              <ChevronLeft className="mr-1 h-4 w-4" />
-              Previous
+              <ChevronLeft className="h-4 w-4" />
             </Button>
+            {pageNumbers.map((p, idx) =>
+              p === '...' ? (
+                <span key={`ellipsis-${idx}`} className="px-2 text-sm text-muted-foreground">
+                  …
+                </span>
+              ) : (
+                <Button
+                  key={p}
+                  variant={p === page ? 'default' : 'outline'}
+                  size="sm"
+                  className="h-8 w-8 p-0"
+                  onClick={() => goToPage(p)}
+                >
+                  {p + 1}
+                </Button>
+              )
+            )}
             <Button variant="outline" size="sm" disabled={page >= totalPages - 1} onClick={() => goToPage(page + 1)}>
-              Next
-              <ChevronRight className="ml-1 h-4 w-4" />
+              <ChevronRight className="h-4 w-4" />
             </Button>
           </div>
         </div>

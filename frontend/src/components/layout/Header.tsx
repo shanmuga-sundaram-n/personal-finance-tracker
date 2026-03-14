@@ -27,7 +27,7 @@ export function Header() {
   }
 
   return (
-    <header className="sticky top-0 z-40 flex h-14 items-center gap-4 border-b bg-background px-4 lg:px-6">
+    <header className="sticky top-0 z-40 flex h-14 items-center gap-4 border-b border-border/50 bg-background/95 px-4 backdrop-blur supports-[backdrop-filter]:bg-background/80 lg:px-6">
       <Sheet>
         <SheetTrigger asChild>
           <Button variant="ghost" size="icon" className="lg:hidden">
@@ -51,7 +51,7 @@ export function Header() {
         <DropdownMenuTrigger asChild>
           <Button variant="ghost" className="relative h-8 w-8 rounded-full">
             <Avatar className="h-8 w-8">
-              <AvatarFallback className="bg-primary text-primary-foreground text-xs">
+              <AvatarFallback className="bg-gradient-to-br from-blue-600 to-indigo-600 text-xs text-white">
                 {initials}
               </AvatarFallback>
             </Avatar>
