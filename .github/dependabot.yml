@@ -1,0 +1,53 @@
+version: 2
+
+updates:
+  # ── GitHub Actions ──
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: "09:00"
+    commit-message:
+      prefix: "chore(actions)"
+    labels:
+      - dependencies
+      - github-actions
+
+  # ── npm (frontend) ──
+  - package-ecosystem: npm
+    directory: /frontend
+    schedule:
+      interval: weekly
+      day: monday
+      time: "09:00"
+    commit-message:
+      prefix: "chore(deps/frontend)"
+    labels:
+      - dependencies
+      - frontend
+    groups:
+      react-ecosystem:
+        patterns:
+          - "react*"
+          - "@types/react*"
+      vite-ecosystem:
+        patterns:
+          - "vite*"
+          - "@vitejs/*"
+      radix-ui:
+        patterns:
+          - "@radix-ui/*"
+
+  # ── Gradle (backend) ──
+  - package-ecosystem: gradle
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: "09:00"
+    commit-message:
+      prefix: "chore(deps/backend)"
+    labels:
+      - dependencies
+      - backend

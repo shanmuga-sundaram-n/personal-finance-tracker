@@ -1,0 +1,201 @@
+name: CI
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  JAVA_VERSION: "21"
+  NODE_VERSION: "20"
+
+jobs:
+  # ─────────────────────────────────────────────
+  # Backend — compile, test, package
+  # ─────────────────────────────────────────────
+  backend:
+    name: Backend (Gradle / Java ${{ env.JAVA_VERSION }})
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK ${{ env.JAVA_VERSION }}
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: temurin
+          cache: gradle
+
+      - name: Validate Gradle wrapper
+        uses: gradle/actions/wrapper-validation@v3
+
+      - name: Grant execute permission to gradlew
+        run: chmod +x gradlew
+
+      - name: Run tests
+        run: ./gradlew :application:test --no-daemon --parallel
+
+      - name: Build JAR (skip tests — already ran)
+        run: ./gradlew :application:bootJar --no-daemon -x test
+
+      - name: Upload test reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-test-reports
+          path: application/build/reports/tests/
+          retention-days: 7
+
+      - name: Upload JAR artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-jar
+          path: application/build/libs/*.jar
+          retention-days: 1
+
+  # ─────────────────────────────────────────────
+  # Frontend — lint, type-check, build
+  # ─────────────────────────────────────────────
+  frontend:
+    name: Frontend (Node ${{ env.NODE_VERSION }})
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: frontend
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node ${{ env.NODE_VERSION }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Build (type-check + Vite bundle)
+        run: npm run build
+
+      - name: Upload dist artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-dist
+          path: frontend/dist/
+          retention-days: 1
+
+  # ─────────────────────────────────────────────
+  # Docker — build images (no push on CI)
+  # ─────────────────────────────────────────────
+  docker-build:
+    name: Docker Build Verification
+    runs-on: ubuntu-latest
+    needs: [backend, frontend]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build backend image (no push)
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile
+          push: false
+          tags: personal-finance-tracker-backend:ci
+          cache-from: type=gha,scope=backend
+          cache-to: type=gha,mode=max,scope=backend
+
+      - name: Build frontend image (no push)
+        uses: docker/build-push-action@v5
+        with:
+          context: ./frontend
+          file: ./frontend/Dockerfile
+          push: false
+          tags: personal-finance-tracker-frontend:ci
+          cache-from: type=gha,scope=frontend
+          cache-to: type=gha,mode=max,scope=frontend
+
+  # ─────────────────────────────────────────────
+  # Security — vulnerability scan on Docker images
+  # ─────────────────────────────────────────────
+  security-scan:
+    name: Trivy Security Scan
+    runs-on: ubuntu-latest
+    needs: [backend, frontend]
+    # Only run on push to main or PRs targeting main
+    if: github.ref == 'refs/heads/main' || github.event_name == 'pull_request'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build backend image for scanning
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile
+          load: true
+          tags: pft-backend:scan
+          cache-from: type=gha,scope=backend
+
+      - name: Run Trivy on backend image
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: pft-backend:scan
+          format: sarif
+          output: trivy-backend.sarif
+          severity: CRITICAL,HIGH
+          exit-code: "0"
+
+      - name: Upload Trivy backend results to GitHub Security
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: trivy-backend.sarif
+          category: trivy-backend
+
+      - name: Build frontend image for scanning
+        uses: docker/build-push-action@v5
+        with:
+          context: ./frontend
+          file: ./frontend/Dockerfile
+          load: true
+          tags: pft-frontend:scan
+          cache-from: type=gha,scope=frontend
+
+      - name: Run Trivy on frontend image
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: pft-frontend:scan
+          format: sarif
+          output: trivy-frontend.sarif
+          severity: CRITICAL,HIGH
+          exit-code: "0"
+
+      - name: Upload Trivy frontend results to GitHub Security
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: trivy-frontend.sarif
+          category: trivy-frontend
