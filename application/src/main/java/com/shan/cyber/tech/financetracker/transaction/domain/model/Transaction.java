@@ -24,7 +24,7 @@ public class Transaction {
     private String referenceNumber;
     private final boolean isRecurring;
     private TransactionId transferPairId;
-    private final boolean isReconciled;
+    private boolean isReconciled;
     private AuditInfo auditInfo;
 
     public Transaction(TransactionId id, UserId userId, AccountId accountId, CategoryId categoryId,
@@ -82,6 +82,10 @@ public class Transaction {
 
     public void unlinkTransferPair() {
         this.transferPairId = null;
+    }
+
+    public void reconcile(boolean reconciled) {
+        this.isReconciled = reconciled;
     }
 
     public TransactionId getId() { return id; }

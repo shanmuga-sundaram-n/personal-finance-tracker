@@ -7,6 +7,8 @@ import com.shan.cyber.tech.financetracker.transaction.domain.port.inbound.Create
 import com.shan.cyber.tech.financetracker.transaction.domain.port.inbound.CreateTransferCommand;
 import com.shan.cyber.tech.financetracker.transaction.domain.port.inbound.CreateTransferUseCase;
 import com.shan.cyber.tech.financetracker.transaction.domain.port.inbound.DeleteTransactionUseCase;
+import com.shan.cyber.tech.financetracker.transaction.domain.port.inbound.ReconcileTransactionCommand;
+import com.shan.cyber.tech.financetracker.transaction.domain.port.inbound.ReconcileTransactionUseCase;
 import com.shan.cyber.tech.financetracker.transaction.domain.port.inbound.TransactionView;
 import com.shan.cyber.tech.financetracker.transaction.domain.port.inbound.TransferResult;
 import com.shan.cyber.tech.financetracker.transaction.domain.port.inbound.UpdateTransactionCommand;
@@ -20,7 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @Transactional
-public class TransactionApplicationService implements CreateTransactionUseCase, CreateTransferUseCase, DeleteTransactionUseCase, UpdateTransactionUseCase {
+public class TransactionApplicationService implements CreateTransactionUseCase, CreateTransferUseCase, DeleteTransactionUseCase, UpdateTransactionUseCase, ReconcileTransactionUseCase {
 
     private final TransactionCommandService commandService;
 
@@ -48,5 +50,10 @@ public class TransactionApplicationService implements CreateTransactionUseCase, 
     @Override
     public void deleteTransaction(TransactionId transactionId, UserId userId) {
         commandService.deleteTransaction(transactionId, userId);
+    }
+
+    @Override
+    public TransactionView reconcileTransaction(ReconcileTransactionCommand command) {
+        return commandService.reconcileTransaction(command);
     }
 }

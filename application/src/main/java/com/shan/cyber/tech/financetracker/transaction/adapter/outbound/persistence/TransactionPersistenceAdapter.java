@@ -82,6 +82,8 @@ public class TransactionPersistenceAdapter implements TransactionPersistencePort
                 filter.type() != null ? filter.type().name() : null,
                 filter.fromDate(),
                 filter.toDate(),
+                filter.minAmount(),
+                filter.maxAmount(),
                 PageRequest.of(page, size));
 
         List<TransactionView> views = jpaPage.getContent().stream()

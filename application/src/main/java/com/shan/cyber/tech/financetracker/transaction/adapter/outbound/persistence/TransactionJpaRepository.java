@@ -11,6 +11,8 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
+
+
 public interface TransactionJpaRepository extends JpaRepository<TransactionJpaEntity, Long> {
 
     Optional<TransactionJpaEntity> findByIdAndUserId(Long id, Long userId);
@@ -43,6 +45,8 @@ public interface TransactionJpaRepository extends JpaRepository<TransactionJpaEn
               AND (:transactionType IS NULL OR t.transactionType = :transactionType)
               AND (:fromDate IS NULL OR t.transactionDate >= :fromDate)
               AND (:toDate IS NULL OR t.transactionDate <= :toDate)
+              AND (:minAmount IS NULL OR t.amount >= :minAmount)
+              AND (:maxAmount IS NULL OR t.amount <= :maxAmount)
             ORDER BY t.transactionDate DESC, t.id DESC
             """)
     Page<TransactionViewProjection> findByFilter(
@@ -52,6 +56,8 @@ public interface TransactionJpaRepository extends JpaRepository<TransactionJpaEn
             @Param("transactionType") String transactionType,
             @Param("fromDate") LocalDate fromDate,
             @Param("toDate") LocalDate toDate,
+            @Param("minAmount") BigDecimal minAmount,
+            @Param("maxAmount") BigDecimal maxAmount,
             Pageable pageable);
 
     @Query("""

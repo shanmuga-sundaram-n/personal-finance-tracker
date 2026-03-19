@@ -9,11 +9,14 @@ import com.shan.cyber.tech.financetracker.budget.domain.port.inbound.GetBudgetsQ
 import com.shan.cyber.tech.financetracker.budget.domain.port.inbound.UpdateBudgetCommand;
 import com.shan.cyber.tech.financetracker.budget.domain.port.inbound.UpdateBudgetUseCase;
 import com.shan.cyber.tech.financetracker.shared.adapter.inbound.web.SecurityContextHolder;
+import com.shan.cyber.tech.financetracker.shared.adapter.inbound.web.dto.PageResponseDto;
 import com.shan.cyber.tech.financetracker.shared.domain.model.BudgetId;
 import com.shan.cyber.tech.financetracker.shared.domain.model.CategoryId;
 import com.shan.cyber.tech.financetracker.shared.domain.model.Money;
 import com.shan.cyber.tech.financetracker.shared.domain.model.UserId;
 import jakarta.validation.Valid;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -49,11 +52,19 @@ public class BudgetController {
     }
 
     @GetMapping
-    public List<BudgetResponseDto> list() {
+    public PageResponseDto<BudgetResponseDto> list(@PageableDefault(size = 50) Pageable pageable) {
         UserId userId = currentUserId();
-        return getBudgetsQuery.getActiveByUser(userId).stream()
+        List<BudgetResponseDto> allDtos = getBudgetsQuery.getActiveByUser(userId).stream()
                 .map(this::toResponseDto)
                 .toList();
+        int page = pageable.getPageNumber();
+        int size = pageable.getPageSize();
+        int total = allDtos.size();
+        int fromIndex = Math.min(page * size, total);
+        int toIndex = Math.min(fromIndex + size, total);
+        List<BudgetResponseDto> pageContent = allDtos.subList(fromIndex, toIndex);
+        int totalPages = size > 0 ? (int) Math.ceil((double) total / size) : 0;
+        return new PageResponseDto<>(pageContent, page, size, total, totalPages);
     }
 
     @GetMapping("/{id}")
@@ -116,6 +127,8 @@ public class BudgetController {
                 view.startDate(), view.endDate(),
                 view.rolloverEnabled(), view.alertThresholdPct(),
                 view.isActive(), view.spentAmount(), view.remainingAmount(),
-                view.percentUsed(), view.alertTriggered(), view.createdAt());
+                view.percentUsed(), view.alertTriggered(),
+                view.rolloverAmountAdded(), view.effectiveBudgetThisPeriod(),
+                view.createdAt());
     }
 }

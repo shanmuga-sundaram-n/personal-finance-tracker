@@ -14,6 +14,8 @@ import com.shan.cyber.tech.financetracker.transaction.domain.port.inbound.Create
 import com.shan.cyber.tech.financetracker.transaction.domain.port.inbound.CreateTransferUseCase;
 import com.shan.cyber.tech.financetracker.transaction.domain.port.inbound.DeleteTransactionUseCase;
 import com.shan.cyber.tech.financetracker.transaction.domain.port.inbound.GetTransactionsQuery;
+import com.shan.cyber.tech.financetracker.transaction.domain.port.inbound.ReconcileTransactionCommand;
+import com.shan.cyber.tech.financetracker.transaction.domain.port.inbound.ReconcileTransactionUseCase;
 import com.shan.cyber.tech.financetracker.transaction.domain.port.inbound.TransactionView;
 import com.shan.cyber.tech.financetracker.transaction.domain.port.inbound.TransferResult;
 import com.shan.cyber.tech.financetracker.transaction.domain.port.inbound.UpdateTransactionCommand;
@@ -26,6 +28,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -35,6 +38,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.math.BigDecimal;
 import java.net.URI;
 import java.time.LocalDate;
 
@@ -46,6 +50,7 @@ public class TransactionController {
     private final CreateTransferUseCase createTransferUseCase;
     private final UpdateTransactionUseCase updateTransactionUseCase;
     private final DeleteTransactionUseCase deleteTransactionUseCase;
+    private final ReconcileTransactionUseCase reconcileTransactionUseCase;
     private final GetTransactionsQuery getTransactionsQuery;
     private final int defaultSize;
     private final int maxSize;
@@ -54,6 +59,7 @@ public class TransactionController {
                                   CreateTransferUseCase createTransferUseCase,
                                   UpdateTransactionUseCase updateTransactionUseCase,
                                   DeleteTransactionUseCase deleteTransactionUseCase,
+                                  ReconcileTransactionUseCase reconcileTransactionUseCase,
                                   GetTransactionsQuery getTransactionsQuery,
                                   @Value("${app.pagination.default-size:30}") int defaultSize,
                                   @Value("${app.pagination.max-size:100}") int maxSize) {
@@ -61,6 +67,7 @@ public class TransactionController {
         this.createTransferUseCase = createTransferUseCase;
         this.updateTransactionUseCase = updateTransactionUseCase;
         this.deleteTransactionUseCase = deleteTransactionUseCase;
+        this.reconcileTransactionUseCase = reconcileTransactionUseCase;
         this.getTransactionsQuery = getTransactionsQuery;
         this.defaultSize = defaultSize;
         this.maxSize = maxSize;
@@ -73,6 +80,8 @@ public class TransactionController {
             @RequestParam(required = false) String type,
             @RequestParam(required = false) LocalDate from,
             @RequestParam(required = false) LocalDate to,
+            @RequestParam(required = false) BigDecimal minAmount,
+            @RequestParam(required = false) BigDecimal maxAmount,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(required = false) Integer size) {
         UserId userId = currentUserId();
@@ -84,7 +93,9 @@ public class TransactionController {
                 categoryId != null ? new CategoryId(categoryId) : null,
                 type != null ? TransactionType.valueOf(type) : null,
                 from,
-                to);
+                to,
+                minAmount,
+                maxAmount);
 
         TransactionPage result = getTransactionsQuery.getTransactions(filter, page, effectiveSize);
 
@@ -116,6 +127,10 @@ public class TransactionController {
                 .body(response);
     }
 
+    /**
+     * @deprecated Use POST /api/v1/transfers instead. Kept for backward compatibility.
+     */
+    @Deprecated
     @PostMapping("/transfers")
     public ResponseEntity<TransferResultResponseDto> createTransfer(@Valid @RequestBody CreateTransferRequestDto dto) {
         UserId userId = currentUserId();
@@ -162,6 +177,15 @@ public class TransactionController {
     public void delete(@PathVariable Long id) {
         UserId userId = currentUserId();
         deleteTransactionUseCase.deleteTransaction(new TransactionId(id), userId);
+    }
+
+    @PatchMapping("/{id}/reconcile")
+    public TransactionResponseDto reconcile(@PathVariable Long id,
+                                             @RequestBody ReconcileTransactionRequestDto dto) {
+        UserId userId = currentUserId();
+        TransactionView view = reconcileTransactionUseCase.reconcileTransaction(
+                new ReconcileTransactionCommand(new TransactionId(id), userId, dto.reconciled()));
+        return toResponseDto(view);
     }
 
     private UserId currentUserId() {

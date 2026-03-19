@@ -5,6 +5,7 @@ import com.shan.cyber.tech.financetracker.shared.domain.model.CategoryId;
 import com.shan.cyber.tech.financetracker.shared.domain.model.UserId;
 import com.shan.cyber.tech.financetracker.transaction.domain.model.TransactionType;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 
 public record TransactionFilter(
@@ -13,5 +14,7 @@ public record TransactionFilter(
         CategoryId categoryId,
         TransactionType type,
         LocalDate fromDate,
-        LocalDate toDate) {
+        LocalDate toDate,
+        BigDecimal minAmount,
+        BigDecimal maxAmount) {
 }

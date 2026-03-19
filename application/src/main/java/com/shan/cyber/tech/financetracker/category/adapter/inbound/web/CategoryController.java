@@ -8,9 +8,12 @@ import com.shan.cyber.tech.financetracker.category.domain.port.inbound.GetCatego
 import com.shan.cyber.tech.financetracker.category.domain.port.inbound.UpdateCategoryCommand;
 import com.shan.cyber.tech.financetracker.category.domain.port.inbound.UpdateCategoryUseCase;
 import com.shan.cyber.tech.financetracker.shared.adapter.inbound.web.SecurityContextHolder;
+import com.shan.cyber.tech.financetracker.shared.adapter.inbound.web.dto.PageResponseDto;
 import com.shan.cyber.tech.financetracker.shared.domain.model.CategoryId;
 import com.shan.cyber.tech.financetracker.shared.domain.model.UserId;
 import jakarta.validation.Valid;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -47,7 +50,9 @@ public class CategoryController {
     }
 
     @GetMapping
-    public List<CategoryResponseDto> list(@RequestParam(required = false) String type) {
+    public PageResponseDto<CategoryResponseDto> list(
+            @RequestParam(required = false) String type,
+            @PageableDefault(size = 50) Pageable pageable) {
         UserId userId = currentUserId();
         List<CategoryView> views;
         if (type != null && !type.isBlank()) {
@@ -55,7 +60,15 @@ public class CategoryController {
         } else {
             views = getCategoriesQuery.getByOwner(userId);
         }
-        return views.stream().map(this::toResponseDto).toList();
+        List<CategoryResponseDto> allDtos = views.stream().map(this::toResponseDto).toList();
+        int page = pageable.getPageNumber();
+        int size = pageable.getPageSize();
+        int total = allDtos.size();
+        int fromIndex = Math.min(page * size, total);
+        int toIndex = Math.min(fromIndex + size, total);
+        List<CategoryResponseDto> pageContent = allDtos.subList(fromIndex, toIndex);
+        int totalPages = size > 0 ? (int) Math.ceil((double) total / size) : 0;
+        return new PageResponseDto<>(pageContent, page, size, total, totalPages);
     }
 
     @PostMapping
