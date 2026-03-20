@@ -19,7 +19,7 @@ jobs:
   # Backend — compile, test, package
   # ─────────────────────────────────────────────
   backend:
-    name: Backend (Gradle / Java ${{ env.JAVA_VERSION }})
+    name: Backend (Gradle / Java 21)
     runs-on: ubuntu-latest
 
     steps:
@@ -64,7 +64,7 @@ jobs:
   # Frontend — lint, type-check, build
   # ─────────────────────────────────────────────
   frontend:
-    name: Frontend (Node ${{ env.NODE_VERSION }})
+    name: Frontend (Node 20)
     runs-on: ubuntu-latest
 
     defaults:
