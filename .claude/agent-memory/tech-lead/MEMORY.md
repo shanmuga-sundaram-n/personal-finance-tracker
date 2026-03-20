@@ -1,5 +1,5 @@
 # Tech Lead Memory — Personal Finance Tracker
-**Last Updated**: 2026-03-01
+**Last Updated**: 2026-03-19
 **Model**: claude-sonnet-4-6
 
 This file is loaded into every session. Keep it under 200 lines. Link to topic files for details.
@@ -46,6 +46,12 @@ This file is loaded into every session. Keep it under 200 lines. Link to topic f
 - **Multi-platform API**: Platform-agnostic REST. CORS for web only. See `multi-platform-api.md`
 - **CORS**: Environment-configurable via `app.cors.allowed-origins` in application.yaml
 - **Testing**: Unit (Mockito, zero Spring context for domain services) + Repository (@DataJpaTest + Testcontainers) + Integration (RestAssured + Testcontainers) + ArchUnit boundary enforcement
+- **BudgetApplicationService pattern**: `budget/config/BudgetApplicationService.java` is a `@Service @Transactional` wrapper in the config layer that delegates to `BudgetCommandService` (the pure domain service). `BudgetCommandService` MUST be a `@Bean` in `BudgetConfig.java` and injected into `BudgetApplicationService` — never constructed inline via `new`. This is the correct separation of `@Transactional` (application layer) from domain logic (domain layer).
+- **Upsert-by-category pattern**: `POST /api/v1/budgets/upsert-by-category` — if same period type exists, update amount/endDate. If period type changes, deactivate old (soft) and create new. Parent category guard enforced at domain service level (`BusinessRuleException`) not controller level. TRANSFER category guard also at domain level.
+- **BudgetPlan grouping**: `BudgetPlanQueryService` performs pure Java grouping of expense categories by parentCategoryId. Income rows remain flat. Ungrouped leaves (no parent, or parent outside the list, and not themselves a parent) each get a solo group with `parentCategoryId=null`. No SQL grouping — all done in memory.
+- **BudgetPeriod.toMonthlyMultiplier()**: Pure BigDecimal enum method. WEEKLY = 13/3 (52 weeks / 12 months / (52/4)). No float/double. `CUSTOM -> BigDecimal.ONE` (caller is responsible for meaning).
+- **percentUsed as double**: Established pattern (see `BudgetView`, `BudgetPlanCategoryRow`, `BudgetPlanTotals`). `percentUsed` is a display-only computed percentage, not a monetary value — `double` is acceptable here per project convention.
+- **CategorySummary placement**: `budget/domain/port/outbound/CategorySummary.java` — data class returned by `CategoryNameQueryPort`. Lives in the outbound port package, owned by the budget domain. This is correct — the domain defines the shape of data it expects from external adapters.
 
 ---
 

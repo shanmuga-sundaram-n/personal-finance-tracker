@@ -19,5 +19,7 @@ public record BudgetView(
         String remainingAmount,
         double percentUsed,
         boolean alertTriggered,
+        String rolloverAmountAdded,
+        String effectiveBudgetThisPeriod,
         OffsetDateTime createdAt) {
 }

@@ -11,6 +11,7 @@ import com.shan.cyber.tech.financetracker.transaction.domain.port.inbound.Catego
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 public interface TransactionPersistencePort {
@@ -29,9 +30,15 @@ public interface TransactionPersistencePort {
 
     BigDecimal sumExpenseAmount(UserId userId, CategoryId categoryId, LocalDate from, LocalDate to);
 
+    BigDecimal sumIncomeAmountByCategoryAndDateRange(UserId userId, CategoryId categoryId, LocalDate from, LocalDate to);
+
     BigDecimal sumByType(UserId userId, String transactionType, LocalDate from, LocalDate to);
 
     List<CategorySpending> sumByCategory(UserId userId, LocalDate from, LocalDate to, int limit);
+
+    Map<CategoryId, BigDecimal> sumExpenseAmountBatch(UserId userId, List<CategoryId> categoryIds, LocalDate from, LocalDate to);
+
+    Map<CategoryId, BigDecimal> sumIncomeAmountBatch(UserId userId, List<CategoryId> categoryIds, LocalDate from, LocalDate to);
 
     TransactionPage findRecent(UserId userId, int limit);
 }

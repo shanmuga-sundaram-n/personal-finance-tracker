@@ -19,5 +19,7 @@ public record BudgetResponseDto(
         String remainingAmount,
         double percentUsed,
         boolean alertTriggered,
+        String rolloverAmountAdded,
+        String effectiveBudgetThisPeriod,
         OffsetDateTime createdAt) {
 }

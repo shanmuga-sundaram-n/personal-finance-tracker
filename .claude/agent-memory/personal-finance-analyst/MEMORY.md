@@ -50,6 +50,11 @@ User, Session, AccountType (ref), Account, CategoryType (ref), Category (2-level
 
 ## Budget Spending Logic
 Spent = SUM of EXPENSE transactions in period for budget's category AND all its child categories. Never stored — always computed at query time.
+NOTE: The `sumExpenseAmount` query in `TransactionJpaRepository` incorrectly includes TRANSFER_OUT. Budget plan spending figures must filter to `transactionType = 'EXPENSE'` only.
+
+## Budget Plan Review
+Full findings at: `.claude/agent-memory/personal-finance-analyst/budget-plan-review.md`
+Key outstanding issues (as of 2026-03-19): TRANSFER_OUT inflates expense actuals (Major), totals calculation asymmetry (Major), income variance sign inverted (Major), USD hardcoded as currency default (Minor), rollover not applied in plan view (Minor).
 
 ## API Conventions
 - All endpoints under /api/v1/
@@ -58,3 +63,15 @@ Spent = SUM of EXPENSE transactions in period for budget's category AND all its 
 - 409 for duplicates
 - Error body: { status, error, message, errors[], timestamp, path }
 - Pagination: page/size/sort/direction query params; response wraps in content + metadata
+
+## Hierarchical Budget Plan + Set Budget Dialog Feature (2026-03-19)
+Full analysis at: `.claude/agent-memory/personal-finance-analyst/hierarchical-budget-plan-analysis.md`
+Key decisions:
+- BudgetPeriod needs BI_WEEKLY + SEMI_ANNUAL added (blocker)
+- CategorySummary needs parentCategoryId + isLeaf fields (blocker)
+- BudgetPlanView must change from flat expenseRows to List<ExpenseCategoryGroup> (blocker)
+- Budgets on parent categories are BLOCKED — backend guard required in BudgetCommandService
+- Parent subtotals = sum of children's monthlyEquivalents (BigDecimal, server-side)
+- Frequency multipliers: WEEKLY=52/12, BI_WEEKLY=26/12, MONTHLY=1, QUARTERLY=1/3, SEMI_ANNUAL=1/6, ANNUALLY=1/12
+- period_type is currently immutable in Budget domain — frequency change in dialog needs deactivate-and-recreate (tech-lead decision required)
+- USD hardcode bug (budget-plan-review Issue 5) is promoted to MUST-FIX before this feature ships

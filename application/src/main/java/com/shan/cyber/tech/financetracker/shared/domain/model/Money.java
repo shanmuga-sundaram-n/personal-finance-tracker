@@ -1,5 +1,7 @@
 package com.shan.cyber.tech.financetracker.shared.domain.model;
 
+import com.shan.cyber.tech.financetracker.shared.domain.exception.CurrencyMismatchException;
+
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.Objects;
@@ -64,8 +66,7 @@ public final class Money {
 
     private void assertSameCurrency(Money other) {
         if (!this.currency.equals(other.currency)) {
-            throw new IllegalArgumentException(
-                    "Cannot operate on different currencies: " + this.currency + " vs " + other.currency);
+            throw new CurrencyMismatchException(this.currency, other.currency);
         }
     }
 

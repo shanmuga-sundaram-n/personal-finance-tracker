@@ -1,9 +1,11 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { ArrowLeft, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
+import { AreaChart, Area, XAxis, Tooltip, ResponsiveContainer } from 'recharts'
 import { getAccount, updateAccount, deleteAccount } from '@/api/accounts.api'
 import { ApiClientError } from '@/api/client'
+import { useTransactions } from '@/hooks/useTransactions'
 import type { Account } from '@/types/account.types'
 import { MoneyDisplay } from '@/components/shared/MoneyDisplay'
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner'
@@ -37,6 +39,12 @@ export function AccountDetailPage() {
   const [editInstitution, setEditInstitution] = useState('')
   const [saving, setSaving] = useState(false)
   const [deleting, setDeleting] = useState(false)
+
+  const txFilters = useMemo(
+    () => ({ accountId: id ? parseInt(id, 10) : 0, size: 30 }),
+    [id]
+  )
+  const { transactions } = useTransactions(txFilters)
 
   const load = useCallback(async () => {
     if (!id) return
@@ -86,11 +94,39 @@ export function AccountDetailPage() {
       await deleteAccount(account.id)
       toast.success('Account deleted')
       navigate('/accounts')
-    } catch {
-      toast.error('Failed to delete account')
+    } catch (e) {
+      const message = e instanceof ApiClientError
+        ? (e.apiError?.message ?? 'Failed to delete account')
+        : 'Failed to delete account'
+      toast.error(message)
       setDeleting(false)
     }
   }
+
+  // Compute sparkline data: work backwards from currentBalance through sorted transactions
+  const sparkData = useMemo(() => {
+    if (!account || transactions.length === 0) return []
+    const sorted = [...transactions].sort((a, b) =>
+      b.transactionDate.localeCompare(a.transactionDate)
+    )
+    let balance = parseFloat(account.currentBalance)
+    const points: { date: string; balance: number }[] = [
+      { date: 'Now', balance: Math.round(balance * 100) / 100 },
+    ]
+    sorted.forEach((tx) => {
+      const amt = parseFloat(tx.amount)
+      if (tx.type === 'INCOME' || tx.type === 'TRANSFER_IN') {
+        balance -= amt
+      } else {
+        balance += amt
+      }
+      points.push({
+        date: tx.transactionDate,
+        balance: Math.round(balance * 100) / 100,
+      })
+    })
+    return points.reverse()
+  }, [account, transactions])
 
   if (isLoading) {
     return (
@@ -113,7 +149,8 @@ export function AccountDetailPage() {
         <Badge variant="secondary">{account.accountTypeName}</Badge>
       </div>
 
-      <Card>
+      <Card className="overflow-hidden">
+        <div className="h-1 bg-gradient-to-r from-blue-600 via-blue-500/70 to-blue-400/30" />
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle>Account Info</CardTitle>
           <div className="flex gap-2">
@@ -197,6 +234,50 @@ export function AccountDetailPage() {
                 <p className="font-medium">{new Date(account.createdAt).toLocaleDateString()}</p>
               </div>
             </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Balance Sparkline */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Balance History</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {sparkData.length === 0 ? (
+            <p className="text-sm text-muted-foreground">No transaction history yet</p>
+          ) : (
+            <ResponsiveContainer width="100%" height={160}>
+              <AreaChart data={sparkData} margin={{ top: 4, right: 8, bottom: 0, left: 0 }}>
+                <defs>
+                  <linearGradient id="balanceGradient" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="hsl(var(--chart-1))" stopOpacity={0.3} />
+                    <stop offset="95%" stopColor="hsl(var(--chart-1))" stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                <XAxis
+                  dataKey="date"
+                  tick={{ fontSize: 10 }}
+                  interval="preserveStartEnd"
+                />
+                <Tooltip
+                  formatter={(value: number | undefined) => [
+                    typeof value === 'number'
+                      ? `${account.currency} ${value.toFixed(2)}`
+                      : '',
+                    'Balance',
+                  ]}
+                  contentStyle={{ borderRadius: '8px', fontSize: '12px' }}
+                />
+                <Area
+                  type="monotone"
+                  dataKey="balance"
+                  stroke="hsl(var(--chart-1))"
+                  strokeWidth={2}
+                  fill="url(#balanceGradient)"
+                />
+              </AreaChart>
+            </ResponsiveContainer>
           )}
         </CardContent>
       </Card>

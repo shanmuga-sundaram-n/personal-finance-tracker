@@ -9,6 +9,7 @@ import com.shan.cyber.tech.financetracker.account.domain.model.AccountType;
 import com.shan.cyber.tech.financetracker.account.domain.port.inbound.CreateAccountCommand;
 import com.shan.cyber.tech.financetracker.account.domain.port.outbound.AccountEventPublisherPort;
 import com.shan.cyber.tech.financetracker.account.domain.port.outbound.AccountPersistencePort;
+import com.shan.cyber.tech.financetracker.account.domain.port.outbound.AccountTransactionCountPort;
 import com.shan.cyber.tech.financetracker.account.domain.port.outbound.AccountTypePersistencePort;
 import com.shan.cyber.tech.financetracker.shared.domain.model.AccountId;
 import com.shan.cyber.tech.financetracker.shared.domain.model.Money;
@@ -31,6 +32,7 @@ class AccountCommandServiceTest {
     @Mock private AccountPersistencePort accountPersistencePort;
     @Mock private AccountTypePersistencePort accountTypePersistencePort;
     @Mock private AccountEventPublisherPort eventPublisherPort;
+    @Mock private AccountTransactionCountPort transactionCountPort;
 
     private AccountCommandService service;
 
@@ -40,7 +42,7 @@ class AccountCommandServiceTest {
 
     @BeforeEach
     void setUp() {
-        service = new AccountCommandService(accountPersistencePort, accountTypePersistencePort, eventPublisherPort);
+        service = new AccountCommandService(accountPersistencePort, accountTypePersistencePort, eventPublisherPort, transactionCountPort);
     }
 
     @Test

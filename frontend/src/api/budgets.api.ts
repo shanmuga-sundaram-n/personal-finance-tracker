@@ -1,10 +1,19 @@
 import { api } from './client'
-import type { Budget, CreateBudgetRequest, UpdateBudgetRequest } from '@/types/budget.types'
+import type { Budget, BudgetPlan, CreateBudgetRequest, UpdateBudgetRequest } from '@/types/budget.types'
 
 const BASE = '/api/v1/budgets'
 
+export interface UpsertBudgetByCategoryRequest {
+  categoryId: number
+  periodType: string
+  amount: string
+  currency: string
+  startDate: string
+  endDate: string
+}
+
 export function listBudgets(): Promise<Budget[]> {
-  return api.get<Budget[]>(BASE)
+  return api.get<{ content: Budget[] }>(BASE).then(data => data.content)
 }
 
 export function getBudget(id: number): Promise<Budget> {
@@ -21,4 +30,12 @@ export function updateBudget(id: number, data: UpdateBudgetRequest): Promise<Bud
 
 export function deleteBudget(id: number): Promise<void> {
   return api.delete(`${BASE}/${id}`)
+}
+
+export function getBudgetPlan(startDate: string, endDate: string): Promise<BudgetPlan> {
+  return api.get<BudgetPlan>(`${BASE}/plan?startDate=${startDate}&endDate=${endDate}`)
+}
+
+export function upsertBudgetByCategory(data: UpsertBudgetByCategoryRequest): Promise<Budget> {
+  return api.post<Budget>(`${BASE}/upsert-by-category`, data)
 }

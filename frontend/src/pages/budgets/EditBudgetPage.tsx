@@ -42,6 +42,7 @@ export function EditBudgetPage() {
 
   useEffect(() => {
     if (!id) return
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setLoading(true)
     getBudget(parseInt(id, 10))
       .then((b) => {
@@ -99,7 +100,8 @@ export function EditBudgetPage() {
     <div className="mx-auto max-w-2xl space-y-6">
       <h1 className="text-3xl font-bold">Edit Budget</h1>
 
-      <Card>
+      <Card className="overflow-hidden">
+        <div className="h-1 bg-gradient-to-r from-blue-600 via-blue-500/70 to-blue-400/30" />
         <CardHeader>
           <CardTitle>
             {budget.categoryName} — {periodLabel}

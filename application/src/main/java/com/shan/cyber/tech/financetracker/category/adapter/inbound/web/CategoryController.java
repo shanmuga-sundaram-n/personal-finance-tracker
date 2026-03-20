@@ -49,12 +49,9 @@ public class CategoryController {
     @GetMapping
     public List<CategoryResponseDto> list(@RequestParam(required = false) String type) {
         UserId userId = currentUserId();
-        List<CategoryView> views;
-        if (type != null && !type.isBlank()) {
-            views = getCategoriesQuery.getByType(userId, type);
-        } else {
-            views = getCategoriesQuery.getByOwner(userId);
-        }
+        List<CategoryView> views = (type != null && !type.isBlank())
+                ? getCategoriesQuery.getByType(userId, type)
+                : getCategoriesQuery.getByOwner(userId);
         return views.stream().map(this::toResponseDto).toList();
     }
 

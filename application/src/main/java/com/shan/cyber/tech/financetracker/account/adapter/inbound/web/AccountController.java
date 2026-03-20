@@ -100,7 +100,7 @@ public class AccountController {
                 view.totalAssets().amount().toPlainString(),
                 view.totalLiabilities().amount().toPlainString(),
                 view.netWorth().amount().toPlainString(),
-                "USD");
+                view.netWorth().currency());
     }
 
     private UserId currentUserId() {

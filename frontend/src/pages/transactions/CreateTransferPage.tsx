@@ -82,7 +82,8 @@ export function CreateTransferPage() {
     <div className="mx-auto max-w-2xl space-y-6">
       <h1 className="text-3xl font-bold">Create Transfer</h1>
 
-      <Card>
+      <Card className="overflow-hidden">
+        <div className="h-1 bg-gradient-to-r from-blue-600 via-blue-500/70 to-blue-400/30" />
         <CardHeader>
           <CardTitle>Transfer Details</CardTitle>
         </CardHeader>

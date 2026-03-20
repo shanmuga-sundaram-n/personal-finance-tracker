@@ -13,6 +13,8 @@ import com.shan.cyber.tech.financetracker.transaction.domain.port.inbound.Create
 import com.shan.cyber.tech.financetracker.transaction.domain.port.inbound.CreateTransferCommand;
 import com.shan.cyber.tech.financetracker.transaction.domain.port.inbound.CreateTransferUseCase;
 import com.shan.cyber.tech.financetracker.transaction.domain.port.inbound.DeleteTransactionUseCase;
+import com.shan.cyber.tech.financetracker.transaction.domain.port.inbound.ReconcileTransactionCommand;
+import com.shan.cyber.tech.financetracker.transaction.domain.port.inbound.ReconcileTransactionUseCase;
 import com.shan.cyber.tech.financetracker.transaction.domain.port.inbound.TransactionView;
 import com.shan.cyber.tech.financetracker.transaction.domain.port.inbound.TransferResult;
 import com.shan.cyber.tech.financetracker.transaction.domain.port.inbound.UpdateTransactionCommand;
@@ -23,7 +25,7 @@ import com.shan.cyber.tech.financetracker.transaction.domain.port.outbound.Trans
 
 import java.util.List;
 
-public class TransactionCommandService implements CreateTransactionUseCase, CreateTransferUseCase, DeleteTransactionUseCase, UpdateTransactionUseCase {
+public class TransactionCommandService implements CreateTransactionUseCase, CreateTransferUseCase, DeleteTransactionUseCase, UpdateTransactionUseCase, ReconcileTransactionUseCase {
 
     private final TransactionPersistencePort persistencePort;
     private final TransactionEventPublisherPort eventPublisherPort;
@@ -175,6 +177,18 @@ public class TransactionCommandService implements CreateTransactionUseCase, Crea
         eventPublisherPort.publish(new TransactionDeleted(
                 transaction.getId(), transaction.getUserId(), transaction.getAccountId(),
                 transaction.getAmount(), transaction.getType()));
+    }
+
+    @Override
+    public TransactionView reconcileTransaction(ReconcileTransactionCommand command) {
+        Transaction transaction = persistencePort.findById(command.transactionId(), command.userId())
+                .orElseThrow(() -> new TransactionNotFoundException(command.transactionId().value()));
+
+        transaction.reconcile(command.reconciled());
+        persistencePort.save(transaction);
+
+        return persistencePort.findViewById(command.transactionId(), command.userId())
+                .orElseThrow(() -> new TransactionNotFoundException(command.transactionId().value()));
     }
 
     private void reverseBalance(Transaction transaction) {

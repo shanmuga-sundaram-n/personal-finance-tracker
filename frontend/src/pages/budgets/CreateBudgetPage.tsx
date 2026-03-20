@@ -60,7 +60,7 @@ export function CreateBudgetPage() {
     try {
       await createBudget({
         categoryId: parseInt(data.categoryId, 10),
-        periodType: data.periodType as 'WEEKLY' | 'MONTHLY' | 'QUARTERLY' | 'ANNUALLY' | 'CUSTOM',
+        periodType: data.periodType as 'WEEKLY' | 'BI_WEEKLY' | 'MONTHLY' | 'QUARTERLY' | 'SEMI_ANNUAL' | 'ANNUALLY' | 'CUSTOM',
         amount: parseFloat(data.amount),
         currency: data.currency,
         startDate: data.startDate,
@@ -83,7 +83,8 @@ export function CreateBudgetPage() {
     <div className="mx-auto max-w-2xl space-y-6">
       <h1 className="text-3xl font-bold">Create Budget</h1>
 
-      <Card>
+      <Card className="overflow-hidden">
+        <div className="h-1 bg-gradient-to-r from-blue-600 via-blue-500/70 to-blue-400/30" />
         <CardHeader>
           <CardTitle>Budget Details</CardTitle>
         </CardHeader>

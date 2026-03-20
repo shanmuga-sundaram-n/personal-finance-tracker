@@ -1,5 +1,6 @@
 package com.shan.cyber.tech.financetracker.shared.domain.model;
 
+import com.shan.cyber.tech.financetracker.shared.domain.exception.CurrencyMismatchException;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
@@ -37,10 +38,10 @@ class MoneyTest {
     }
 
     @Test
-    void add_differentCurrency_throwsIllegalArgument() {
+    void add_differentCurrency_throwsCurrencyMismatch() {
         Money usd = Money.of("100", "USD");
         Money eur = Money.of("100", "EUR");
-        assertThrows(IllegalArgumentException.class, () -> usd.add(eur));
+        assertThrows(CurrencyMismatchException.class, () -> usd.add(eur));
     }
 
     @Test
@@ -52,10 +53,10 @@ class MoneyTest {
     }
 
     @Test
-    void subtract_differentCurrency_throwsIllegalArgument() {
+    void subtract_differentCurrency_throwsCurrencyMismatch() {
         Money usd = Money.of("100", "USD");
         Money eur = Money.of("50", "EUR");
-        assertThrows(IllegalArgumentException.class, () -> usd.subtract(eur));
+        assertThrows(CurrencyMismatchException.class, () -> usd.subtract(eur));
     }
 
     @Test

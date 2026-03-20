@@ -8,6 +8,8 @@ import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.List;
+import java.util.Map;
 
 @Component
 public class TransactionSpendingAdapter implements SpendingQueryPort {
@@ -21,5 +23,20 @@ public class TransactionSpendingAdapter implements SpendingQueryPort {
     @Override
     public BigDecimal getSpentAmount(UserId userId, CategoryId categoryId, LocalDate from, LocalDate to) {
         return spendingTotalsQuery.sumExpenses(userId, categoryId, from, to);
+    }
+
+    @Override
+    public BigDecimal getIncomeAmount(UserId userId, CategoryId categoryId, LocalDate from, LocalDate to) {
+        return spendingTotalsQuery.sumIncome(userId, categoryId, from, to);
+    }
+
+    @Override
+    public Map<CategoryId, BigDecimal> getSpentAmountBatch(UserId userId, List<CategoryId> categoryIds, LocalDate from, LocalDate to) {
+        return spendingTotalsQuery.sumExpenseBatch(userId, categoryIds, from, to);
+    }
+
+    @Override
+    public Map<CategoryId, BigDecimal> getIncomeAmountBatch(UserId userId, List<CategoryId> categoryIds, LocalDate from, LocalDate to) {
+        return spendingTotalsQuery.sumIncomeBatch(userId, categoryIds, from, to);
     }
 }

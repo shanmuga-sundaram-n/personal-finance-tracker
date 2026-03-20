@@ -115,6 +115,32 @@ Examples:
 
 ---
 
+## Budget Domain Model Notes (Category-Hierarchical Budget Plan)
+
+- `BudgetPlanView.expenseGroups()` returns `List<BudgetPlanCategoryGroup>` (NOT `expenseRows()`). The old `expenseRows()` field no longer exists — flatten via `.stream().flatMap(g -> g.rows().stream())` in tests.
+- `CategorySummary` is a 4-param record: `(CategoryId id, String name, String typeCode, Long parentCategoryId)`. Pass `null` for `parentCategoryId` for flat (ungrouped) categories.
+- `BudgetPlanCategoryRow` has 11 fields — new fields `frequency`, `monthlyAmount`, `yearlyAmount` added. Always supply all 11.
+- `BudgetCommandService` takes 3 constructor args: `(BudgetPersistencePort, BudgetEventPublisherPort, CategoryNameQueryPort)`.
+- `POST /api/v1/budgets/upsert-by-category` — invalid enum string in `periodType` causes `IllegalArgumentException` → 500 (not 400), because `UpsertBudgetByCategoryRequestDto.periodType` is a plain `String`, not a `BudgetPeriod`. Validated at `BudgetPeriod.valueOf()` call in controller. Future fix: add `@Pattern` or deserialize directly to `BudgetPeriod`.
+- JSON response for budget plan uses field name `expenseGroups` (not `expenseRows`). Controller tests must assert against `$.expenseGroups`.
+
+## Pre-existing Test Compile Failures (as of 2026-03-20)
+
+The test suite has 2 compile errors that block `./gradlew :application:test`. They are unrelated to the category bug fix:
+
+1. **`AccountCommandServiceTest`** — constructor call `new AccountCommandService(port1, port2, port3)` is missing the 4th arg `AccountTransactionCountPort`. Production service was updated to require it but the test was not updated.
+2. **`BudgetControllerTest` line ~385** — `new BudgetPlanCategoryGroup(null, name, rows, monthlyTotal, yearlyTotal)` uses 5 args but the record now requires 7: `(Long parentCategoryId, String parentCategoryName, List<rows>, BigDecimal groupMonthlyTotal, BigDecimal groupYearlyTotal, BigDecimal groupActualTotal, boolean alertTriggered)`.
+
+Both are pre-existing and must be fixed before any `./gradlew :application:test` run will succeed.
+
+---
+
+## Note on SecurityContextHolder in @WebMvcTest
+
+The `TestSecurityConfig` class referenced in memory does NOT exist in `application/src/test/` — instead, controller tests directly call `SecurityContextHolder.setCurrentUserId(1L)` in `@BeforeEach` and `SecurityContextHolder.clear()` in `@AfterEach`. The `SecurityContextHolder` is a custom static holder, not Spring Security.
+
+---
+
 ## Documents Written (This Session)
 
 - `testing-strategy.md` — Full 5-layer testing strategy with mocking decisions and coverage targets

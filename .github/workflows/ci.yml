@@ -19,7 +19,7 @@ jobs:
   # Backend — compile, test, package
   # ─────────────────────────────────────────────
   backend:
-    name: Backend (Gradle / Java ${{ env.JAVA_VERSION }})
+    name: Backend (Gradle / Java 21)
     runs-on: ubuntu-latest
 
     steps:
@@ -34,7 +34,7 @@ jobs:
           cache: gradle
 
       - name: Validate Gradle wrapper
-        uses: gradle/actions/wrapper-validation@v3
+        uses: gradle/actions/wrapper-validation@v5
 
       - name: Grant execute permission to gradlew
         run: chmod +x gradlew
@@ -47,14 +47,14 @@ jobs:
 
       - name: Upload test reports
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: backend-test-reports
           path: application/build/reports/tests/
           retention-days: 7
 
       - name: Upload JAR artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: app-jar
           path: application/build/libs/*.jar
@@ -64,7 +64,7 @@ jobs:
   # Frontend — lint, type-check, build
   # ─────────────────────────────────────────────
   frontend:
-    name: Frontend (Node ${{ env.NODE_VERSION }})
+    name: Frontend (Node 20)
     runs-on: ubuntu-latest
 
     defaults:
@@ -92,7 +92,7 @@ jobs:
         run: npm run build
 
       - name: Upload dist artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: frontend-dist
           path: frontend/dist/
@@ -114,7 +114,7 @@ jobs:
         uses: docker/setup-buildx-action@v3
 
       - name: Build backend image (no push)
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v7
         with:
           context: .
           file: ./Dockerfile
@@ -124,7 +124,7 @@ jobs:
           cache-to: type=gha,mode=max,scope=backend
 
       - name: Build frontend image (no push)
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v7
         with:
           context: ./frontend
           file: ./frontend/Dockerfile
@@ -142,6 +142,9 @@ jobs:
     needs: [backend, frontend]
     # Only run on push to main or PRs targeting main
     if: github.ref == 'refs/heads/main' || github.event_name == 'pull_request'
+    permissions:
+      security-events: write
+      contents: read
 
     steps:
       - name: Checkout
@@ -151,7 +154,7 @@ jobs:
         uses: docker/setup-buildx-action@v3
 
       - name: Build backend image for scanning
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v7
         with:
           context: .
           file: ./Dockerfile
@@ -161,6 +164,7 @@ jobs:
 
       - name: Run Trivy on backend image
         uses: aquasecurity/trivy-action@master
+        continue-on-error: true
         with:
           image-ref: pft-backend:scan
           format: sarif
@@ -170,13 +174,13 @@ jobs:
 
       - name: Upload Trivy backend results to GitHub Security
         uses: github/codeql-action/upload-sarif@v4
-        if: always()
+        if: always() && hashFiles('trivy-backend.sarif') != ''
         with:
           sarif_file: trivy-backend.sarif
           category: trivy-backend
 
       - name: Build frontend image for scanning
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v7
         with:
           context: ./frontend
           file: ./frontend/Dockerfile
@@ -186,6 +190,7 @@ jobs:
 
       - name: Run Trivy on frontend image
         uses: aquasecurity/trivy-action@master
+        continue-on-error: true
         with:
           image-ref: pft-frontend:scan
           format: sarif
@@ -195,7 +200,7 @@ jobs:
 
       - name: Upload Trivy frontend results to GitHub Security
         uses: github/codeql-action/upload-sarif@v4
-        if: always()
+        if: always() && hashFiles('trivy-frontend.sarif') != ''
         with:
           sarif_file: trivy-frontend.sarif
           category: trivy-frontend

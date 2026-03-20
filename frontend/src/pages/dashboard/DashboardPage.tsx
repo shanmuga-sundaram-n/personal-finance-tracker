@@ -1,12 +1,23 @@
 import { Link } from 'react-router-dom'
 import { Plus, TrendingUp, TrendingDown, DollarSign, ArrowUpCircle, ArrowDownCircle, Activity, AlertTriangle } from 'lucide-react'
+import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from 'recharts'
 import { useDashboard } from '@/hooks/useDashboard'
 import { MoneyDisplay } from '@/components/shared/MoneyDisplay'
+import { TransactionAmount } from '@/components/shared/TransactionAmount'
+import { typeBadgeVariant, typeLabel, rowBorderClass } from '@/lib/transactionUtils'
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner'
 import { ErrorAlert } from '@/components/shared/ErrorAlert'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+
+const CHART_COLORS = [
+  'hsl(var(--chart-1))',
+  'hsl(var(--chart-2))',
+  'hsl(var(--chart-3))',
+  'hsl(var(--chart-4))',
+  'hsl(var(--chart-5))',
+]
 
 export function DashboardPage() {
   const { dashboard, isLoading, error } = useDashboard()
@@ -26,6 +37,14 @@ export function DashboardPage() {
   if (!dashboard) return null
 
   const netCashFlowNum = parseFloat(dashboard.netCashFlow)
+  const isPositive = netCashFlowNum >= 0
+
+  const donutData = dashboard.topExpenseCategories.map((cat) => ({
+    name: cat.categoryName,
+    value: parseFloat(cat.amount),
+  }))
+
+  const donutTotal = donutData.reduce((sum, d) => sum + d.value, 0)
 
   return (
     <div className="space-y-6">
@@ -41,10 +60,12 @@ export function DashboardPage() {
 
       {/* Row 1: Net Worth */}
       <div className="grid gap-4 md:grid-cols-3">
-        <Card>
+        <Card className="border-blue-500/20 bg-gradient-to-br from-blue-500/10 to-indigo-500/5 dark:from-blue-500/15 dark:to-indigo-500/5">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Net Worth</CardTitle>
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
+            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-blue-500/15">
+              <DollarSign className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+            </div>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
@@ -52,10 +73,13 @@ export function DashboardPage() {
             </div>
           </CardContent>
         </Card>
-        <Card>
+
+        <Card className="border-green-500/20 bg-gradient-to-br from-green-500/10 to-emerald-500/5 dark:from-green-500/15 dark:to-emerald-500/5">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Assets</CardTitle>
-            <TrendingUp className="h-4 w-4 text-green-600" />
+            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-green-500/15">
+              <TrendingUp className="h-5 w-5 text-green-600 dark:text-green-400" />
+            </div>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
@@ -63,10 +87,13 @@ export function DashboardPage() {
             </div>
           </CardContent>
         </Card>
-        <Card>
+
+        <Card className="border-red-500/20 bg-gradient-to-br from-red-500/10 to-rose-500/5 dark:from-red-500/15 dark:to-rose-500/5">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Liabilities</CardTitle>
-            <TrendingDown className="h-4 w-4 text-red-600" />
+            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-red-500/15">
+              <TrendingDown className="h-5 w-5 text-red-600 dark:text-red-400" />
+            </div>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
@@ -78,71 +105,95 @@ export function DashboardPage() {
 
       {/* Row 2: Current Month */}
       <div className="grid gap-4 md:grid-cols-3">
-        <Card>
+        <Card className="border-green-500/20 bg-gradient-to-br from-green-500/10 to-teal-500/5 dark:from-green-500/15 dark:to-teal-500/5">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Monthly Income</CardTitle>
-            <ArrowUpCircle className="h-4 w-4 text-green-600" />
+            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-green-500/15">
+              <ArrowUpCircle className="h-5 w-5 text-green-600 dark:text-green-400" />
+            </div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-green-600">
+            <div className="text-2xl font-bold text-green-600 dark:text-green-400">
               <MoneyDisplay amount={dashboard.currentMonthIncome} currency={dashboard.currency} />
             </div>
           </CardContent>
         </Card>
-        <Card>
+
+        <Card className="border-red-500/20 bg-gradient-to-br from-red-500/10 to-orange-500/5 dark:from-red-500/15 dark:to-orange-500/5">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Monthly Expense</CardTitle>
-            <ArrowDownCircle className="h-4 w-4 text-red-600" />
+            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-red-500/15">
+              <ArrowDownCircle className="h-5 w-5 text-red-600 dark:text-red-400" />
+            </div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-red-600">
+            <div className="text-2xl font-bold text-red-600 dark:text-red-400">
               <MoneyDisplay amount={dashboard.currentMonthExpense} currency={dashboard.currency} />
             </div>
           </CardContent>
         </Card>
-        <Card>
+
+        <Card className={isPositive
+          ? 'border-green-500/20 bg-gradient-to-br from-green-500/10 to-cyan-500/5 dark:from-green-500/15 dark:to-cyan-500/5'
+          : 'border-red-500/20 bg-gradient-to-br from-red-500/10 to-orange-500/5 dark:from-red-500/15 dark:to-orange-500/5'
+        }>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Net Cash Flow</CardTitle>
-            <Activity className="h-4 w-4 text-muted-foreground" />
+            <div className={`flex h-9 w-9 items-center justify-center rounded-lg ${isPositive ? 'bg-green-500/15' : 'bg-red-500/15'}`}>
+              <Activity className={`h-5 w-5 ${isPositive ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`} />
+            </div>
           </CardHeader>
           <CardContent>
-            <div className={`text-2xl font-bold ${netCashFlowNum >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+            <div className={`text-2xl font-bold ${isPositive ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
               <MoneyDisplay amount={dashboard.netCashFlow} currency={dashboard.currency} />
             </div>
           </CardContent>
         </Card>
       </div>
 
-      {/* Row 3: Top Categories + Budget Alerts */}
+      {/* Row 3: Top Categories (Donut) + Budget Alerts */}
       <div className="grid gap-4 md:grid-cols-2">
         <Card>
           <CardHeader>
             <CardTitle className="text-base">Top Expense Categories</CardTitle>
           </CardHeader>
           <CardContent>
-            {dashboard.topExpenseCategories.length === 0 ? (
+            {donutData.length === 0 ? (
               <p className="text-sm text-muted-foreground">No expenses this month</p>
             ) : (
-              <div className="space-y-3">
-                {dashboard.topExpenseCategories.map((cat) => {
-                  const maxAmount = parseFloat(dashboard.topExpenseCategories[0].amount)
-                  const catAmount = parseFloat(cat.amount)
-                  const pct = maxAmount > 0 ? (catAmount / maxAmount) * 100 : 0
-                  return (
-                    <div key={cat.categoryId} className="space-y-1">
-                      <div className="flex items-center justify-between text-sm">
-                        <span>{cat.categoryName}</span>
-                        <MoneyDisplay amount={cat.amount} currency={dashboard.currency} className="text-sm" />
-                      </div>
-                      <div className="h-2 rounded-full bg-muted">
-                        <div
-                          className="h-2 rounded-full bg-red-500"
-                          style={{ width: `${pct}%` }}
-                        />
-                      </div>
-                    </div>
-                  )
-                })}
+              <div className="relative h-[260px] w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={donutData}
+                      cx="50%"
+                      cy="45%"
+                      innerRadius={55}
+                      outerRadius={90}
+                      paddingAngle={2}
+                      dataKey="value"
+                    >
+                      {donutData.map((_, index) => (
+                        <Cell key={index} fill={CHART_COLORS[index % CHART_COLORS.length]} />
+                      ))}
+                    </Pie>
+                    <Tooltip
+                      formatter={(value: number | undefined) => [
+                        typeof value === 'number' ? `${dashboard.currency} ${value.toFixed(2)}` : '',
+                        'Spent',
+                      ]}
+                      contentStyle={{ borderRadius: '8px', fontSize: '12px' }}
+                    />
+                    <Legend iconSize={10} wrapperStyle={{ fontSize: '12px' }} />
+                  </PieChart>
+                </ResponsiveContainer>
+                {/* Center total */}
+                <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center pb-8">
+                  <span className="text-xs text-muted-foreground">Total</span>
+                  <span className="text-sm font-bold">
+                    {dashboard.currency} {donutTotal.toFixed(2)}
+                  </span>
+                </div>
               </div>
             )}
           </CardContent>
@@ -159,7 +210,16 @@ export function DashboardPage() {
               <div className="space-y-3">
                 {dashboard.budgetAlerts.map((alert) => {
                   const pct = Math.min(alert.percentUsed, 100)
-                  const barColor = pct >= 100 ? 'bg-red-500' : pct >= 85 ? 'bg-orange-500' : 'bg-yellow-500'
+                  const barColor = pct >= 100
+                    ? 'bg-gradient-to-r from-red-500 to-rose-400'
+                    : pct >= 85
+                    ? 'bg-gradient-to-r from-orange-500 to-amber-400'
+                    : 'bg-gradient-to-r from-yellow-500 to-amber-400'
+                  const trackColor = pct >= 100
+                    ? 'bg-red-100 dark:bg-red-950'
+                    : pct >= 85
+                    ? 'bg-orange-100 dark:bg-orange-950'
+                    : 'bg-yellow-100 dark:bg-yellow-950'
                   return (
                     <div key={alert.budgetId} className="space-y-1">
                       <div className="flex items-center justify-between text-sm">
@@ -173,13 +233,13 @@ export function DashboardPage() {
                           <MoneyDisplay amount={alert.amount} currency={dashboard.currency} className="text-sm" />
                         </span>
                       </div>
-                      <div className="h-2 rounded-full bg-muted">
+                      <div className={`h-2 rounded-full ${trackColor}`}>
                         <div
-                          className={`h-2 rounded-full ${barColor}`}
+                          className={`h-2 rounded-full transition-all ${barColor}`}
                           style={{ width: `${pct}%` }}
                         />
                       </div>
-                      <p className="text-xs text-muted-foreground text-right">{alert.percentUsed.toFixed(0)}% used</p>
+                      <p className="text-right text-xs text-muted-foreground">{alert.percentUsed.toFixed(0)}% used</p>
                     </div>
                   )
                 })}
@@ -197,29 +257,45 @@ export function DashboardPage() {
             <Link to="/transactions">View all</Link>
           </Button>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-0">
           {dashboard.recentTransactions.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No transactions yet</p>
+            <p className="px-4 py-6 text-sm text-muted-foreground">No transactions yet</p>
           ) : (
-            <div className="space-y-2">
-              {dashboard.recentTransactions.map((txn) => (
-                <div
-                  key={txn.id}
-                  className="flex items-center justify-between rounded-md border p-2"
-                >
-                  <div className="flex flex-col">
-                    <span className="text-sm font-medium">{txn.description || txn.categoryName}</span>
-                    <div className="flex gap-2 text-xs text-muted-foreground">
-                      <Badge variant="secondary" className="text-xs">{txn.categoryName}</Badge>
-                      <span>{txn.date}</span>
-                    </div>
-                  </div>
-                  <span className={`font-mono text-sm font-medium ${txn.type === 'INCOME' ? 'text-green-600' : 'text-red-600'}`}>
-                    {txn.type === 'INCOME' ? '+' : '-'}
-                    <MoneyDisplay amount={txn.amount} currency={txn.currency} />
-                  </span>
-                </div>
-              ))}
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b text-left text-sm text-muted-foreground">
+                    <th className="px-4 py-3 font-medium">Date</th>
+                    <th className="px-4 py-3 font-medium">Description</th>
+                    <th className="px-4 py-3 font-medium">Category</th>
+                    <th className="px-4 py-3 font-medium">Type</th>
+                    <th className="px-4 py-3 text-right font-medium">Amount</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {dashboard.recentTransactions.map((txn) => (
+                    <tr
+                      key={txn.id}
+                      className={`border-b last:border-0 hover:bg-accent/50 transition-colors ${rowBorderClass(txn.type)}`}
+                    >
+                      <td className="px-4 py-3 text-sm">{txn.date}</td>
+                      <td className="px-4 py-3 text-sm font-medium">{txn.description || txn.categoryName}</td>
+                      <td className="px-4 py-3 text-sm">{txn.categoryName}</td>
+                      <td className="px-4 py-3">
+                        <Badge variant={typeBadgeVariant(txn.type)}>{typeLabel(txn.type)}</Badge>
+                      </td>
+                      <td className="px-4 py-3 text-right">
+                        <TransactionAmount
+                          amount={txn.amount}
+                          currency={txn.currency}
+                          type={txn.type}
+                          className="text-sm font-medium"
+                        />
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           )}
         </CardContent>
@@ -234,17 +310,17 @@ export function DashboardPage() {
           {dashboard.accountBalances.length === 0 ? (
             <p className="py-4 text-center text-muted-foreground">
               No accounts yet.{' '}
-              <Link to="/accounts/new" className="text-primary hover:underline">
+              <Link to="/accounts/new" className="text-blue-600 dark:text-blue-400 hover:underline">
                 Create your first account
               </Link>
             </p>
           ) : (
-            <div className="space-y-3">
+            <div className="space-y-2">
               {dashboard.accountBalances.map((account) => (
                 <Link
                   key={account.id}
                   to={`/accounts/${account.id}`}
-                  className="flex items-center justify-between rounded-md border p-3 transition-colors hover:bg-accent"
+                  className="flex items-center justify-between rounded-xl border p-3 transition-all duration-200 hover:bg-accent hover:shadow-sm"
                 >
                   <div className="flex items-center gap-3">
                     <div>

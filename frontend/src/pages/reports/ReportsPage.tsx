@@ -1,5 +1,10 @@
 import { useState } from 'react'
 import { TrendingUp, TrendingDown, Activity } from 'lucide-react'
+import {
+  LineChart, Line, BarChart, Bar,
+  XAxis, YAxis, CartesianGrid, Tooltip, Legend,
+  ResponsiveContainer,
+} from 'recharts'
 import { useSpendingReport, useTrend } from '@/hooks/useReports'
 import { MoneyDisplay } from '@/components/shared/MoneyDisplay'
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner'
@@ -18,6 +23,12 @@ function formatMonthLabel(yearMonth: string): string {
   return date.toLocaleDateString('en-US', { year: 'numeric', month: 'long' })
 }
 
+function shortMonthLabel(yearMonth: string): string {
+  const [year, month] = yearMonth.split('-')
+  const date = new Date(parseInt(year), parseInt(month) - 1)
+  return date.toLocaleDateString('en-US', { month: 'short' })
+}
+
 export function ReportsPage() {
   const [selectedMonth, setSelectedMonth] = useState(getCurrentMonth())
   const { report, isLoading: reportLoading, error: reportError } = useSpendingReport(selectedMonth)
@@ -34,6 +45,18 @@ export function ReportsPage() {
     const d = new Date(year, month)
     setSelectedMonth(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`)
   }
+
+  const trendChartData = trend?.months.map((item) => ({
+    month: shortMonthLabel(item.month),
+    income: parseFloat(item.income),
+    expense: parseFloat(item.expense),
+    net: parseFloat(item.net),
+  })) ?? []
+
+  const categoryChartData = report?.categoryBreakdown.map((cat) => ({
+    name: cat.categoryName,
+    amount: parseFloat(cat.amount),
+  })) ?? []
 
   return (
     <div className="space-y-6">
@@ -91,43 +114,57 @@ export function ReportsPage() {
             </Card>
           </div>
 
-          {/* Category Breakdown */}
+          {/* Category Breakdown — Horizontal Bar Chart */}
           <Card>
             <CardHeader>
               <CardTitle>Category Breakdown</CardTitle>
             </CardHeader>
             <CardContent>
-              {report.categoryBreakdown.length === 0 ? (
+              {categoryChartData.length === 0 ? (
                 <p className="text-sm text-muted-foreground">No expenses for this month</p>
               ) : (
-                <div className="space-y-3">
-                  {report.categoryBreakdown.map((cat) => {
-                    const maxAmount = parseFloat(report.categoryBreakdown[0].amount)
-                    const catAmount = parseFloat(cat.amount)
-                    const pct = maxAmount > 0 ? (catAmount / maxAmount) * 100 : 0
-                    return (
-                      <div key={cat.categoryId} className="space-y-1">
-                        <div className="flex items-center justify-between text-sm">
-                          <span>{cat.categoryName}</span>
-                          <MoneyDisplay amount={cat.amount} className="text-sm" />
-                        </div>
-                        <div className="h-2 rounded-full bg-muted">
-                          <div
-                            className="h-2 rounded-full bg-primary"
-                            style={{ width: `${pct}%` }}
-                          />
-                        </div>
-                      </div>
-                    )
-                  })}
-                </div>
+                <ResponsiveContainer
+                  width="100%"
+                  height={Math.max(200, categoryChartData.length * 42)}
+                >
+                  <BarChart
+                    layout="vertical"
+                    data={categoryChartData}
+                    margin={{ top: 0, right: 24, bottom: 0, left: 0 }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" horizontal={false} />
+                    <XAxis
+                      type="number"
+                      tick={{ fontSize: 11 }}
+                      tickFormatter={(v: number) => v.toFixed(0)}
+                    />
+                    <YAxis
+                      type="category"
+                      dataKey="name"
+                      tick={{ fontSize: 11 }}
+                      width={110}
+                    />
+                    <Tooltip
+                      formatter={(value: number | undefined) => [
+                        typeof value === 'number' ? value.toFixed(2) : '',
+                        'Amount',
+                      ]}
+                      contentStyle={{ borderRadius: '8px', fontSize: '12px' }}
+                    />
+                    <Bar
+                      dataKey="amount"
+                      fill="hsl(var(--chart-1))"
+                      radius={[0, 4, 4, 0]}
+                    />
+                  </BarChart>
+                </ResponsiveContainer>
               )}
             </CardContent>
           </Card>
         </>
       ) : null}
 
-      {/* 6-Month Trend */}
+      {/* 6-Month Trend — Line Chart */}
       <Card>
         <CardHeader>
           <CardTitle>6-Month Trend</CardTitle>
@@ -139,35 +176,49 @@ export function ReportsPage() {
             </div>
           ) : trendError ? (
             <ErrorAlert message={trendError} />
-          ) : trend && trend.months.length > 0 ? (
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b">
-                    <th className="py-2 text-left font-medium">Month</th>
-                    <th className="py-2 text-right font-medium">Income</th>
-                    <th className="py-2 text-right font-medium">Expenses</th>
-                    <th className="py-2 text-right font-medium">Net</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {trend.months.map((item) => (
-                    <tr key={item.month} className="border-b last:border-0">
-                      <td className="py-2">{formatMonthLabel(item.month)}</td>
-                      <td className="py-2 text-right text-green-600">
-                        <MoneyDisplay amount={item.income} />
-                      </td>
-                      <td className="py-2 text-right text-red-600">
-                        <MoneyDisplay amount={item.expense} />
-                      </td>
-                      <td className="py-2 text-right">
-                        <MoneyDisplay amount={item.net} colored />
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+          ) : trendChartData.length > 0 ? (
+            <ResponsiveContainer width="100%" height={300}>
+              <LineChart data={trendChartData} margin={{ top: 4, right: 24, bottom: 4, left: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="month" tick={{ fontSize: 12 }} />
+                <YAxis tick={{ fontSize: 12 }} tickFormatter={(v: number) => v.toFixed(0)} />
+                <Tooltip
+                  formatter={(value: number | undefined) => [
+                    typeof value === 'number' ? value.toFixed(2) : '',
+                    '',
+                  ]}
+                  contentStyle={{ borderRadius: '8px', fontSize: '12px' }}
+                />
+                <Legend wrapperStyle={{ fontSize: '12px' }} />
+                <Line
+                  type="monotone"
+                  dataKey="income"
+                  name="Income"
+                  stroke="hsl(var(--chart-2))"
+                  strokeWidth={2}
+                  dot={false}
+                  activeDot={{ r: 4 }}
+                />
+                <Line
+                  type="monotone"
+                  dataKey="expense"
+                  name="Expense"
+                  stroke="hsl(var(--chart-3))"
+                  strokeWidth={2}
+                  dot={false}
+                  activeDot={{ r: 4 }}
+                />
+                <Line
+                  type="monotone"
+                  dataKey="net"
+                  name="Net"
+                  stroke="hsl(var(--chart-1))"
+                  strokeWidth={2}
+                  dot={false}
+                  activeDot={{ r: 4 }}
+                />
+              </LineChart>
+            </ResponsiveContainer>
           ) : (
             <p className="text-sm text-muted-foreground">No trend data available</p>
           )}

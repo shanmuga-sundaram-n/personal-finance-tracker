@@ -2,6 +2,7 @@ package com.shan.cyber.tech.financetracker.budget.domain.service;
 
 import com.shan.cyber.tech.financetracker.budget.domain.exception.BudgetNotFoundException;
 import com.shan.cyber.tech.financetracker.budget.domain.model.Budget;
+import com.shan.cyber.tech.financetracker.budget.domain.model.BudgetPeriod;
 import com.shan.cyber.tech.financetracker.budget.domain.port.inbound.BudgetView;
 import com.shan.cyber.tech.financetracker.budget.domain.port.inbound.GetBudgetsQuery;
 import com.shan.cyber.tech.financetracker.budget.domain.port.outbound.BudgetPersistencePort;
@@ -12,6 +13,7 @@ import com.shan.cyber.tech.financetracker.shared.domain.model.UserId;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.LocalDate;
 import java.util.List;
 
 public class BudgetQueryService implements GetBudgetsQuery {
@@ -49,11 +51,25 @@ public class BudgetQueryService implements GetBudgetsQuery {
                 userId, budget.getCategoryId(), budget.getStartDate(), budget.getEndDate());
 
         BigDecimal budgetAmount = budget.getAmount().amount();
-        BigDecimal remaining = budgetAmount.subtract(spent);
 
-        double percentUsed = budgetAmount.compareTo(BigDecimal.ZERO) > 0
+        // Calculate rollover from previous period when rollover_enabled=true
+        BigDecimal rolloverAmount = BigDecimal.ZERO;
+        if (budget.isRolloverEnabled() && budget.getPeriodType() != BudgetPeriod.CUSTOM) {
+            LocalDate prevPeriodEnd = budget.getStartDate().minusDays(1);
+            LocalDate prevPeriodStart = calculatePreviousPeriodStart(budget.getPeriodType(), budget.getStartDate());
+            BigDecimal previousSpent = spendingQueryPort.getSpentAmount(
+                    userId, budget.getCategoryId(), prevPeriodStart, prevPeriodEnd);
+            BigDecimal previousRemaining = budgetAmount.subtract(previousSpent);
+            // Cap rollover at 100% of the budget amount; minimum 0
+            rolloverAmount = previousRemaining.max(BigDecimal.ZERO).min(budgetAmount);
+        }
+
+        BigDecimal effectiveBudget = budgetAmount.add(rolloverAmount);
+        BigDecimal remaining = effectiveBudget.subtract(spent);
+
+        double percentUsed = effectiveBudget.compareTo(BigDecimal.ZERO) > 0
                 ? spent.multiply(BigDecimal.valueOf(100))
-                        .divide(budgetAmount, 2, RoundingMode.HALF_UP)
+                        .divide(effectiveBudget, 2, RoundingMode.HALF_UP)
                         .doubleValue()
                 : 0.0;
 
@@ -76,6 +92,20 @@ public class BudgetQueryService implements GetBudgetsQuery {
                 remaining.toPlainString(),
                 percentUsed,
                 alertTriggered,
+                rolloverAmount.toPlainString(),
+                effectiveBudget.toPlainString(),
                 budget.getAuditInfo() != null ? budget.getAuditInfo().createdAt() : null);
+    }
+
+    private LocalDate calculatePreviousPeriodStart(BudgetPeriod periodType, LocalDate currentPeriodStart) {
+        return switch (periodType) {
+            case WEEKLY -> currentPeriodStart.minusWeeks(1);
+            case BI_WEEKLY -> currentPeriodStart.minusWeeks(2);
+            case MONTHLY -> currentPeriodStart.minusMonths(1);
+            case QUARTERLY -> currentPeriodStart.minusMonths(3);
+            case SEMI_ANNUAL -> currentPeriodStart.minusMonths(6);
+            case ANNUALLY -> currentPeriodStart.minusYears(1);
+            case CUSTOM -> currentPeriodStart; // not reached
+        };
     }
 }

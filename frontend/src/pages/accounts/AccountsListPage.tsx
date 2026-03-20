@@ -9,7 +9,7 @@ import { LoadingSpinner } from '@/components/shared/LoadingSpinner'
 import { ErrorAlert } from '@/components/shared/ErrorAlert'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent } from '@/components/ui/card'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -74,28 +74,21 @@ export function AccountsListPage() {
           </CardContent>
         </Card>
       ) : (
-        <div className="space-y-3">
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {accounts.map((account) => (
             <Card
               key={account.id}
-              className="cursor-pointer transition-colors hover:bg-accent/50"
+              className="cursor-pointer transition-all duration-200 hover:-translate-y-0.5 hover:bg-accent/50 hover:shadow-md"
               onClick={() => navigate(`/accounts/${account.id}`)}
             >
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <div className="flex items-center gap-3">
-                  <CardTitle className="text-base">{account.name}</CardTitle>
+              <CardContent className="pb-5 pt-4">
+                {/* Top row: type badge + delete */}
+                <div className="flex items-center justify-between">
                   <Badge variant="secondary">{account.accountTypeName}</Badge>
-                </div>
-                <div className="flex items-center gap-2">
-                  <MoneyDisplay
-                    amount={account.currentBalance}
-                    currency={account.currency}
-                    colored
-                    className="text-lg font-semibold"
-                  />
                   <Button
                     variant="ghost"
                     size="icon"
+                    className="h-8 w-8"
                     onClick={(e) => {
                       e.stopPropagation()
                       setDeleteId(account.id)
@@ -104,15 +97,28 @@ export function AccountsListPage() {
                     <Trash2 className="h-4 w-4 text-muted-foreground hover:text-destructive" />
                   </Button>
                 </div>
-              </CardHeader>
-              {(account.institutionName || account.accountNumberLast4) && (
-                <CardContent className="pt-0">
-                  <p className="text-sm text-muted-foreground">
-                    {account.institutionName}
-                    {account.accountNumberLast4 && ` ****${account.accountNumberLast4}`}
-                  </p>
-                </CardContent>
-              )}
+
+                {/* Middle: account name + institution */}
+                <div className="mt-3">
+                  <p className="text-xl font-bold leading-tight">{account.name}</p>
+                  {(account.institutionName || account.accountNumberLast4) && (
+                    <p className="mt-0.5 text-sm text-muted-foreground">
+                      {account.institutionName}
+                      {account.accountNumberLast4 && ` ****${account.accountNumberLast4}`}
+                    </p>
+                  )}
+                </div>
+
+                {/* Bottom: balance */}
+                <div className="mt-4">
+                  <MoneyDisplay
+                    amount={account.currentBalance}
+                    currency={account.currency}
+                    colored
+                    className="text-2xl font-bold"
+                  />
+                </div>
+              </CardContent>
             </Card>
           ))}
         </div>
