@@ -43,4 +43,4 @@ bin/
 
 ### Frontend ###
 frontend/node_modules/
-frontend/dist/
+frontend/dist/.claude/worktrees/
