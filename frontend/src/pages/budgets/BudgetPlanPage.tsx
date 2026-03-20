@@ -208,8 +208,7 @@ interface CategoryRowProps {
  * Planning-only row: shows Category | Frequency | Monthly | Yearly | Action.
  * No progress bar, no actual amounts, no variance, no % used.
  */
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-function CategoryRow({ row, currency, isIncome, indent = false, onSetBudget, onDeleteBudget }: CategoryRowProps) {
+function CategoryRow({ row, currency: _currency, isIncome, indent = false, onSetBudget, onDeleteBudget }: CategoryRowProps) {
   const amountColor = isIncome
     ? 'text-green-600 dark:text-green-400'
     : 'text-foreground'
