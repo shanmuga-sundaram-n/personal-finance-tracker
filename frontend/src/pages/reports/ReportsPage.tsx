@@ -145,7 +145,7 @@ export function ReportsPage() {
                       width={110}
                     />
                     <Tooltip
-                      formatter={(value: number | undefined) => [
+                      formatter={(value: unknown) => [
                         typeof value === 'number' ? value.toFixed(2) : '',
                         'Amount',
                       ]}
@@ -183,7 +183,7 @@ export function ReportsPage() {
                 <XAxis dataKey="month" tick={{ fontSize: 12 }} />
                 <YAxis tick={{ fontSize: 12 }} tickFormatter={(v: number) => v.toFixed(0)} />
                 <Tooltip
-                  formatter={(value: number | undefined) => [
+                  formatter={(value: unknown) => [
                     typeof value === 'number' ? value.toFixed(2) : '',
                     '',
                   ]}

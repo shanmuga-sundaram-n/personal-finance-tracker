@@ -178,7 +178,7 @@ export function DashboardPage() {
                       ))}
                     </Pie>
                     <Tooltip
-                      formatter={(value: number | undefined) => [
+                      formatter={(value: unknown) => [
                         typeof value === 'number' ? `${dashboard.currency} ${value.toFixed(2)}` : '',
                         'Spent',
                       ]}

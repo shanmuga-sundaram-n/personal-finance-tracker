@@ -261,7 +261,7 @@ export function AccountDetailPage() {
                   interval="preserveStartEnd"
                 />
                 <Tooltip
-                  formatter={(value: number | undefined) => [
+                  formatter={(value: unknown) => [
                     typeof value === 'number'
                       ? `${account.currency} ${value.toFixed(2)}`
                       : '',

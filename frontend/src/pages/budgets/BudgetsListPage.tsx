@@ -268,7 +268,7 @@ function SummaryChart({ incomeTotals, expenseTotals }: {
             <CartesianGrid strokeDasharray="3 3" vertical={false} />
             <XAxis dataKey="name" tick={{ fontSize: 12 }} />
             <YAxis tick={{ fontSize: 11 }} tickFormatter={(v: number | undefined) => v != null && v >= 1000 ? `${(v / 1000).toFixed(0)}k` : String(v ?? '')} />
-            <Tooltip formatter={(v: number | undefined) => [v != null ? v.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '']} />
+            <Tooltip formatter={(v: unknown) => [typeof v === 'number' ? v.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '']} />
             <Legend />
             <Bar dataKey="Budget" fill="#3b82f6" radius={[3, 3, 0, 0]} />
             <Bar dataKey="Actual" fill="#ef4444" radius={[3, 3, 0, 0]} />
@@ -308,7 +308,7 @@ function SpendingChart({ groups }: { groups: BudgetPlanCategoryGroup[] }) {
             <XAxis dataKey="name" tick={{ fontSize: 11 }} />
             <YAxis tick={{ fontSize: 11 }} tickFormatter={(v: number | undefined) => v != null && v >= 1000 ? `${(v / 1000).toFixed(0)}k` : String(v ?? '')} />
             <Tooltip
-              formatter={(v: number | undefined) => [v != null ? v.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '']}
+              formatter={(v: unknown) => [typeof v === 'number' ? v.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '']}
             />
             <Legend />
             <Bar dataKey="Budget" fill="#3b82f6" radius={[3, 3, 0, 0]} />
