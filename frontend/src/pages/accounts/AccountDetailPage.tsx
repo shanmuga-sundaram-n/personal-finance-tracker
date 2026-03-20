@@ -94,8 +94,11 @@ export function AccountDetailPage() {
       await deleteAccount(account.id)
       toast.success('Account deleted')
       navigate('/accounts')
-    } catch {
-      toast.error('Failed to delete account')
+    } catch (e) {
+      const message = e instanceof ApiClientError
+        ? (e.apiError?.message ?? 'Failed to delete account')
+        : 'Failed to delete account'
+      toast.error(message)
       setDeleting(false)
     }
   }

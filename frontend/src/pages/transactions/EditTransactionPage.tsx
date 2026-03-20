@@ -11,7 +11,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { CategorySelect } from '@/components/shared/CategorySelect'
 import { ErrorAlert } from '@/components/shared/ErrorAlert'
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner'
 import type { Transaction } from '@/types/transaction.types'
@@ -123,21 +123,11 @@ export function EditTransactionPage() {
 
             <div className="space-y-2">
               <Label>Category</Label>
-              <Select
-                defaultValue={String(transaction.categoryId)}
+              <CategorySelect
+                categories={filteredCategories}
+                value={String(transaction.categoryId)}
                 onValueChange={(v) => setValue('categoryId', v)}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select category" />
-                </SelectTrigger>
-                <SelectContent>
-                  {filteredCategories.map((c) => (
-                    <SelectItem key={c.id} value={String(c.id)}>
-                      {c.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              />
               {errors.categoryId && <p className="text-sm text-destructive">{errors.categoryId.message}</p>}
             </div>
 

@@ -10,6 +10,7 @@ import com.shan.cyber.tech.financetracker.transaction.domain.port.inbound.Create
 import com.shan.cyber.tech.financetracker.transaction.domain.port.inbound.CreateTransferUseCase;
 import com.shan.cyber.tech.financetracker.transaction.domain.port.inbound.DeleteTransactionUseCase;
 import com.shan.cyber.tech.financetracker.transaction.domain.port.inbound.GetTransactionsQuery;
+import com.shan.cyber.tech.financetracker.transaction.domain.port.inbound.ReconcileTransactionUseCase;
 import com.shan.cyber.tech.financetracker.transaction.domain.port.inbound.TransactionView;
 import com.shan.cyber.tech.financetracker.transaction.domain.port.inbound.TransferResult;
 import com.shan.cyber.tech.financetracker.transaction.domain.port.inbound.UpdateTransactionUseCase;
@@ -45,6 +46,7 @@ class TransactionControllerTest {
     @MockBean private CreateTransferUseCase createTransferUseCase;
     @MockBean private UpdateTransactionUseCase updateTransactionUseCase;
     @MockBean private DeleteTransactionUseCase deleteTransactionUseCase;
+    @MockBean private ReconcileTransactionUseCase reconcileTransactionUseCase;
     @MockBean private GetTransactionsQuery getTransactionsQuery;
 
     private static final Long TEST_USER_ID = 1L;

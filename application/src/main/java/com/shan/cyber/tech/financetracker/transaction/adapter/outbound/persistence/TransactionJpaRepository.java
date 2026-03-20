@@ -17,6 +17,8 @@ public interface TransactionJpaRepository extends JpaRepository<TransactionJpaEn
 
     Optional<TransactionJpaEntity> findByIdAndUserId(Long id, Long userId);
 
+    boolean existsByAccountId(Long accountId);
+
     @Query("""
             SELECT t.id AS id,
                    t.accountId AS accountId,
@@ -43,10 +45,10 @@ public interface TransactionJpaRepository extends JpaRepository<TransactionJpaEn
               AND (:accountId IS NULL OR t.accountId = :accountId)
               AND (:categoryId IS NULL OR t.categoryId = :categoryId)
               AND (:transactionType IS NULL OR t.transactionType = :transactionType)
-              AND (:fromDate IS NULL OR t.transactionDate >= :fromDate)
-              AND (:toDate IS NULL OR t.transactionDate <= :toDate)
-              AND (:minAmount IS NULL OR t.amount >= :minAmount)
-              AND (:maxAmount IS NULL OR t.amount <= :maxAmount)
+              AND t.transactionDate >= :fromDate
+              AND t.transactionDate <= :toDate
+              AND t.amount >= :minAmount
+              AND t.amount <= :maxAmount
             ORDER BY t.transactionDate DESC, t.id DESC
             """)
     Page<TransactionViewProjection> findByFilter(
@@ -86,12 +88,22 @@ public interface TransactionJpaRepository extends JpaRepository<TransactionJpaEn
             """)
     Optional<TransactionViewProjection> findViewByIdAndUserId(@Param("id") Long id, @Param("userId") Long userId);
 
+    @Query("SELECT COALESCE(SUM(t.amount), 0) FROM TransactionJpaEntity t " +
+           "WHERE t.userId = :userId AND t.categoryId = :categoryId " +
+           "AND t.transactionType = 'INCOME' " +
+           "AND t.transactionDate BETWEEN :from AND :to")
+    BigDecimal sumIncomeAmountByCategoryAndDateRange(
+        @Param("userId") Long userId,
+        @Param("categoryId") Long categoryId,
+        @Param("from") LocalDate from,
+        @Param("to") LocalDate to);
+
     @Query("""
             SELECT COALESCE(SUM(t.amount), 0)
             FROM TransactionJpaEntity t
             WHERE t.userId = :userId
               AND t.categoryId = :categoryId
-              AND t.transactionType IN ('EXPENSE', 'TRANSFER_OUT')
+              AND t.transactionType = 'EXPENSE'
               AND t.transactionDate BETWEEN :fromDate AND :toDate
             """)
     BigDecimal sumExpenseAmount(
@@ -159,4 +171,34 @@ public interface TransactionJpaRepository extends JpaRepository<TransactionJpaEn
     Page<TransactionViewProjection> findRecentByUserId(
             @Param("userId") Long userId,
             Pageable pageable);
+
+    @Query("""
+            SELECT t.categoryId AS categoryId, COALESCE(SUM(t.amount), 0) AS totalAmount
+            FROM TransactionJpaEntity t
+            WHERE t.userId = :userId
+              AND t.categoryId IN :categoryIds
+              AND t.transactionType = 'EXPENSE'
+              AND t.transactionDate BETWEEN :from AND :to
+            GROUP BY t.categoryId
+            """)
+    List<CategoryAmountProjection> sumExpenseBatch(
+            @Param("userId") Long userId,
+            @Param("categoryIds") List<Long> categoryIds,
+            @Param("from") LocalDate from,
+            @Param("to") LocalDate to);
+
+    @Query("""
+            SELECT t.categoryId AS categoryId, COALESCE(SUM(t.amount), 0) AS totalAmount
+            FROM TransactionJpaEntity t
+            WHERE t.userId = :userId
+              AND t.categoryId IN :categoryIds
+              AND t.transactionType = 'INCOME'
+              AND t.transactionDate BETWEEN :from AND :to
+            GROUP BY t.categoryId
+            """)
+    List<CategoryAmountProjection> sumIncomeBatch(
+            @Param("userId") Long userId,
+            @Param("categoryIds") List<Long> categoryIds,
+            @Param("from") LocalDate from,
+            @Param("to") LocalDate to);
 }

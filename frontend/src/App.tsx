@@ -18,6 +18,7 @@ import { EditTransactionPage } from '@/pages/transactions/EditTransactionPage'
 import { BudgetsListPage } from '@/pages/budgets/BudgetsListPage'
 import { CreateBudgetPage } from '@/pages/budgets/CreateBudgetPage'
 import { EditBudgetPage } from '@/pages/budgets/EditBudgetPage'
+import { BudgetPlanPage } from '@/pages/budgets/BudgetPlanPage'
 import { ReportsPage } from '@/pages/reports/ReportsPage'
 
 export default function App() {
@@ -41,6 +42,7 @@ export default function App() {
               <Route path="/transactions/transfer" element={<CreateTransferPage />} />
               <Route path="/transactions/:id/edit" element={<EditTransactionPage />} />
               <Route path="/budgets" element={<BudgetsListPage />} />
+              <Route path="/budgets/plan" element={<BudgetPlanPage />} />
               <Route path="/budgets/new" element={<CreateBudgetPage />} />
               <Route path="/budgets/:id/edit" element={<EditBudgetPage />} />
               <Route path="/reports" element={<ReportsPage />} />

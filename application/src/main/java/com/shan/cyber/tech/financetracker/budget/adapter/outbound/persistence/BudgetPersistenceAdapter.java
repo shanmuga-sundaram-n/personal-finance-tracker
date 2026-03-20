@@ -8,6 +8,7 @@ import com.shan.cyber.tech.financetracker.shared.domain.model.CategoryId;
 import com.shan.cyber.tech.financetracker.shared.domain.model.UserId;
 import org.springframework.stereotype.Component;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
@@ -47,5 +48,12 @@ public class BudgetPersistenceAdapter implements BudgetPersistencePort {
         return repository.findByUserIdAndCategoryIdAndPeriodTypeAndIsActiveTrue(
                 userId.value(), categoryId.value(), periodType.name())
                 .map(mapper::toDomain);
+    }
+
+    @Override
+    public List<Budget> findActiveByUserAndDateRange(UserId userId, LocalDate startDate, LocalDate endDate) {
+        return repository.findActiveByUserAndDateRange(userId.value(), startDate, endDate).stream()
+                .map(mapper::toDomain)
+                .toList();
     }
 }

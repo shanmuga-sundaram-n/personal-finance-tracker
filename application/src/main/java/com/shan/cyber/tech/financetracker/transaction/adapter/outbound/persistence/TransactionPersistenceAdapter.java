@@ -19,7 +19,9 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Component
 public class TransactionPersistenceAdapter implements TransactionPersistencePort {
@@ -75,15 +77,20 @@ public class TransactionPersistenceAdapter implements TransactionPersistencePort
 
     @Override
     public TransactionPage findByFilter(TransactionFilter filter, int page, int size) {
+        LocalDate fromDate = filter.fromDate() != null ? filter.fromDate() : LocalDate.of(1900, 1, 1);
+        LocalDate toDate   = filter.toDate()   != null ? filter.toDate()   : LocalDate.of(2100, 12, 31);
+        BigDecimal minAmt  = filter.minAmount() != null ? filter.minAmount() : BigDecimal.ZERO;
+        BigDecimal maxAmt  = filter.maxAmount() != null ? filter.maxAmount() : new BigDecimal("999999999999");
+
         Page<TransactionViewProjection> jpaPage = repository.findByFilter(
                 filter.userId().value(),
                 filter.accountId() != null ? filter.accountId().value() : null,
                 filter.categoryId() != null ? filter.categoryId().value() : null,
                 filter.type() != null ? filter.type().name() : null,
-                filter.fromDate(),
-                filter.toDate(),
-                filter.minAmount(),
-                filter.maxAmount(),
+                fromDate,
+                toDate,
+                minAmt,
+                maxAmt,
                 PageRequest.of(page, size));
 
         List<TransactionView> views = jpaPage.getContent().stream()
@@ -105,6 +112,11 @@ public class TransactionPersistenceAdapter implements TransactionPersistencePort
     }
 
     @Override
+    public BigDecimal sumIncomeAmountByCategoryAndDateRange(UserId userId, CategoryId categoryId, LocalDate from, LocalDate to) {
+        return repository.sumIncomeAmountByCategoryAndDateRange(userId.value(), categoryId.value(), from, to);
+    }
+
+    @Override
     public BigDecimal sumByType(UserId userId, String transactionType, LocalDate from, LocalDate to) {
         return repository.sumByType(userId.value(), transactionType, from, to);
     }
@@ -116,6 +128,26 @@ public class TransactionPersistenceAdapter implements TransactionPersistencePort
                 .limit(limit)
                 .map(p -> new CategorySpending(p.getCategoryId(), p.getCategoryName(), p.getTotalAmount().toPlainString()))
                 .toList();
+    }
+
+    @Override
+    public Map<CategoryId, BigDecimal> sumExpenseAmountBatch(UserId userId, List<CategoryId> categoryIds, LocalDate from, LocalDate to) {
+        List<Long> ids = categoryIds.stream().map(CategoryId::value).toList();
+        List<CategoryAmountProjection> results = repository.sumExpenseBatch(userId.value(), ids, from, to);
+        return results.stream().collect(Collectors.toMap(
+                r -> new CategoryId(r.getCategoryId()),
+                CategoryAmountProjection::getTotalAmount
+        ));
+    }
+
+    @Override
+    public Map<CategoryId, BigDecimal> sumIncomeAmountBatch(UserId userId, List<CategoryId> categoryIds, LocalDate from, LocalDate to) {
+        List<Long> ids = categoryIds.stream().map(CategoryId::value).toList();
+        List<CategoryAmountProjection> results = repository.sumIncomeBatch(userId.value(), ids, from, to);
+        return results.stream().collect(Collectors.toMap(
+                r -> new CategoryId(r.getCategoryId()),
+                CategoryAmountProjection::getTotalAmount
+        ));
     }
 
     @Override

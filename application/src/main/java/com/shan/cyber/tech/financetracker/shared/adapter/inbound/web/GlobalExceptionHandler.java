@@ -14,8 +14,10 @@ import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 import java.util.List;
 
@@ -84,6 +86,24 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY)
                 .body(ErrorResponseDto.of(422, "VALIDATION_ERROR", "Validation failed", fieldErrors,
                         request.getRequestURI()));
+    }
+
+    @ExceptionHandler(MissingServletRequestParameterException.class)
+    public ResponseEntity<ErrorResponseDto> handleMissingParam(MissingServletRequestParameterException ex,
+                                                                HttpServletRequest request) {
+        log.debug("Missing required request parameter '{}': {}", ex.getParameterName(), ex.getMessage());
+        String message = "Required parameter '" + ex.getParameterName() + "' is missing";
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(ErrorResponseDto.of(400, "MISSING_PARAMETER", message, request.getRequestURI()));
+    }
+
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public ResponseEntity<ErrorResponseDto> handleTypeMismatch(MethodArgumentTypeMismatchException ex,
+                                                                HttpServletRequest request) {
+        log.debug("Type mismatch for parameter '{}': {}", ex.getName(), ex.getMessage());
+        String message = "Invalid value for parameter '" + ex.getName() + "'";
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(ErrorResponseDto.of(400, "INVALID_PARAMETER", message, request.getRequestURI()));
     }
 
     @ExceptionHandler(Exception.class)

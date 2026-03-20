@@ -13,6 +13,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { CategorySelect } from '@/components/shared/CategorySelect'
 import { ErrorAlert } from '@/components/shared/ErrorAlert'
 
 const createTransactionSchema = z.object({
@@ -135,18 +136,10 @@ export function CreateTransactionPage() {
 
             <div className="space-y-2">
               <Label>Category</Label>
-              <Select onValueChange={(v) => setValue('categoryId', v)}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select category" />
-                </SelectTrigger>
-                <SelectContent>
-                  {filteredCategories.map((c) => (
-                    <SelectItem key={c.id} value={String(c.id)}>
-                      {c.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <CategorySelect
+                categories={filteredCategories}
+                onValueChange={(v) => setValue('categoryId', v)}
+              />
               {errors.categoryId && <p className="text-sm text-destructive">{errors.categoryId.message}</p>}
             </div>
 

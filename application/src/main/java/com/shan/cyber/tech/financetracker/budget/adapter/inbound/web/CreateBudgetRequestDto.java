@@ -12,7 +12,9 @@ import java.time.LocalDate;
 
 public record CreateBudgetRequestDto(
         @NotNull Long categoryId,
-        @NotBlank String periodType,
+        @NotBlank @Pattern(regexp = "^(WEEKLY|BI_WEEKLY|MONTHLY|QUARTERLY|SEMI_ANNUAL|ANNUALLY|CUSTOM)$",
+                           message = "periodType must be one of: WEEKLY, BI_WEEKLY, MONTHLY, QUARTERLY, SEMI_ANNUAL, ANNUALLY, CUSTOM")
+        String periodType,
         @NotNull @Positive BigDecimal amount,
         @NotBlank @Pattern(regexp = "^[A-Z]{3}$") String currency,
         @NotNull LocalDate startDate,

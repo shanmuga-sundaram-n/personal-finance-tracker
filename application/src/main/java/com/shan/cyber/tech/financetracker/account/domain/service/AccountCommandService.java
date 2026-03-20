@@ -16,8 +16,10 @@ import com.shan.cyber.tech.financetracker.account.domain.port.inbound.CreateAcco
 import com.shan.cyber.tech.financetracker.account.domain.port.inbound.DeactivateAccountUseCase;
 import com.shan.cyber.tech.financetracker.account.domain.port.inbound.UpdateAccountCommand;
 import com.shan.cyber.tech.financetracker.account.domain.port.inbound.UpdateAccountUseCase;
+import com.shan.cyber.tech.financetracker.account.domain.exception.AccountHasTransactionsException;
 import com.shan.cyber.tech.financetracker.account.domain.port.outbound.AccountEventPublisherPort;
 import com.shan.cyber.tech.financetracker.account.domain.port.outbound.AccountPersistencePort;
+import com.shan.cyber.tech.financetracker.account.domain.port.outbound.AccountTransactionCountPort;
 import com.shan.cyber.tech.financetracker.account.domain.port.outbound.AccountTypePersistencePort;
 import com.shan.cyber.tech.financetracker.shared.domain.exception.BusinessRuleException;
 import com.shan.cyber.tech.financetracker.shared.domain.model.AccountId;
@@ -32,13 +34,16 @@ public class AccountCommandService implements CreateAccountUseCase, UpdateAccoun
     private final AccountPersistencePort accountPersistencePort;
     private final AccountTypePersistencePort accountTypePersistencePort;
     private final AccountEventPublisherPort eventPublisherPort;
+    private final AccountTransactionCountPort transactionCountPort;
 
     public AccountCommandService(AccountPersistencePort accountPersistencePort,
                                   AccountTypePersistencePort accountTypePersistencePort,
-                                  AccountEventPublisherPort eventPublisherPort) {
+                                  AccountEventPublisherPort eventPublisherPort,
+                                  AccountTransactionCountPort transactionCountPort) {
         this.accountPersistencePort = accountPersistencePort;
         this.accountTypePersistencePort = accountTypePersistencePort;
         this.eventPublisherPort = eventPublisherPort;
+        this.transactionCountPort = transactionCountPort;
     }
 
     @Override
@@ -85,6 +90,9 @@ public class AccountCommandService implements CreateAccountUseCase, UpdateAccoun
     @Override
     public void deactivateAccount(AccountId accountId, UserId requestingUser) {
         Account account = findAccountOrThrow(accountId, requestingUser);
+        if (transactionCountPort.hasTransactions(accountId)) {
+            throw new AccountHasTransactionsException(accountId.value());
+        }
         account.deactivate();
         accountPersistencePort.save(account);
         eventPublisherPort.publish(new AccountDeactivated(accountId, requestingUser));

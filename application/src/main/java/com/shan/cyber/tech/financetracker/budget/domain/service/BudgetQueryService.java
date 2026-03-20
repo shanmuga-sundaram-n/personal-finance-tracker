@@ -100,8 +100,10 @@ public class BudgetQueryService implements GetBudgetsQuery {
     private LocalDate calculatePreviousPeriodStart(BudgetPeriod periodType, LocalDate currentPeriodStart) {
         return switch (periodType) {
             case WEEKLY -> currentPeriodStart.minusWeeks(1);
+            case BI_WEEKLY -> currentPeriodStart.minusWeeks(2);
             case MONTHLY -> currentPeriodStart.minusMonths(1);
             case QUARTERLY -> currentPeriodStart.minusMonths(3);
+            case SEMI_ANNUAL -> currentPeriodStart.minusMonths(6);
             case ANNUALLY -> currentPeriodStart.minusYears(1);
             case CUSTOM -> currentPeriodStart; // not reached
         };

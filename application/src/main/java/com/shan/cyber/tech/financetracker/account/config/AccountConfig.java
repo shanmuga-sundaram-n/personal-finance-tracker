@@ -2,6 +2,7 @@ package com.shan.cyber.tech.financetracker.account.config;
 
 import com.shan.cyber.tech.financetracker.account.domain.port.outbound.AccountEventPublisherPort;
 import com.shan.cyber.tech.financetracker.account.domain.port.outbound.AccountPersistencePort;
+import com.shan.cyber.tech.financetracker.account.domain.port.outbound.AccountTransactionCountPort;
 import com.shan.cyber.tech.financetracker.account.domain.port.outbound.AccountTypePersistencePort;
 import com.shan.cyber.tech.financetracker.account.domain.service.AccountCommandService;
 import com.shan.cyber.tech.financetracker.account.domain.service.AccountQueryService;
@@ -15,8 +16,10 @@ public class AccountConfig {
     public AccountCommandService accountCommandService(
             AccountPersistencePort accountPersistencePort,
             AccountTypePersistencePort accountTypePersistencePort,
-            AccountEventPublisherPort accountEventPublisherPort) {
-        return new AccountCommandService(accountPersistencePort, accountTypePersistencePort, accountEventPublisherPort);
+            AccountEventPublisherPort accountEventPublisherPort,
+            AccountTransactionCountPort accountTransactionCountPort) {
+        return new AccountCommandService(accountPersistencePort, accountTypePersistencePort,
+                accountEventPublisherPort, accountTransactionCountPort);
     }
 
     @Bean

@@ -1,5 +1,5 @@
 import { NavLink, Link } from 'react-router-dom'
-import { LayoutDashboard, Wallet, Tag, ArrowLeftRight, PieChart, BarChart3 } from 'lucide-react'
+import { LayoutDashboard, Wallet, Tag, ArrowLeftRight, PieChart, BarChart3, CalendarRange } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 const navItems = [
@@ -7,7 +7,8 @@ const navItems = [
   { to: '/accounts', label: 'Accounts', icon: Wallet },
   { to: '/categories', label: 'Categories', icon: Tag },
   { to: '/transactions', label: 'Transactions', icon: ArrowLeftRight },
-  { to: '/budgets', label: 'Budgets', icon: PieChart },
+  { to: '/budgets', label: 'Spending Analysis', icon: PieChart, end: true },
+  { to: '/budgets/plan', label: 'Budget Plan', icon: CalendarRange },
   { to: '/reports', label: 'Reports', icon: BarChart3 },
 ]
 
@@ -24,10 +25,11 @@ export function Sidebar({ className }: { className?: string }) {
 
       {/* Navigation */}
       <nav className="flex flex-col gap-0.5">
-        {navItems.map(({ to, label, icon: Icon }) => (
+        {navItems.map(({ to, label, icon: Icon, end }) => (
           <NavLink
             key={to}
             to={to}
+            end={end}
             className={({ isActive }) =>
               cn(
                 'flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200',

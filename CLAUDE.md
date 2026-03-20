@@ -59,17 +59,41 @@ cd frontend && npm run build     # Production build
 | Frontend entry | `frontend/src/main.tsx` |
 | Nginx config | `frontend/nginx.conf` |
 
+## Feature Delivery Pipeline (Mandatory — Every Feature, Every Time)
+
+**This pipeline is non-negotiable. Never skip or reorder steps. Never implement directly without planning first.**
+
+```
+1. solution-planner        → coordinates analyst + tech-lead, produces unified Feature Brief
+      ├── personal-finance-analyst  → domain rules, acceptance criteria, edge cases
+      └── tech-lead                 → architecture, ports/adapters, implementation order
+
+2. full-stack-dev          → implements backend + frontend from the Feature Brief
+
+3. ux-ui-designer          → reviews all UI, ensures mobile-first, applies design system
+
+4. qa-automation-tester    → writes + runs unit tests, integration tests, accessibility checks
+
+5. tech-lead               → final architecture sign-off, confirms no rule violations
+```
+
+**Trigger rules:**
+- Any new feature or significant change → start at step 1 (`solution-planner`)
+- UI-only change → start at step 3 (`ux-ui-designer`)
+- Bug fix → `tech-lead` to diagnose, `full-stack-dev` to fix, `qa-automation-tester` to verify
+- Infrastructure change → `devops-engineer` directly
+
 ## Agent Routing Guide
 
-| Task | Agent |
+| Agent | Responsibility |
 |---|---|
-| **New feature — plan before building** | `solution-planner` ← start here |
-| Architecture decisions, code review, design patterns | `tech-lead` |
-| Feature implementation spanning frontend + backend | `full-stack-dev` |
-| Tests — unit, integration, accessibility | `qa-automation-tester` |
-| UI/UX design, component design, design system | `ux-ui-designer` |
-| Financial domain logic, budget/spending rules | `personal-finance-analyst` |
-| Docker, CI/CD, Makefile, Gradle, infrastructure | `devops-engineer` |
+| `solution-planner` | Orchestrates analyst + tech-lead → unified Feature Brief |
+| `personal-finance-analyst` | Domain rules, financial correctness, acceptance criteria |
+| `tech-lead` | Architecture decisions, code review, design patterns, final sign-off |
+| `full-stack-dev` | Implementation spanning frontend + backend |
+| `ux-ui-designer` | All UI/UX — mobile-first, design system, accessibility |
+| `qa-automation-tester` | Unit, integration, and accessibility tests — always runs after implementation |
+| `devops-engineer` | Docker, CI/CD, Makefile, Gradle, infrastructure |
 
 ## Deep Reference (Agent Memory)
 

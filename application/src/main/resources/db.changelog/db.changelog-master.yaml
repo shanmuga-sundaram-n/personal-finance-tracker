@@ -50,3 +50,7 @@ databaseChangeLog:
   - include:
       file: changes/013_add_currency_to_budgets.yml
       relativeToChangelogFile: true
+
+  - include:
+      file: changes/014_budget_plan_index.yml
+      relativeToChangelogFile: true

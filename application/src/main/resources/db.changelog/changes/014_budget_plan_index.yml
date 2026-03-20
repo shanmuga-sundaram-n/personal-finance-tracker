@@ -1,0 +1,10 @@
+databaseChangeLog:
+  - changeSet:
+      id: budget-plan-date-range-index
+      author: dev
+      changes:
+        - sql:
+            sql: |
+              CREATE INDEX IF NOT EXISTS idx_budgets_user_active_dates
+                ON finance_tracker.budgets(user_id, start_date, end_date)
+                WHERE is_active = true;

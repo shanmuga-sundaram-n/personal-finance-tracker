@@ -60,7 +60,7 @@ export function CreateBudgetPage() {
     try {
       await createBudget({
         categoryId: parseInt(data.categoryId, 10),
-        periodType: data.periodType as 'WEEKLY' | 'MONTHLY' | 'QUARTERLY' | 'ANNUALLY' | 'CUSTOM',
+        periodType: data.periodType as 'WEEKLY' | 'BI_WEEKLY' | 'MONTHLY' | 'QUARTERLY' | 'SEMI_ANNUAL' | 'ANNUALLY' | 'CUSTOM',
         amount: parseFloat(data.amount),
         currency: data.currency,
         startDate: data.startDate,

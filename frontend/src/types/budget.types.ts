@@ -1,4 +1,4 @@
-export type BudgetPeriod = 'WEEKLY' | 'MONTHLY' | 'QUARTERLY' | 'ANNUALLY' | 'CUSTOM'
+export type BudgetPeriod = 'WEEKLY' | 'BI_WEEKLY' | 'MONTHLY' | 'QUARTERLY' | 'SEMI_ANNUAL' | 'ANNUALLY' | 'CUSTOM'
 
 export interface Budget {
   id: number
@@ -36,4 +36,47 @@ export interface UpdateBudgetRequest {
   endDate?: string
   rolloverEnabled: boolean
   alertThresholdPct?: number
+}
+
+export interface BudgetPlanCategoryRow {
+  categoryId: number
+  categoryName: string
+  budgetId: number | null
+  budgetedAmount: string
+  actualAmount: string
+  varianceAmount: string
+  percentUsed: number
+  hasBudget: boolean
+  frequency: string | null
+  monthlyAmount: string
+  yearlyAmount: string
+}
+
+export interface BudgetPlanTotals {
+  totalBudgeted: string
+  totalActual: string
+  totalVariance: string
+  totalPercentUsed: number
+  totalMonthly: string
+  totalYearly: string
+}
+
+export interface BudgetPlanCategoryGroup {
+  parentCategoryId: number | null
+  parentCategoryName: string
+  rows: BudgetPlanCategoryRow[]
+  groupMonthlyTotal: string
+  groupYearlyTotal: string
+  groupActualTotal: string
+  alertTriggered: boolean
+}
+
+export interface BudgetPlan {
+  startDate: string
+  endDate: string
+  currency: string
+  incomeRows: BudgetPlanCategoryRow[]
+  expenseGroups: BudgetPlanCategoryGroup[]
+  incomeTotals: BudgetPlanTotals
+  expenseTotals: BudgetPlanTotals
 }
