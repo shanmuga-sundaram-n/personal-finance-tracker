@@ -42,6 +42,7 @@ export function EditBudgetPage() {
 
   useEffect(() => {
     if (!id) return
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setLoading(true)
     getBudget(parseInt(id, 10))
       .then((b) => {

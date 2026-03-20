@@ -37,8 +37,6 @@ export function RegisterPage() {
   const navigate = useNavigate()
   const [error, setError] = useState<string | null>(null)
 
-  if (user) return <Navigate to="/dashboard" replace />
-
   const {
     register,
     handleSubmit,
@@ -47,10 +45,13 @@ export function RegisterPage() {
     resolver: zodResolver(registerSchema),
   })
 
+  if (user) return <Navigate to="/dashboard" replace />
+
   const onSubmit = async (data: RegisterForm) => {
     setError(null)
     try {
-      const { confirmPassword: _, ...request } = data
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { confirmPassword, ...request } = data
       await registerUser(request)
       navigate('/login')
     } catch (e) {

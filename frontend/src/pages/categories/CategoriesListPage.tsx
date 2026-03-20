@@ -598,6 +598,7 @@ function CategoryTabContent({
   const [collapsedIds, setCollapsedIds] = useState<Set<number>>(new Set())
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setCurrentPage(0)
   }, [search, categories])
 
@@ -615,12 +616,14 @@ function CategoryTabContent({
     [categories]
   )
 
-  function buildHierarchy(parents: Category[]) {
-    return parents.map((p) => ({
-      ...p,
-      children: allChildren.filter((c) => c.parentCategoryId === p.id),
-    }))
-  }
+  const buildHierarchy = useCallback(
+    (parents: Category[]) =>
+      parents.map((p) => ({
+        ...p,
+        children: allChildren.filter((c) => c.parentCategoryId === p.id),
+      })),
+    [allChildren]
+  )
 
   const hasUserChild = useCallback(
     (parentId: number) =>
@@ -646,14 +649,14 @@ function CategoryTabContent({
       (c) => c.parentCategoryId == null && (!c.isSystem || hasUserChild(c.id))
     )
     return filterHierarchy(buildHierarchy(parents))
-  }, [categories, allChildren, search, hasUserChild, filterHierarchy])
+  }, [categories, search, hasUserChild, filterHierarchy, buildHierarchy])
 
   const systemHierarchy = useMemo(() => {
     const parents = categories.filter(
       (c) => c.isSystem && c.parentCategoryId == null && !hasUserChild(c.id)
     )
     return filterHierarchy(buildHierarchy(parents))
-  }, [categories, allChildren, search, hasUserChild, filterHierarchy])
+  }, [categories, search, hasUserChild, filterHierarchy, buildHierarchy])
 
   // Build flat rows for pagination — honouring collapsed state when search is empty
   const allRows = useMemo(() => {

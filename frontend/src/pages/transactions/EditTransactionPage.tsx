@@ -47,6 +47,7 @@ export function EditTransactionPage() {
 
   useEffect(() => {
     if (!id) return
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setLoading(true)
     getTransaction(parseInt(id, 10))
       .then((tx) => {

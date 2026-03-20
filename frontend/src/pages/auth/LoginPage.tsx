@@ -24,8 +24,6 @@ export function LoginPage() {
   const navigate = useNavigate()
   const [error, setError] = useState<string | null>(null)
 
-  if (user) return <Navigate to="/dashboard" replace />
-
   const {
     register,
     handleSubmit,
@@ -33,6 +31,8 @@ export function LoginPage() {
   } = useForm<LoginForm>({
     resolver: zodResolver(loginSchema),
   })
+
+  if (user) return <Navigate to="/dashboard" replace />
 
   const onSubmit = async (data: LoginForm) => {
     setError(null)
