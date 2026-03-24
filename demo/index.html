@@ -1,0 +1,1372 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>The AI Engineering Crew — Personal Finance Tracker</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/styles/github-dark.min.css" />
+  <style>
+    :root {
+      --bg:       #0f172a;
+      --surface:  #1e293b;
+      --surface2: #162032;
+      --border:   #334155;
+      --text:     #e2e8f0;
+      --muted:    #94a3b8;
+      --accent:   #d97706;
+      --green:    #22c55e;
+      --blue:     #38bdf8;
+      --purple:   #a78bfa;
+      --red:      #f87171;
+      --cyan:     #67e8f9;
+      --orange:   #fb923c;
+      --pink:     #f9a8d4;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      font-size: 15px;
+      line-height: 1.6;
+    }
+
+    /* ── layout ── */
+    .page { max-width: 1040px; margin: 0 auto; padding: 2rem 1.5rem 6rem; }
+
+    /* ── nav sidebar ── */
+    .toc {
+      position: fixed;
+      top: 1.5rem;
+      right: 1.5rem;
+      width: 190px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: .8rem 1rem;
+      font-size: .72rem;
+      display: flex;
+      flex-direction: column;
+      gap: .25rem;
+      z-index: 100;
+      max-height: calc(100vh - 3rem);
+      overflow-y: auto;
+    }
+    .toc a {
+      color: var(--muted);
+      text-decoration: none;
+      padding: .15rem .3rem;
+      border-radius: 4px;
+      transition: color .15s, background .15s;
+    }
+    .toc a:hover { color: var(--text); background: var(--border); }
+    .toc-title { color: var(--accent); font-weight: 700; font-size: .75rem; margin-bottom: .3rem; }
+
+    @media (max-width: 1300px) { .toc { display: none; } }
+
+    /* ── section card ── */
+    .section {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 2rem 2.4rem;
+      margin-bottom: 1.5rem;
+      scroll-margin-top: 1rem;
+    }
+    .section-num {
+      display: inline-block;
+      background: var(--border);
+      color: var(--muted);
+      font-size: .72rem;
+      font-weight: 700;
+      padding: .1em .5em;
+      border-radius: 4px;
+      margin-bottom: .6rem;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+    }
+
+    h1 { font-size: 2.2rem; font-weight: 800; line-height: 1.15; }
+    h2 { font-size: 1.5rem; font-weight: 700; color: var(--accent); margin-bottom: .8rem; }
+    h3 { font-size: 1rem; font-weight: 700; color: var(--blue); margin-bottom: .4rem; margin-top: 1rem; }
+    h3:first-child { margin-top: 0; }
+    p  { color: var(--muted); margin-bottom: .5rem; }
+
+    /* ── title hero ── */
+    .hero {
+      text-align: center;
+      padding: 4.5rem 2rem 3.5rem;
+      border-radius: 16px;
+      background:
+        radial-gradient(ellipse 80% 55% at 50% 0%, rgba(217,119,6,.13) 0%, transparent 65%),
+        linear-gradient(180deg, #0d1829 0%, #111827 100%);
+      border: 1px solid var(--border);
+      border-top: 2px solid var(--accent);
+      margin-bottom: 1.5rem;
+      position: relative;
+      overflow: hidden;
+    }
+    .hero::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background-image: radial-gradient(circle, #1e293b 1px, transparent 1px);
+      background-size: 28px 28px;
+      opacity: .6;
+      pointer-events: none;
+    }
+    .hero > * { position: relative; z-index: 1; }
+    .hero-label {
+      display: inline-block;
+      font-size: .72rem;
+      letter-spacing: .16em;
+      text-transform: uppercase;
+      color: var(--accent);
+      border: 1px solid rgba(217,119,6,.35);
+      background: rgba(217,119,6,.08);
+      border-radius: 9999px;
+      padding: .3em 1em;
+      margin-bottom: 1.2rem;
+    }
+    .hero h1 {
+      font-size: 3.6rem;
+      font-weight: 800;
+      letter-spacing: -.02em;
+      background: linear-gradient(135deg, #ffffff 0%, #e2e8f0 50%, #94a3b8 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: .6rem;
+      line-height: 1.1;
+    }
+    .hero .sub {
+      color: var(--muted);
+      font-size: .95rem;
+      margin-bottom: .5rem;
+      letter-spacing: .01em;
+    }
+    .hero .sub span { color: var(--accent); margin: 0 .4em; }
+    .hero-divider {
+      width: 40px;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, var(--accent), transparent);
+      margin: 1.2rem auto;
+    }
+    .hero .stack-label {
+      font-size: .65rem;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      color: #475569;
+      margin-bottom: .6rem;
+    }
+
+    /* ── pills ── */
+    .pill {
+      display: inline-block;
+      padding: .18em .65em;
+      border-radius: 9999px;
+      font-size: .72rem;
+      font-weight: 600;
+      letter-spacing: .03em;
+    }
+    .pill-amber  { background: #78350f; color: var(--accent); }
+    .pill-green  { background: #14532d; color: var(--green);  }
+    .pill-blue   { background: #0c4a6e; color: var(--blue);   }
+    .pill-purple { background: #3b0764; color: var(--purple); }
+    .pill-red    { background: #450a0a; color: var(--red);    }
+    .pill-cyan   { background: #083344; color: var(--cyan);   }
+    .pill-orange { background: #431407; color: var(--orange); }
+    .pill-pink   { background: #500724; color: var(--pink);   }
+
+    .badge-row { display: flex; gap: .4rem; flex-wrap: wrap; margin: .6rem 0; }
+
+    /* ── grid ── */
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin: .8rem 0; }
+    .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: .8rem; margin: .8rem 0; }
+    @media (max-width: 700px) { .grid-2, .grid-3 { grid-template-columns: 1fr; } }
+
+    /* ── card ── */
+    .card {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1rem 1.2rem;
+    }
+    .card.border-green { border-color: #16a34a; }
+    .card.border-red   { border-color: #dc2626; }
+    .card.border-amber { border-color: var(--accent); }
+    .card.border-blue  { border-color: #0369a1; }
+
+    /* ── pipeline ── */
+    .pipeline {
+      display: flex;
+      align-items: center;
+      gap: .4rem;
+      flex-wrap: wrap;
+      margin: 1.2rem 0;
+    }
+    .pipeline-step {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: .5rem .9rem;
+      text-align: center;
+      min-width: 100px;
+    }
+    .pipeline-step .phase { font-size: .65rem; color: var(--muted); }
+    .pipeline-step .name  { font-size: .85rem; font-weight: 700; line-height: 1.3; }
+    .pipeline-step .agent { font-size: .6rem; color: var(--muted); margin-top: .25rem; font-family: 'Fira Code', monospace; }
+    .pipeline-arrow { color: var(--accent); font-size: 1.3rem; }
+
+    /* ── highlight box ── */
+    .callout {
+      border-left: 3px solid var(--accent);
+      background: #1c1207;
+      padding: .7rem 1rem;
+      margin: .8rem 0;
+      border-radius: 0 6px 6px 0;
+      font-size: .88rem;
+    }
+    .callout.green { border-color: var(--green); background: #071a0f; }
+    .callout.red   { border-color: var(--red);   background: #180707; }
+    .callout.blue  { border-color: var(--blue);  background: #061523; }
+
+    /* ── code ── */
+    pre {
+      border-radius: 8px;
+      margin: .8rem 0;
+      font-size: .8rem;
+      overflow-x: auto;
+      border: 1px solid var(--border);
+    }
+    code.inline {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: .1em .35em;
+      font-size: .85em;
+      font-family: 'Fira Code', 'Cascadia Code', monospace;
+    }
+
+    /* ── tables ── */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: .85rem;
+      margin: .8rem 0;
+    }
+    th {
+      background: #162032;
+      color: var(--blue);
+      text-align: left;
+      padding: .5rem .8rem;
+      border-bottom: 1px solid var(--border);
+      font-size: .8rem;
+      letter-spacing: .04em;
+      text-transform: uppercase;
+    }
+    td {
+      padding: .55rem .8rem;
+      border-bottom: 1px solid #1a2840;
+      vertical-align: top;
+    }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: #182030; }
+
+    /* ── memory tree ── */
+    .tree {
+      font-family: 'Fira Code', 'Cascadia Code', monospace;
+      font-size: .8rem;
+      line-height: 1.65;
+      white-space: pre;
+      overflow-x: auto;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1rem 1.2rem;
+      margin: .8rem 0;
+    }
+
+    /* ── lists ── */
+    ul, ol { padding-left: 1.4rem; color: var(--muted); }
+    ul li, ol li { margin-bottom: .25rem; }
+    li strong { color: var(--text); }
+
+    /* ── agent colours ── */
+    .c-green  { color: var(--green);  }
+    .c-red    { color: var(--red);    }
+    .c-amber  { color: var(--accent); }
+    .c-blue   { color: var(--blue);   }
+    .c-purple { color: var(--purple); }
+    .c-cyan   { color: var(--cyan);   }
+    .c-orange { color: var(--orange); }
+    .c-pink   { color: var(--pink);   }
+    .c-muted  { color: var(--muted);  }
+
+    /* ── divider ── */
+    hr { border: none; border-top: 1px solid var(--border); margin: 1.2rem 0; }
+
+    /* ── scroll progress bar ── */
+    .progress-bar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      height: 3px;
+      width: 0%;
+      background: linear-gradient(90deg, var(--accent), #fbbf24);
+      z-index: 1000;
+      transition: width .08s linear;
+    }
+
+    /* ── scroll-to-top ── */
+    .top-btn {
+      position: fixed;
+      bottom: 2rem;
+      right: 1.5rem;
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      padding: .5rem .9rem;
+      font-size: .8rem;
+      cursor: pointer;
+      font-weight: 600;
+      z-index: 200;
+    }
+    .top-btn:hover { background: #b45309; }
+  </style>
+</head>
+<body>
+
+<!-- TOC sidebar -->
+<nav class="toc">
+  <div class="toc-title">Contents</div>
+  <a href="#intro">What is Claude Code?</a>
+  <a href="#project">Project Overview</a>
+  <a href="#challenge">The Challenge</a>
+  <a href="#pipeline">Delivery Pipeline</a>
+  <a href="#planner">solution-planner</a>
+  <a href="#analyst">personal-finance-analyst</a>
+  <a href="#techlead">tech-lead</a>
+  <a href="#dev">full-stack-dev</a>
+  <a href="#ux-qa">UX · QA · Sign-off</a>
+  <a href="#hooks">Hooks Overview</a>
+  <a href="#domain-hook">Domain Purity Hook</a>
+  <a href="#migration-hook">Migration Guard Hook</a>
+  <a href="#bash-hook">Bash Guard Hook</a>
+  <a href="#memory">Agent Memory</a>
+  <a href="#memory-pattern">MEMORY.md Pattern</a>
+  <a href="#demo">Live Demo</a>
+  <a href="#agents-table">All 7 Agents</a>
+  <a href="#summary">Summary</a>
+</nav>
+
+<div class="progress-bar" id="progress"></div>
+<button class="top-btn" onclick="window.scrollTo({top:0,behavior:'smooth'})">↑ Top</button>
+
+<div class="page">
+
+  <!-- ── HERO ── -->
+  <div class="hero">
+    <div class="hero-label">AI-Assisted Development with Claude Code</div>
+    <h1>The AI Engineering Crew</h1>
+    <p class="sub">
+      Personal Finance Tracker
+      <span>·</span> Multi-agent pipeline
+      <span>·</span> Automated guardrails
+      <span>·</span> Persistent context
+    </p>
+    <div class="hero-divider"></div>
+    <div class="stack-label">Built on</div>
+    <div class="badge-row" style="justify-content:center;">
+      <span class="pill pill-blue">Java 17</span>
+      <span class="pill pill-cyan">Spring Boot 3.2</span>
+      <span class="pill pill-green">React + TypeScript</span>
+      <span class="pill pill-amber">Hexagonal Architecture</span>
+      <span class="pill pill-purple">PostgreSQL 15</span>
+    </div>
+  </div>
+
+  <!-- ── 1. What is Claude Code ── -->
+  <div class="section" id="intro">
+    <div class="section-num">01</div>
+    <h2>What is Claude Code?</h2>
+    <p>Anthropic's official CLI for agentic software engineering — runs in your terminal, reads and writes files, executes commands, and orchestrates specialized sub-agents.</p>
+    <div class="grid-2" style="margin-top:1rem;">
+      <div class="card">
+        <h3>Agents</h3>
+        <p>Autonomous sub-processes with their own system prompts, tool access, and persistent memory. Spawned by an orchestrator or triggered by user intent.</p>
+      </div>
+      <div class="card">
+        <h3>Hooks</h3>
+        <p>Shell scripts that fire on <strong>PreToolUse</strong> or <strong>PostToolUse</strong> events. Can block tool calls (<code class="inline">exit 2</code>) or run side-effects automatically.</p>
+      </div>
+      <div class="card">
+        <h3>Agent Memory</h3>
+        <p>Markdown files that persist across conversations. Each agent owns a memory directory — institutional knowledge that survives session boundaries.</p>
+      </div>
+      <div class="card">
+        <h3>Skill Files</h3>
+        <p>Custom slash commands (<code class="inline">/feature</code>, <code class="inline">/review</code>) that inject prompt templates. For repetitive user-triggered workflows.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── 2. Project Overview ── -->
+  <div class="section" id="project">
+    <div class="section-num">02</div>
+    <h2>Personal Finance Tracker</h2>
+    <div class="grid-2">
+      <div>
+        <div class="card">
+          <h3>Backend</h3>
+          <p>Java 17 · Spring Boot 3.2.2 · Gradle multi-module (<code class="inline">application/</code>, <code class="inline">acceptance/</code>, <code class="inline">database/</code>)<br/>Root pkg: <code class="inline">com.shan.cyber.tech.financetracker</code></p>
+        </div>
+        <div class="card" style="margin-top:.8rem;">
+          <h3>Frontend</h3>
+          <p>React + TypeScript · Vite · Tailwind CSS · shadcn/ui · in <code class="inline">frontend/</code></p>
+        </div>
+        <div class="card" style="margin-top:.8rem;">
+          <h3>Infrastructure</h3>
+          <p>Docker Compose · Nginx · PostgreSQL 15.2 · GitHub Actions CI/CD</p>
+        </div>
+      </div>
+      <div>
+        <div class="card">
+          <h3>Bounded Contexts</h3>
+          <div class="badge-row">
+            <span class="pill pill-blue">identity</span>
+            <span class="pill pill-blue">account</span>
+            <span class="pill pill-blue">category</span>
+            <span class="pill pill-blue">transaction</span>
+            <span class="pill pill-blue">budget</span>
+            <span class="pill pill-blue">reporting</span>
+            <span class="pill pill-amber">shared</span>
+          </div>
+        </div>
+        <div class="card" style="margin-top:.8rem;">
+          <h3>Key Constraints</h3>
+          <ul>
+            <li>Hexagonal Architecture (ADR-014) — ArchUnit enforced</li>
+            <li>Domain zone = pure Java (zero Spring / JPA / Lombok)</li>
+            <li>Money = BigDecimal always — no float/double</li>
+            <li>Soft-delete only — <code class="inline">is_active = false</code></li>
+            <li>All financial writes <code class="inline">@Transactional</code></li>
+            <li>Auth via opaque UUID Bearer token (no JWT, no Spring Security)</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── 3. The Challenge ── -->
+  <div class="section" id="challenge">
+    <div class="section-num">03</div>
+    <h2>The Challenge</h2>
+    <p>Hexagonal Architecture with strict ArchUnit enforcement means dozens of rules to hold in mind while coding every feature.</p>
+    <pre><code class="language-text">{context}/
+  domain/                 ←  PURE JAVA — zero Spring, JPA, Lombok, Jackson
+  adapter/
+    inbound/web/          ←  REST controllers + *RequestDto / *ResponseDto (records)
+    outbound/
+      persistence/        ←  *JpaEntity  +  *JpaMapper  +  *PersistenceAdapter
+      event/              ←  Domain event publishers
+      crosscontext/       ←  ACL adapters (no direct domain imports across contexts)
+  config/                 ←  *Config.java — @Bean wiring ONLY (never @Service on domain)</code></pre>
+    <div class="grid-2">
+      <div class="callout red">
+        <strong class="c-red">✗ Without Claude Code</strong><br/>
+        Spring annotations leak into domain · wrong layer for @Transactional ·
+        cross-context direct imports · float used for money · migration files edited in-place
+      </div>
+      <div class="callout green">
+        <strong class="c-green">✓ With Claude Code</strong><br/>
+        7 specialized agents enforce rules at every phase ·
+        3 pre-hooks block violations before they land ·
+        ArchUnit is the final safety net, not the first line of defence
+      </div>
+    </div>
+  </div>
+
+  <!-- ── 4. Pipeline Overview ── -->
+  <div class="section" id="pipeline">
+    <div class="section-num">04</div>
+    <h2>Feature Delivery Pipeline</h2>
+    <p>Every feature flows through 7 phases. No skipping. No merging.</p>
+
+    <!-- Entry point -->
+    <div style="display:flex;align-items:center;gap:.6rem;margin-bottom:.6rem;">
+      <div class="pipeline-step" style="border-color:#64748b;background:#0f172a;min-width:80px;">
+        <div class="phase">Trigger</div>
+        <div class="name" style="color:#94a3b8;">User<br/>Request</div>
+      </div>
+      <div class="pipeline-arrow">→</div>
+      <div class="pipeline-step" style="border-color:#16a34a;background:#0a1f12;">
+        <div class="phase">Orchestrator</div>
+        <div class="name c-green">solution-<br/>planner</div>
+        <div class="agent c-green">starts first · drives all phases</div>
+      </div>
+      <div class="pipeline-arrow">→</div>
+      <span style="font-size:.8rem;color:var(--muted);font-style:italic;">spawns phases below</span>
+    </div>
+
+    <!-- Phases -->
+    <div style="border:1px solid #16a34a;border-radius:10px;padding:1rem;background:#07120a;">
+      <div style="font-size:.65rem;color:#16a34a;letter-spacing:.08em;text-transform:uppercase;margin-bottom:.7rem;">
+        solution-planner orchestrates →
+      </div>
+      <div class="pipeline">
+        <div class="pipeline-step" style="border-color:#dc2626;">
+          <div class="phase">Phase 1</div>
+          <div class="name c-red">Domain<br/>Analysis</div>
+          <div class="agent c-red">personal-finance-analyst</div>
+        </div>
+        <div class="pipeline-arrow">→</div>
+        <div class="pipeline-step" style="border-color:#fb923c;">
+          <div class="phase">Phase 2</div>
+          <div class="name c-orange">Architecture<br/>Design</div>
+          <div class="agent c-orange">tech-lead</div>
+        </div>
+        <div class="pipeline-arrow">→</div>
+        <div class="pipeline-step" style="border-color:#16a34a;background:#0a1f12;">
+          <div class="phase">Phase 3</div>
+          <div class="name c-green">Synthesis</div>
+          <div class="agent c-green">solution-planner</div>
+        </div>
+        <div class="pipeline-arrow">→</div>
+        <div class="pipeline-step" style="border-color:#0891b2;">
+          <div class="phase">Phase 4</div>
+          <div class="name c-cyan">Implement</div>
+          <div class="agent c-cyan">full-stack-dev</div>
+        </div>
+        <div class="pipeline-arrow">→</div>
+        <div style="display:flex;flex-direction:column;gap:.4rem;border:1px dashed var(--border);border-radius:8px;padding:.5rem .6rem;">
+          <div style="font-size:.6rem;color:var(--accent);text-align:center;letter-spacing:.06em;text-transform:uppercase;margin-bottom:.1rem;">parallel</div>
+          <div class="pipeline-step" style="border-color:#db2777;min-width:110px;">
+            <div class="phase">Phase 5</div>
+            <div class="name c-pink">UX Review</div>
+            <div class="agent c-pink">ux-ui-designer</div>
+          </div>
+          <div class="pipeline-step" style="border-color:#7c3aed;min-width:110px;">
+            <div class="phase">Phase 6</div>
+            <div class="name c-purple">QA &amp; Tests</div>
+            <div class="agent c-purple">qa-automation-tester</div>
+          </div>
+        </div>
+        <div class="pipeline-arrow">→</div>
+        <div class="pipeline-step" style="border-color:#fb923c;">
+          <div class="phase">Phase 7</div>
+          <div class="name c-orange">Sign-off</div>
+          <div class="agent c-orange">tech-lead</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid-2" style="margin-top:1rem;">
+      <div class="card">
+        <h3>Execution order</h3>
+        <ul>
+          <li><strong>solution-planner starts first</strong> — receives user request</li>
+          <li>Phases 1→2→3→4 run <strong>sequentially</strong> (each feeds the next)</li>
+          <li>Phases 5 &amp; 6 run <strong>in parallel</strong> after Phase 4</li>
+          <li>Phase 7 waits for both 5 and 6 to complete</li>
+          <li>User confirms Feature Brief before Phase 4 begins</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>Routing shortcuts</h3>
+        <ul>
+          <li>UI-only change → start at Phase 5 (ux-ui-designer)</li>
+          <li>Bug fix → tech-lead diagnose → full-stack-dev fix → qa verify</li>
+          <li>Infrastructure → devops-engineer directly</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── 5. solution-planner ── -->
+  <div class="section" id="planner">
+    <div class="section-num">05</div>
+    <h2>Agent: <span class="c-green">solution-planner</span></h2>
+    <div class="badge-row">
+      <span class="pill pill-amber">model: opus</span>
+      <span class="pill pill-green">orchestrator</span>
+      <span class="pill pill-green">does NOT write code</span>
+    </div>
+    <p style="margin-top:.8rem;">The entry point for all feature work. Coordinates 6 downstream agents and produces a <strong>Feature Brief</strong> — the single source of truth for implementation.</p>
+    <h3>Feature Brief structure</h3>
+    <pre><code class="language-markdown"># Feature Brief: Budget Rollover
+Date: 2026-03-23   Status: Ready for implementation   Phase: 2
+
+## Domain Rules
+- Rollover amount = unspent balance from previous period (never negative)
+- Rollover is soft — user can disable per budget
+
+## Acceptance Criteria
+1. POST /api/v1/budgets/{id}/rollover creates a new period with carried balance
+2. 404 if budget belongs to a different user
+3. 422 if budget has no completed prior period
+
+## Architecture
+### New Inbound Port: RolloverBudgetUseCase
+### New Outbound Port: BudgetPeriodPersistencePort
+### DB Migration: 011_add_budget_rollover_fields.yml
+### REST: POST /api/v1/budgets/{id}/rollover → 201 RolloverResponseDto
+
+## Implementation Checklist
+- [ ] DB migration        - [ ] Domain model       - [ ] Inbound port
+- [ ] Domain service      - [ ] Outbound port       - [ ] JPA entity + mapper
+- [ ] REST controller     - [ ] @Bean wiring        - [ ] Frontend hook
+- [ ] Frontend component  - [ ] Unit tests          - [ ] Controller tests</code></pre>
+    <p class="c-muted" style="font-size:.85rem;">Saved to: <code class="inline">.claude/agent-memory/solution-planner/feature-briefs/</code></p>
+  </div>
+
+  <!-- ── 6. personal-finance-analyst ── -->
+  <div class="section" id="analyst">
+    <div class="section-num">06</div>
+    <h2>Agent: <span class="c-red">personal-finance-analyst</span></h2>
+    <div class="badge-row">
+      <span class="pill pill-red">Phase 1</span>
+      <span class="pill pill-red">Domain Brief</span>
+      <span class="pill pill-red">reads DOMAIN-OWNERSHIP.md</span>
+    </div>
+    <div class="grid-2" style="margin-top:.8rem;">
+      <div class="card">
+        <h3>Produces</h3>
+        <ol>
+          <li>Relevant domain rules &amp; invariants</li>
+          <li>Acceptance criteria (numbered, testable)</li>
+          <li>Data model changes (fields, constraints)</li>
+          <li>Edge cases + validation rules + error codes</li>
+          <li>Financial correctness concerns</li>
+          <li>Conflicts with existing domain rules</li>
+          <li>Phase classification (1 / 2 / 3)</li>
+        </ol>
+      </div>
+      <div class="card">
+        <h3>Financial rules it enforces</h3>
+        <ul>
+          <li>Money = BigDecimal, NUMERIC(19,4)</li>
+          <li>SAVINGS/CASH accounts cannot go below zero</li>
+          <li>TRANSFER creates two rows atomically</li>
+          <li>Soft-delete only on all financial entities</li>
+          <li>All list queries scoped to authenticated user</li>
+          <li>Sign convention: income +, expense −</li>
+        </ul>
+      </div>
+    </div>
+    <div class="callout">
+      Output feeds Phase 2 (tech-lead) <em>in full</em> — never summarised. The tech-lead needs complete context.
+    </div>
+  </div>
+
+  <!-- ── 7. tech-lead ── -->
+  <div class="section" id="techlead">
+    <div class="section-num">07</div>
+    <h2>Agent: <span class="c-amber">tech-lead</span></h2>
+    <div class="badge-row">
+      <span class="pill pill-amber">Phase 2</span>
+      <span class="pill pill-amber">Phase 7 sign-off</span>
+      <span class="pill pill-amber">bug diagnosis</span>
+    </div>
+    <div class="grid-2" style="margin-top:.8rem;">
+      <div class="card">
+        <h3>Architecture Brief (Phase 2)</h3>
+        <ul>
+          <li>Bounded contexts affected</li>
+          <li>New inbound / outbound port interfaces with exact signatures</li>
+          <li>Cross-context ACL adapter pattern (ADR-016)</li>
+          <li>Domain service class + constructor (pure Java)</li>
+          <li>JPA entity changes + Liquibase migration plan</li>
+          <li>REST endpoints (method, path, DTOs)</li>
+          <li><code class="inline">@Transactional</code> placement (adapter layer only — never domain)</li>
+          <li>N+1 risks + JOIN FETCH mitigation</li>
+          <li>Implementation order + complexity (S/M/L)</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>Sign-off Checklist (Phase 7)</h3>
+        <ul>
+          <li>No Spring/JPA in <code class="inline">domain/</code> classes</li>
+          <li>All domain services wired via <code class="inline">@Bean</code></li>
+          <li>No cross-context domain imports</li>
+          <li>Ports named per ADR-017 convention</li>
+          <li>Tests pass</li>
+          <li>Updates <code class="inline">MEMORY.md</code> with new patterns</li>
+        </ul>
+        <div class="callout red" style="margin-top:.8rem; font-size:.85rem;">
+          ArchUnit violations → <strong class="c-red">blocked</strong>, not warned
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── 8. full-stack-dev ── -->
+  <div class="section" id="dev">
+    <div class="section-num">08</div>
+    <h2>Agent: <span class="c-cyan">full-stack-dev</span></h2>
+    <div class="badge-row">
+      <span class="pill pill-cyan">Phase 4</span>
+      <span class="pill pill-cyan">backend + frontend</span>
+    </div>
+    <p style="margin-top:.8rem;">Receives the Feature Brief → executes the Implementation Checklist end-to-end in a fixed dependency order.</p>
+    <div class="grid-2" style="margin-top:.8rem;">
+      <div class="card">
+        <h3>Backend implementation order</h3>
+        <ol>
+          <li>DB migration (Liquibase YAML)</li>
+          <li>Domain model (pure Java)</li>
+          <li>Inbound port interfaces (UseCase / Query)</li>
+          <li>Domain service (zero Spring)</li>
+          <li>Outbound port interfaces (PersistencePort)</li>
+          <li>JPA entity + <code class="inline">*JpaMapper</code></li>
+          <li>Persistence adapter</li>
+          <li>REST controller + DTO records</li>
+          <li><code class="inline">@Bean</code> wiring in Config</li>
+        </ol>
+      </div>
+      <div class="card">
+        <h3>Frontend implementation order</h3>
+        <ol>
+          <li>TypeScript types</li>
+          <li>API client function</li>
+          <li>Custom hook (<code class="inline">use*.ts</code>)</li>
+          <li>Page / component</li>
+        </ol>
+        <hr/>
+        <h3>Verification before done</h3>
+        <ul>
+          <li><code class="inline">./gradlew :application:test --no-daemon</code></li>
+          <li><code class="inline">cd frontend &amp;&amp; npm run build</code></li>
+          <li>Fix failures before reporting complete</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── 9. UX + QA + sign-off ── -->
+  <div class="section" id="ux-qa">
+    <div class="section-num">09</div>
+    <h2>Phases 5 ∥ 6 → 7 — UX + QA (parallel) → Sign-off</h2>
+
+    <!-- Parallel block -->
+    <div style="border:1px dashed var(--border);border-radius:10px;padding:1rem;margin-bottom:1rem;">
+      <div style="text-align:center;font-size:.65rem;color:var(--accent);letter-spacing:.08em;text-transform:uppercase;margin-bottom:.8rem;">
+        ⇉ spawned simultaneously after Phase 4 — independent of each other
+      </div>
+      <div class="grid-2">
+        <div class="card" style="border-color:#db2777;">
+          <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.5rem;">
+            <span class="pill pill-pink">Phase 5</span>
+            <strong class="c-pink">ux-ui-designer</strong>
+          </div>
+          <ul>
+            <li>Mobile-first (375px+), no HTML tables</li>
+            <li>Touch targets ≥ 44px</li>
+            <li>Skeleton loaders (not spinners)</li>
+            <li>Empty states: icon + heading + CTA</li>
+            <li>WCAG 2.1 AA minimum</li>
+            <li>income=green · expense=red tokens</li>
+            <li>Rebuilds &amp; redeploys frontend after changes</li>
+          </ul>
+        </div>
+        <div class="card" style="border-color:#7c3aed;">
+          <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.5rem;">
+            <span class="pill pill-purple">Phase 6</span>
+            <strong class="c-purple">qa-automation-tester</strong>
+          </div>
+          <ul>
+            <li>Domain service unit tests (JUnit 5)</li>
+            <li>All acceptance criteria edge cases</li>
+            <li>MockMvc controller tests</li>
+            <li>400 / 401 / 404 error paths</li>
+            <li>Accessibility: ARIA, keyboard nav</li>
+            <li>Reports pass/fail counts</li>
+            <li>Fixes failures before marking done</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- Phase 7 sign-off -->
+    <div style="display:flex;align-items:center;gap:.6rem;margin-bottom:.6rem;">
+      <div style="flex:1;height:1px;background:var(--border);"></div>
+      <span style="font-size:.75rem;color:var(--muted);">both complete → Phase 7</span>
+      <div style="flex:1;height:1px;background:var(--border);"></div>
+    </div>
+    <div class="card" style="border-color:#ca8a04;">
+      <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.5rem;">
+        <span class="pill pill-amber">Phase 7</span>
+        <strong class="c-amber">tech-lead — final sign-off</strong>
+      </div>
+      <div class="grid-2" style="margin:0;">
+        <ul>
+          <li>Reviews all changed files</li>
+          <li>Confirms ArchUnit compliance</li>
+          <li>Confirms <code class="inline">@Bean</code>-only domain wiring</li>
+          <li>Confirms no cross-context imports</li>
+        </ul>
+        <ul>
+          <li>Confirms port naming (ADR-017)</li>
+          <li>Updates <code class="inline">MEMORY.md</code> with new patterns</li>
+          <li>Feature merged <em>only</em> after ✓ sign-off</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── 10. Hooks Overview ── -->
+  <div class="section" id="hooks">
+    <div class="section-num">10</div>
+    <h2>Automated Guardrails — Hooks</h2>
+    <p>Shell scripts that fire automatically on tool events. <code class="inline">exit 2</code> blocks the tool call and surfaces the reason to Claude.</p>
+    <table>
+      <thead>
+        <tr>
+          <th>Event</th>
+          <th>Matcher</th>
+          <th>Hook Script</th>
+          <th>What it catches</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><span class="pill pill-red">PreToolUse</span></td>
+          <td><code class="inline">Edit | Write</code></td>
+          <td><code class="inline">pre-domain-purity.sh</code></td>
+          <td>Spring/JPA/Lombok imports + <code class="inline">@Service</code>, <code class="inline">@Entity</code>, <code class="inline">@Autowired</code> in <code class="inline">domain/*.java</code></td>
+        </tr>
+        <tr>
+          <td><span class="pill pill-red">PreToolUse</span></td>
+          <td><code class="inline">Edit | Write</code></td>
+          <td><code class="inline">pre-migration-guard.sh</code></td>
+          <td>Modification of existing Liquibase migration files (immutable once committed)</td>
+        </tr>
+        <tr>
+          <td><span class="pill pill-red">PreToolUse</span></td>
+          <td><code class="inline">Bash</code></td>
+          <td><code class="inline">pre-bash-guard.sh</code></td>
+          <td>Destructive git commands (<code class="inline">reset --hard</code>, <code class="inline">push --force</code>) + hard-delete SQL</td>
+        </tr>
+        <tr>
+          <td><span class="pill pill-green">PostToolUse</span></td>
+          <td><code class="inline">Edit | Write</code></td>
+          <td><code class="inline">post-edit-lint.sh</code></td>
+          <td>Auto-fixes TypeScript/TSX with ESLint <code class="inline">--fix</code> after every edit</td>
+        </tr>
+        <tr>
+          <td><span class="pill pill-blue">Stop</span></td>
+          <td>—</td>
+          <td>macOS notification</td>
+          <td>Plays "Glass" sound + banner when Claude finishes a task</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ── 11. Domain Purity Hook ── -->
+  <div class="section" id="domain-hook">
+    <div class="section-num">11</div>
+    <h2>Pre-hook: Domain Purity Guard</h2>
+    <div class="badge-row">
+      <span class="pill pill-red">PreToolUse</span>
+      <span class="pill pill-orange">Edit | Write on */domain/*.java</span>
+    </div>
+    <p style="margin-top:.8rem;">Fires before Claude writes to any domain package Java file. Checks <code class="inline">new_string</code> (Edit) or <code class="inline">content</code> (Write) for forbidden patterns.</p>
+    <pre><code class="language-bash">FORBIDDEN=(
+  "import org.springframework"    # Spring beans / annotations
+  "import javax.persistence"      # JPA (Jakarta EE)
+  "import jakarta.persistence"    # JPA (Jakarta EE 9+)
+  "import org.hibernate"          # Hibernate-specific
+  "import lombok"                 # Lombok
+  "import com.fasterxml.jackson"  # Jackson JSON
+  "@Service"  "@Component"  "@Repository"  "@Autowired"
+  "@Entity"   "@Table("     "@Column("
+)
+
+# If any match found in new content → exit 2 (block) + explanation to Claude</code></pre>
+    <div class="callout red">
+      <strong class="c-red">Example block message:</strong><br/>
+      BLOCKED: Domain purity violation in BudgetDomainService.java<br/>
+      Forbidden: @Service<br/>
+      Domain classes must be pure Java. Wire via @Bean in BudgetConfig.java instead.
+    </div>
+  </div>
+
+  <!-- ── 12. Migration Guard ── -->
+  <div class="section" id="migration-hook">
+    <div class="section-num">12</div>
+    <h2>Pre-hook: Migration Immutability Guard</h2>
+    <div class="badge-row">
+      <span class="pill pill-red">PreToolUse</span>
+      <span class="pill pill-orange">Edit | Write on */db.changelog/changes/*.yml</span>
+    </div>
+    <p style="margin-top:.8rem;">Liquibase computes a checksum for each changeset on first run. Modifying an existing migration breaks the checksum and causes every deployment to fail.</p>
+    <div class="grid-2">
+      <div class="card border-red">
+        <h3 class="c-red">Blocked — file already exists</h3>
+        <pre><code class="language-text">Edit: 005_create_accounts_table.yml
+
+BLOCKED: Migration file is immutable:
+005_create_accounts_table.yml
+
+Create a new migration instead:
+  changes/011_&lt;description&gt;.yml</code></pre>
+      </div>
+      <div class="card border-green">
+        <h3 class="c-green">Allowed — new file</h3>
+        <pre><code class="language-text">Write: 011_add_budget_rollover_fields.yml
+# File does not exist yet → allow
+
+Migration sequence:
+001  create_schema           ✓
+002  create_user_tables      ✓
+...
+010  create_budgets_table    ✓
+011  add_rollover_fields     ← NEW</code></pre>
+      </div>
+    </div>
+    <p style="font-size:.85rem;">The hook also suggests the next sequence number by scanning existing files in the <code class="inline">changes/</code> directory.</p>
+  </div>
+
+  <!-- ── 13. Bash Guard ── -->
+  <div class="section" id="bash-hook">
+    <div class="section-num">13</div>
+    <h2>Pre-hook: Destructive Command Guard</h2>
+    <div class="badge-row">
+      <span class="pill pill-red">PreToolUse</span>
+      <span class="pill pill-orange">Bash</span>
+    </div>
+    <p style="margin-top:.8rem;">Blocks irreversible commands before they execute. Claude must ask for user confirmation instead of acting autonomously.</p>
+    <div class="grid-2">
+      <div class="card">
+        <h3>Blocked git operations</h3>
+        <ul>
+          <li><code class="inline">git reset --hard</code></li>
+          <li><code class="inline">git push --force</code> / <code class="inline">-f</code></li>
+          <li><code class="inline">git clean -f</code></li>
+          <li><code class="inline">git checkout -- .</code></li>
+          <li><code class="inline">git restore .</code></li>
+          <li><code class="inline">git branch -D</code></li>
+          <li><code class="inline">git rebase -i</code></li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>Blocked SQL operations</h3>
+        <ul>
+          <li><code class="inline">DELETE FROM</code></li>
+          <li><code class="inline">DROP TABLE</code></li>
+          <li><code class="inline">TRUNCATE</code></li>
+        </ul>
+        <div class="callout" style="margin-top:.8rem; font-size:.85rem;">
+          This project uses <strong>soft-delete only</strong> (<code class="inline">is_active = false</code>).
+          Hard deletes should never reach the <code class="inline">finance_tracker</code> schema.
+        </div>
+      </div>
+    </div>
+    <div class="callout" style="margin-top:.8rem;">
+      Block message tells Claude: <em>"Ask the user to confirm and run it directly as <code class="inline">! &lt;command&gt;</code>"</em>
+    </div>
+  </div>
+
+  <!-- ── 14. Agent Memory ── -->
+  <div class="section" id="memory">
+    <div class="section-num">14</div>
+    <h2>Persistent Agent Memory</h2>
+    <p>Each agent owns a memory directory. Context persists across sessions — agents build institutional knowledge over time without re-reading the entire codebase.</p>
+    <div class="tree">
+<span class="c-amber">.claude/agent-memory/</span>
+│
+├── <span class="c-amber">tech-lead/</span>
+│   ├── MEMORY.md                    <span class="c-muted"># loaded into every session (≤ 200 lines)</span>
+│   ├── architecture-decisions.md    <span class="c-muted"># all ADRs (ADR-011 through ADR-018)</span>
+│   ├── hexagonal-architecture.md    <span class="c-muted"># full hexagonal spec</span>
+│   ├── updated-package-structure.md <span class="c-muted"># full class tree per bounded context</span>
+│   ├── code-standards.md
+│   ├── dependencies.md
+│   ├── implementation-plan.md
+│   ├── multi-platform-api.md
+│   └── budget-plan-arch-review.md
+│
+├── <span class="c-red">personal-finance-analyst/</span>
+│   ├── MEMORY.md
+│   ├── DOMAIN-OWNERSHIP.md          <span class="c-muted"># authoritative domain rules for all contexts</span>
+│   ├── brief-for-tech-lead.md       <span class="c-muted"># past domain decisions handed to tech-lead</span>
+│   ├── brief-for-qa-tester.md
+│   ├── brief-for-ux-designer.md
+│   ├── budget-plan-review.md
+│   └── hierarchical-budget-plan-analysis.md
+│
+├── <span class="c-purple">qa-automation-tester/</span>
+│   ├── MEMORY.md
+│   ├── testing-strategy.md
+│   ├── test-infrastructure.md       <span class="c-muted"># base classes, Testcontainers setup</span>
+│   ├── test-cases-by-phase.md
+│   └── acceptance-criteria-checklist.md
+│
+├── <span class="c-pink">ux-ui-designer/</span>
+│   ├── MEMORY.md
+│   ├── design-system.md             <span class="c-muted"># tokens, components, colour conventions</span>
+│   ├── component-library.md
+│   ├── navigation.md
+│   ├── screen-specs.md
+│   └── user-flows.md
+│
+├── <span class="c-cyan">full-stack-dev/</span>
+│   └── MEMORY.md
+│
+├── <span class="c-orange">devops-engineer/</span>
+│   └── MEMORY.md                    <span class="c-muted"># infra snapshot, port mappings, CI/CD notes</span>
+│
+└── <span class="c-green">solution-planner/</span>
+    ├── MEMORY.md                    <span class="c-muted"># feature briefs table, estimation accuracy</span>
+    └── feature-briefs/              <span class="c-muted"># one file per shipped feature</span>
+    </div>
+  </div>
+
+  <!-- ── 15. MEMORY.md Pattern ── -->
+  <div class="section" id="memory-pattern">
+    <div class="section-num">15</div>
+    <h2>MEMORY.md — Institutional Knowledge</h2>
+    <p>Each agent embeds a <code class="inline">## MEMORY.md</code> section at the bottom of its agent file. Agents update it as they discover stable patterns. Contents are loaded on every session start.</p>
+    <pre><code class="language-markdown"># Tech Lead Memory — Personal Finance Tracker
+Last Updated: 2026-03-19
+
+## Key Architecture Decisions
+- BudgetApplicationService pattern: @Service @Transactional wrapper in config layer
+  that delegates to BudgetCommandService (pure domain service, @Bean in BudgetConfig)
+- BudgetPeriod.toMonthlyMultiplier(): pure BigDecimal enum. WEEKLY = 13/3. No float.
+- percentUsed as double: acceptable for display-only computed percentages (not monetary)
+- CategorySummary: lives in budget/domain/port/outbound/ — owned by the budget domain
+
+## Migration Sequence (next = 011)
+001 create_schema ✓   002 create_user_and_session_tables ✓   ...   010 create_budgets_table ✓
+
+## Known Bugs (Phase 0)
+BUG-001: application.yaml changelog path wrong (changelog/ vs db.changelog/)
+BUG-003: users/sessions tables use INT PK — must be BIGINT</code></pre>
+    <div class="grid-2">
+      <div class="callout green">
+        <strong>What to save:</strong> stable patterns confirmed across multiple interactions,
+        ADR summaries, file locations, established conventions, known bugs
+      </div>
+      <div class="callout red">
+        <strong>What NOT to save:</strong> session-specific context, in-progress work,
+        anything already in CLAUDE.md, unverified conclusions
+      </div>
+    </div>
+  </div>
+
+  <!-- ── 16. Live Demo ── -->
+  <div class="section" id="demo">
+    <div class="section-num">16</div>
+    <h2>Demo: "Add Budget Rollover"</h2>
+    <p>A single user message triggers the full pipeline. Follow the flow top to bottom.</p>
+
+    <style>
+      .flow { display: flex; flex-direction: column; gap: 0; }
+      .flow-connector { width: 2px; height: 1.4rem; background: var(--border); margin: 0 auto; }
+      .flow-connector.green { background: #16a34a; }
+      .flow-node { border-radius: 10px; padding: .9rem 1.1rem; font-size: .85rem; position: relative; }
+      .flow-node-header { display: flex; align-items: center; gap: .5rem; margin-bottom: .4rem; font-weight: 700; }
+      .flow-phase { font-size: .65rem; background: var(--surface); border: 1px solid var(--border); border-radius: 4px; padding: .1em .4em; color: var(--muted); }
+      .flow-row { display: grid; grid-template-columns: 1fr 1fr; gap: .8rem; }
+      .flow-parallel-label { text-align: center; font-size: .65rem; color: var(--accent); letter-spacing: .08em; text-transform: uppercase; padding: .3rem; border: 1px dashed var(--border); border-radius: 6px; margin-bottom: .5rem; }
+      .flow-tag { font-size: .7rem; color: var(--muted); }
+      .flow-output { display: inline-block; margin-top: .4rem; background: var(--surface); border: 1px solid var(--border); border-radius: 4px; padding: .15em .5em; font-size: .72rem; font-family: monospace; }
+      .flow-output.final { border-color: var(--green); color: var(--green); }
+    </style>
+
+    <div class="flow">
+
+      <!-- User request -->
+      <div class="flow-node" style="background:#1a1a2e;border:1px solid #64748b;text-align:center;">
+        <div style="font-size:.7rem;color:var(--muted);margin-bottom:.3rem;">USER REQUEST</div>
+        <strong>"I want to add budget rollover — unspent balance carries into the next period"</strong>
+      </div>
+      <div class="flow-connector green"></div>
+
+      <!-- solution-planner wrapper start -->
+      <div style="border:1px solid #16a34a;border-radius:10px;padding:1rem;background:#07120a;">
+        <div style="font-size:.65rem;color:#16a34a;letter-spacing:.08em;text-transform:uppercase;margin-bottom:.8rem;display:flex;align-items:center;gap:.5rem;">
+          <span>⬤</span> solution-planner — orchestrator starts first · drives all phases below
+        </div>
+
+        <div class="flow">
+
+          <!-- Phase 1 -->
+          <div class="flow-node" style="background:#1a0a0a;border:1px solid #dc2626;">
+            <div class="flow-node-header">
+              <span class="flow-phase">Phase 1</span>
+              <span class="c-red">personal-finance-analyst</span>
+            </div>
+            <div class="flow-tag">Input: feature request + DOMAIN-OWNERSHIP.md</div>
+            <ul style="margin:.4rem 0 .4rem 1.2rem;color:var(--muted);">
+              <li>Identifies rollover invariants (unspent balance ≥ 0, user-disable flag)</li>
+              <li>Derives 8 acceptance criteria</li>
+              <li>Flags edge case: partial month at period boundary</li>
+              <li>Confirms: soft-delete only, scoped to authenticated user</li>
+            </ul>
+            <div class="flow-output">→ Domain Brief</div>
+          </div>
+          <div class="flow-connector"></div>
+
+          <!-- Phase 2 -->
+          <div class="flow-node" style="background:#1a1000;border:1px solid #fb923c;">
+            <div class="flow-node-header">
+              <span class="flow-phase">Phase 2</span>
+              <span class="c-orange">tech-lead</span>
+            </div>
+            <div class="flow-tag">Input: Domain Brief</div>
+            <ul style="margin:.4rem 0 .4rem 1.2rem;color:var(--muted);">
+              <li>Designs <code class="inline">RolloverBudgetUseCase</code> + <code class="inline">BudgetPeriodPersistencePort</code></li>
+              <li>Specifies migration <code class="inline">011_add_budget_rollover_fields.yml</code></li>
+              <li>Maps N+1 risk in budget period query → JOIN FETCH mitigation</li>
+              <li>Estimates complexity: M · 14 new classes</li>
+            </ul>
+            <div class="flow-output">→ Architecture Brief</div>
+          </div>
+          <div class="flow-connector"></div>
+
+          <!-- Phase 3 -->
+          <div class="flow-node" style="background:#0a1f12;border:1px solid #16a34a;">
+            <div class="flow-node-header">
+              <span class="flow-phase">Phase 3</span>
+              <span class="c-green">solution-planner — synthesis</span>
+            </div>
+            <div class="flow-tag">Input: Domain Brief + Architecture Brief</div>
+            <ul style="margin:.4rem 0 .4rem 1.2rem;color:var(--muted);">
+              <li>Merges both briefs into Feature Brief with 12-item Implementation Checklist</li>
+              <li>Saves to <code class="inline">.claude/agent-memory/solution-planner/feature-briefs/budget-rollover.md</code></li>
+            </ul>
+            <div style="background:#0f1a0f;border:1px solid #16a34a;border-radius:6px;padding:.5rem .7rem;margin-top:.5rem;font-size:.82rem;">
+              ⚠ <strong class="c-green">User confirmation checkpoint</strong> — Feature Brief shown to user. Phase 4 only starts after approval.
+            </div>
+            <div class="flow-output">→ Feature Brief (saved)</div>
+          </div>
+          <div class="flow-connector"></div>
+
+          <!-- Phase 4 -->
+          <div class="flow-node" style="background:#071523;border:1px solid #0891b2;">
+            <div class="flow-node-header">
+              <span class="flow-phase">Phase 4</span>
+              <span class="c-cyan">full-stack-dev</span>
+            </div>
+            <div class="flow-tag">Input: Feature Brief (user-confirmed)</div>
+            <ul style="margin:.4rem 0 .4rem 1.2rem;color:var(--muted);">
+              <li>Executes 12-item checklist: migration → domain → ports → service → JPA entity → controller → @Bean → frontend hook → component</li>
+              <li><strong>pre-domain-purity hook</strong> blocks any Spring import attempts in <code class="inline">domain/</code></li>
+              <li><strong>pre-migration-guard hook</strong> ensures only new migration file created</li>
+              <li>Build green: <code class="inline">./gradlew :application:test</code> + <code class="inline">npm run build</code></li>
+            </ul>
+            <div class="flow-output">→ Working code</div>
+          </div>
+          <div class="flow-connector"></div>
+
+          <!-- Phases 5 + 6 parallel -->
+          <div>
+            <div class="flow-parallel-label">⇉ phases 5 &amp; 6 run in parallel — both spawned simultaneously</div>
+            <div class="flow-row">
+              <div class="flow-node" style="background:#1a0a14;border:1px solid #db2777;">
+                <div class="flow-node-header">
+                  <span class="flow-phase">Phase 5</span>
+                  <span class="c-pink">ux-ui-designer</span>
+                </div>
+                <div class="flow-tag">Input: all new frontend files</div>
+                <ul style="margin:.4rem 0 .4rem 1.2rem;color:var(--muted);">
+                  <li>Adds skeleton loader to RolloverPage</li>
+                  <li>Fixes touch targets &lt; 44px</li>
+                  <li>Adds empty state: no prior period</li>
+                  <li>Rebuilds: <code class="inline">docker compose build frontend</code></li>
+                </ul>
+                <div class="flow-output">→ Polished UI</div>
+              </div>
+              <div class="flow-node" style="background:#0f0a1a;border:1px solid #7c3aed;">
+                <div class="flow-node-header">
+                  <span class="flow-phase">Phase 6</span>
+                  <span class="c-purple">qa-automation-tester</span>
+                </div>
+                <div class="flow-tag">Input: domain service + controller files</div>
+                <ul style="margin:.4rem 0 .4rem 1.2rem;color:var(--muted);">
+                  <li>8 unit tests covering all acceptance criteria</li>
+                  <li>MockMvc: POST 201 · 400 · 401 · 404</li>
+                  <li>Accessibility: ARIA on rollover toggle</li>
+                  <li>Runs: <code class="inline">./gradlew :application:test</code> ✓</li>
+                </ul>
+                <div class="flow-output">→ Tests passing</div>
+              </div>
+            </div>
+          </div>
+          <div class="flow-connector"></div>
+
+          <!-- Phase 7 -->
+          <div class="flow-node" style="background:#1a1000;border:1px solid #fb923c;">
+            <div class="flow-node-header">
+              <span class="flow-phase">Phase 7</span>
+              <span class="c-orange">tech-lead — sign-off</span>
+            </div>
+            <div class="flow-tag">Input: all changed files (waits for Phase 5 + 6)</div>
+            <ul style="margin:.4rem 0 .4rem 1.2rem;color:var(--muted);">
+              <li>ArchUnit: zero Spring in <code class="inline">budget/domain/</code> ✓</li>
+              <li><code class="inline">BudgetCommandService</code> wired via <code class="inline">@Bean</code> in <code class="inline">BudgetConfig</code> ✓</li>
+              <li>Port naming: <code class="inline">RolloverBudgetUseCase</code> / <code class="inline">BudgetPeriodPersistencePort</code> ✓</li>
+              <li>Updates <code class="inline">MEMORY.md</code> with BudgetPeriod rollover pattern</li>
+            </ul>
+            <div class="flow-output final">✓ Merge ready</div>
+          </div>
+
+        </div><!-- inner flow -->
+      </div><!-- solution-planner wrapper -->
+
+    </div><!-- outer flow -->
+  </div>
+
+  <!-- ── 17. All 7 Agents ── -->
+  <div class="section" id="agents-table">
+    <div class="section-num">17</div>
+    <h2>All 7 Agents at a Glance</h2>
+    <table>
+      <thead>
+        <tr><th>Agent</th><th>Model</th><th>Phase</th><th>Responsibility</th></tr>
+      </thead>
+      <tbody>
+        <tr style="border-left:3px solid #22c55e;">
+          <td style="padding-left:.6rem;"><strong class="c-green">solution-planner</strong></td>
+          <td><span class="pill pill-amber">opus</span></td>
+          <td><span style="font-size:.75rem;color:var(--muted);">Orchestrator · entry point</span></td>
+          <td>Coordinates all phases · produces Feature Brief · user confirmation checkpoint</td>
+        </tr>
+        <tr style="border-left:3px solid #f87171;">
+          <td style="padding-left:.6rem;"><strong class="c-red">personal-finance-analyst</strong></td>
+          <td><span class="pill pill-blue">sonnet</span></td>
+          <td><span class="pill pill-red">Phase 1</span></td>
+          <td>Domain rules · acceptance criteria · financial correctness · data model changes</td>
+        </tr>
+        <tr style="border-left:3px solid #fb923c;">
+          <td style="padding-left:.6rem;"><strong class="c-amber">tech-lead</strong></td>
+          <td><span class="pill pill-blue">sonnet</span></td>
+          <td><span class="pill pill-amber">Phase 2 + 7</span></td>
+          <td>Architecture design · port/adapter interfaces · code review · final sign-off</td>
+        </tr>
+        <tr style="border-left:3px solid #67e8f9;">
+          <td style="padding-left:.6rem;"><strong class="c-cyan">full-stack-dev</strong></td>
+          <td><span class="pill pill-blue">sonnet</span></td>
+          <td><span class="pill pill-cyan">Phase 4</span></td>
+          <td>End-to-end implementation: migration → domain → ports → JPA → controller → frontend</td>
+        </tr>
+        <tr style="border-left:3px solid #f9a8d4;">
+          <td style="padding-left:.6rem;"><strong class="c-pink">ux-ui-designer</strong></td>
+          <td><span class="pill pill-blue">sonnet</span></td>
+          <td><span class="pill pill-pink">Phase 5 ∥</span></td>
+          <td>Mobile-first · WCAG 2.1 AA · design system enforcement · rebuild &amp; redeploy</td>
+        </tr>
+        <tr style="border-left:3px solid #a78bfa;">
+          <td style="padding-left:.6rem;"><strong class="c-purple">qa-automation-tester</strong></td>
+          <td><span class="pill pill-blue">sonnet</span></td>
+          <td><span class="pill pill-purple">Phase 6 ∥</span></td>
+          <td>Unit tests (JUnit 5) · MockMvc controller tests · accessibility checks · runs tests</td>
+        </tr>
+        <tr style="border-left:3px solid #fb923c;">
+          <td style="padding-left:.6rem;"><strong class="c-orange">devops-engineer</strong></td>
+          <td><span class="pill pill-blue">sonnet</span></td>
+          <td><span style="font-size:.75rem;color:var(--muted);">Direct trigger</span></td>
+          <td>Docker · CI/CD (GitHub Actions) · Gradle · Nginx · Makefile</td>
+        </tr>
+      </tbody>
+    </table>
+    <p style="font-size:.78rem;margin-top:.5rem;">∥ = spawned in parallel</p>
+  </div>
+
+  <!-- ── 18. Summary ── -->
+  <div class="section" id="summary">
+    <div class="section-num">18</div>
+    <h2>Summary</h2>
+    <div class="grid-2">
+      <div class="card border-green">
+        <h3 class="c-green">What Claude Code provides</h3>
+        <ul>
+          <li><strong>7 specialized agents</strong> — each owns a phase of delivery</li>
+          <li><strong>Mandatory 7-phase pipeline</strong> — no shortcuts, no phase skipping</li>
+          <li><strong>3 pre-hooks</strong> — block violations at edit time, faster than ArchUnit</li>
+          <li><strong>1 post-hook</strong> — auto-fix TypeScript on every edit</li>
+          <li><strong>Persistent memory</strong> — agents accumulate project knowledge across sessions</li>
+          <li><strong>Feature Briefs</strong> — versioned, user-confirmed spec before any code is written</li>
+        </ul>
+      </div>
+      <div class="card border-blue">
+        <h3 class="c-blue">Key files</h3>
+        <div class="tree" style="font-size:.8rem;">.claude/agents/             <span class="c-muted">← 7 agent skill files</span>
+.claude/hooks/              <span class="c-muted">← 4 hook scripts</span>
+.claude/agent-memory/       <span class="c-muted">← persistent context</span>
+.claude/settings.local.json <span class="c-muted">← hook wiring + permissions</span>
+CLAUDE.md                   <span class="c-muted">← project rules (checked in)</span></div>
+        <h3 style="margin-top:1rem;">Architecture enforced by three layers</h3>
+        <div class="badge-row">
+          <span class="pill pill-red">Pre-hooks (edit time)</span>
+          <span class="pill pill-amber">tech-lead (review)</span>
+          <span class="pill pill-blue">ArchUnit (build time)</span>
+        </div>
+      </div>
+    </div>
+    <div style="margin-top:1.2rem;">
+      <div style="text-align:center;font-size:.7rem;color:var(--muted);letter-spacing:.08em;text-transform:uppercase;margin-bottom:.6rem;">Architecture enforced at three layers</div>
+      <div style="display:flex;gap:.6rem;align-items:stretch;flex-wrap:wrap;">
+        <div style="flex:1;min-width:160px;background:#180707;border:1px solid var(--red);border-radius:8px;padding:.8rem 1rem;text-align:center;">
+          <div style="font-size:.65rem;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;margin-bottom:.3rem;">Layer 1 — Fastest</div>
+          <div class="c-red" style="font-weight:700;font-size:.9rem;">Pre-hooks</div>
+          <div style="font-size:.75rem;color:var(--muted);margin-top:.3rem;">Block at edit time<br/>before code is written</div>
+        </div>
+        <div style="display:flex;align-items:center;color:var(--accent);font-size:1.1rem;">→</div>
+        <div style="flex:1;min-width:160px;background:#1a1000;border:1px solid var(--accent);border-radius:8px;padding:.8rem 1rem;text-align:center;">
+          <div style="font-size:.65rem;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;margin-bottom:.3rem;">Layer 2 — Design</div>
+          <div class="c-amber" style="font-weight:700;font-size:.9rem;">tech-lead review</div>
+          <div style="font-size:.75rem;color:var(--muted);margin-top:.3rem;">Phase 2 design<br/>Phase 7 sign-off</div>
+        </div>
+        <div style="display:flex;align-items:center;color:var(--accent);font-size:1.1rem;">→</div>
+        <div style="flex:1;min-width:160px;background:#06112a;border:1px solid var(--blue);border-radius:8px;padding:.8rem 1rem;text-align:center;">
+          <div style="font-size:.65rem;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;margin-bottom:.3rem;">Layer 3 — Build</div>
+          <div class="c-blue" style="font-weight:700;font-size:.9rem;">ArchUnit</div>
+          <div style="font-size:.75rem;color:var(--muted);margin-top:.3rem;">CI build fails on<br/>any rule violation</div>
+        </div>
+      </div>
+    </div>
+    <div class="callout" style="margin-top:1rem; text-align:center; font-size:.95rem;">
+      The architecture rules are the same. Claude Code makes them <strong>impossible to accidentally break.</strong>
+    </div>
+  </div>
+
+</div><!-- .page -->
+
+<script src="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/highlight.min.js"></script>
+<script>
+  hljs.highlightAll();
+
+  // Scroll progress bar
+  const bar = document.getElementById('progress');
+  window.addEventListener('scroll', () => {
+    const scrolled = document.documentElement.scrollTop;
+    const max = document.documentElement.scrollHeight - window.innerHeight;
+    bar.style.width = (max > 0 ? (scrolled / max * 100) : 0) + '%';
+  }, { passive: true });
+
+  // Highlight active TOC link
+  const sections = document.querySelectorAll('[id]');
+  const tocLinks = document.querySelectorAll('.toc a');
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        tocLinks.forEach(a => {
+          a.style.color = '';
+          a.style.background = '';
+        });
+        const active = document.querySelector(`.toc a[href="#${e.target.id}"]`);
+        if (active) { active.style.color = 'var(--accent)'; active.style.background = 'rgba(217,119,6,.08)'; }
+      }
+    });
+  }, { rootMargin: '-20% 0px -70% 0px' });
+  sections.forEach(s => observer.observe(s));
+</script>
+</body>
+</html>
