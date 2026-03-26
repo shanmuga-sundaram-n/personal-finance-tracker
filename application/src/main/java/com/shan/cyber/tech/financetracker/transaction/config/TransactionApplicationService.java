@@ -13,23 +13,16 @@ import com.shan.cyber.tech.financetracker.transaction.domain.port.inbound.Transa
 import com.shan.cyber.tech.financetracker.transaction.domain.port.inbound.TransferResult;
 import com.shan.cyber.tech.financetracker.transaction.domain.port.inbound.UpdateTransactionCommand;
 import com.shan.cyber.tech.financetracker.transaction.domain.port.inbound.UpdateTransactionUseCase;
-import com.shan.cyber.tech.financetracker.transaction.domain.port.outbound.BalanceUpdatePort;
-import com.shan.cyber.tech.financetracker.transaction.domain.port.outbound.TransactionEventPublisherPort;
-import com.shan.cyber.tech.financetracker.transaction.domain.port.outbound.TransactionPersistencePort;
 import com.shan.cyber.tech.financetracker.transaction.domain.service.TransactionCommandService;
-import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-@Service
 @Transactional
 public class TransactionApplicationService implements CreateTransactionUseCase, CreateTransferUseCase, DeleteTransactionUseCase, UpdateTransactionUseCase, ReconcileTransactionUseCase {
 
     private final TransactionCommandService commandService;
 
-    public TransactionApplicationService(TransactionPersistencePort persistencePort,
-                                          TransactionEventPublisherPort eventPublisherPort,
-                                          BalanceUpdatePort balanceUpdatePort) {
-        this.commandService = new TransactionCommandService(persistencePort, eventPublisherPort, balanceUpdatePort);
+    public TransactionApplicationService(TransactionCommandService commandService) {
+        this.commandService = commandService;
     }
 
     @Override

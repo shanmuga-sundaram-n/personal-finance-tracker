@@ -26,7 +26,7 @@ public class AccountPersistenceAdapter implements AccountPersistencePort {
 
     @Override
     public Optional<Account> findById(AccountId id, UserId ownerId) {
-        return repository.findByIdAndUserId(id.value(), ownerId.value())
+        return repository.findByIdAndUserIdAndIsActiveTrue(id.value(), ownerId.value())
                 .map(mapper::toDomain);
     }
 

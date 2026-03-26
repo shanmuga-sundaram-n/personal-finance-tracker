@@ -132,13 +132,13 @@ class AccountControllerTest {
     }
 
     @Test
-    void getById_notFound_returns422() throws Exception {
+    void getById_notFound_returns404() throws Exception {
         when(getAccountsQuery.getAccountById(any(), any()))
                 .thenThrow(new AccountNotFoundException(999L));
 
         mockMvc.perform(get("/api/v1/accounts/999"))
-                .andExpect(status().isUnprocessableEntity())
-                .andExpect(jsonPath("$.error").value("ACCOUNT_NOT_FOUND"));
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.error").value("NOT_FOUND"));
     }
 
     @Test

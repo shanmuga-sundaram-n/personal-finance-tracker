@@ -18,6 +18,10 @@ interface CategorySelectProps {
   /** Render an "All Categories" option at the top */
   includeAll?: boolean
   className?: string
+  /** ID of an error message element to associate via aria-describedby */
+  'aria-describedby'?: string
+  /** ID forwarded to the trigger button so a <Label htmlFor="…"> can associate with it */
+  id?: string
 }
 
 /**
@@ -33,6 +37,8 @@ export function CategorySelect({
   placeholder = 'Select category',
   includeAll = false,
   className,
+  'aria-describedby': ariaDescribedby,
+  id,
 }: CategorySelectProps) {
   // Separate parents and children
   const parentIds = new Set(
@@ -56,7 +62,7 @@ export function CategorySelect({
 
   return (
     <Select value={value} onValueChange={onValueChange}>
-      <SelectTrigger className={className}>
+      <SelectTrigger id={id} className={className} aria-describedby={ariaDescribedby}>
         <SelectValue placeholder={placeholder} />
       </SelectTrigger>
       <SelectContent>

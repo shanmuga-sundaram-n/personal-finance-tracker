@@ -8,6 +8,13 @@ const TYPE_COLOR: Record<string, string> = {
   TRANSFER_OUT: 'text-red-600 dark:text-red-400',
 }
 
+const TYPE_SIGN: Record<string, string> = {
+  INCOME:       '+',
+  TRANSFER_IN:  '+',
+  EXPENSE:      '-',
+  TRANSFER_OUT: '-',
+}
+
 interface TransactionAmountProps {
   amount: string
   currency: string
@@ -16,10 +23,12 @@ interface TransactionAmountProps {
 }
 
 export function TransactionAmount({ amount, currency, type, className }: TransactionAmountProps) {
+  const sign = TYPE_SIGN[type] ?? ''
   return (
     <MoneyDisplay
       amount={amount}
       currency={currency}
+      sign={sign}
       className={cn(TYPE_COLOR[type] ?? '', className)}
     />
   )

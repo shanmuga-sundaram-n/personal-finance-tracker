@@ -86,14 +86,20 @@ export function CreateAccountPage() {
 
             <div className="space-y-2">
               <Label htmlFor="name">Account Name</Label>
-              <Input id="name" placeholder="e.g., Main Checking" {...register('name')} />
-              {errors.name && <p className="text-sm text-destructive">{errors.name.message}</p>}
+              <Input
+                id="name"
+                placeholder="e.g., Main Checking"
+                aria-describedby={errors.name ? 'name-error' : undefined}
+                aria-invalid={!!errors.name}
+                {...register('name')}
+              />
+              {errors.name && <p id="name-error" role="alert" className="text-sm text-destructive">{errors.name.message}</p>}
             </div>
 
             <div className="space-y-2">
-              <Label>Account Type</Label>
+              <Label htmlFor="accountTypeCode">Account Type</Label>
               <Select onValueChange={(v) => setValue('accountTypeCode', v)}>
-                <SelectTrigger>
+                <SelectTrigger id="accountTypeCode" aria-describedby={errors.accountTypeCode ? 'accountTypeCode-error' : undefined}>
                   <SelectValue placeholder="Select account type" />
                 </SelectTrigger>
                 <SelectContent>
@@ -105,16 +111,22 @@ export function CreateAccountPage() {
                 </SelectContent>
               </Select>
               {errors.accountTypeCode && (
-                <p className="text-sm text-destructive">{errors.accountTypeCode.message}</p>
+                <p id="accountTypeCode-error" role="alert" className="text-sm text-destructive">{errors.accountTypeCode.message}</p>
               )}
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="initialBalance">Initial Balance</Label>
-                <Input id="initialBalance" placeholder="0.00" {...register('initialBalance')} />
+                <Input
+                  id="initialBalance"
+                  placeholder="0.00"
+                  aria-describedby={errors.initialBalance ? 'initialBalance-error' : undefined}
+                  aria-invalid={!!errors.initialBalance}
+                  {...register('initialBalance')}
+                />
                 {errors.initialBalance && (
-                  <p className="text-sm text-destructive">{errors.initialBalance.message}</p>
+                  <p id="initialBalance-error" role="alert" className="text-sm text-destructive">{errors.initialBalance.message}</p>
                 )}
               </div>
               <div className="space-y-2">

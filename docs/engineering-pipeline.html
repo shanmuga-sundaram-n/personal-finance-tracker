@@ -1,0 +1,1042 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Engineering Pipeline — Personal Finance Tracker</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #0f1117;
+      color: #e2e8f0;
+      padding: 32px 24px;
+    }
+
+    h1 { text-align: center; font-size: 28px; font-weight: 700; color: #f8fafc; margin-bottom: 8px; }
+    .subtitle { text-align: center; color: #94a3b8; font-size: 14px; margin-bottom: 48px; }
+
+    .tabs {
+      display: flex; gap: 8px; flex-wrap: wrap;
+      justify-content: center; margin-bottom: 40px;
+    }
+
+    .tab {
+      padding: 8px 20px; border-radius: 999px; font-size: 13px;
+      font-weight: 600; cursor: pointer; border: 2px solid transparent; transition: all .2s;
+    }
+
+    .tab.feature  { background:#1e3a5f; color:#60a5fa; border-color:#1e40af; }
+    .tab.hotfix   { background:#3b1a1a; color:#f87171; border-color:#7f1d1d; }
+    .tab.chore    { background:#1a2e1a; color:#4ade80; border-color:#14532d; }
+    .tab.spike    { background:#2e2000; color:#fbbf24; border-color:#78350f; }
+    .tab.ui       { background:#2a1a3e; color:#c084fc; border-color:#581c87; }
+    .tab.overview { background:#1e293b; color:#94a3b8; border-color:#334155; }
+    .tab.active, .tab:hover { filter: brightness(1.35); border-color: currentColor; }
+
+    .pipeline { display: none; }
+    .pipeline.active { display: block; }
+
+    .pipeline-title { text-align: center; font-size: 22px; font-weight: 700; margin-bottom: 6px; }
+    .pipeline-desc  { text-align: center; color: #94a3b8; font-size: 13px; margin-bottom: 36px; }
+
+    .phases { display: flex; flex-direction: column; align-items: center; gap: 0; }
+
+    .phase-row {
+      display: flex; gap: 16px; justify-content: center;
+      flex-wrap: wrap; width: 100%; max-width: 1100px;
+    }
+
+    .phase {
+      background: #1e293b; border: 1px solid #334155; border-radius: 12px;
+      padding: 20px 24px; min-width: 220px; max-width: 320px; flex: 1; position: relative;
+    }
+    .phase.wide { max-width: 700px; }
+    .phase.full { max-width: 1100px; width: 100%; }
+
+    .phase-num  { font-size: 11px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 6px; opacity: .7; }
+    .phase-name { font-size: 16px; font-weight: 700; margin-bottom: 10px; color: #f1f5f9; }
+
+    .badge-row { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 10px; }
+
+    .agent-badge {
+      display: inline-block; font-size: 11px; font-weight: 600;
+      padding: 2px 10px; border-radius: 999px;
+    }
+
+    .new-badge {
+      display: inline-block; font-size: 10px; font-weight: 700;
+      padding: 1px 7px; border-radius: 999px;
+      background: #14532d; color: #4ade80; margin-left: 4px; vertical-align: middle;
+    }
+
+    .phase ul { list-style: none; padding: 0; }
+    .phase ul li {
+      font-size: 12px; color: #94a3b8; padding: 3px 0 3px 14px; position: relative;
+    }
+    .phase ul li::before { content: '→'; position: absolute; left: 0; color: #475569; }
+
+    .gate-badge {
+      display: inline-block; font-size: 11px; font-weight: 700;
+      padding: 3px 12px; border-radius: 6px; margin-top: 10px;
+      background: #1a1a2e; border: 1px solid #4c1d95; color: #a78bfa;
+    }
+
+    .connector { display: flex; flex-direction: column; align-items: center; margin: 4px 0; }
+    .connector-line  { width: 2px; height: 24px; background: #334155; }
+    .connector-arrow { width: 0; height: 0; border-left: 6px solid transparent; border-right: 6px solid transparent; border-top: 8px solid #334155; }
+    .connector-label { font-size: 11px; color: #64748b; background: #0f1117; padding: 0 8px; z-index: 1; border-radius: 4px; }
+
+    .parallel-label { font-size: 11px; font-weight: 700; letter-spacing: 1px; color: #f59e0b; text-transform: uppercase; margin-bottom: 8px; text-align: center; }
+
+    /* Phase border accents */
+    .p0 { border-left: 3px solid #64748b !important; }
+    .p1 { border-left: 3px solid #3b82f6 !important; }
+    .p2 { border-left: 3px solid #10b981 !important; }
+    .p3 { border-left: 3px solid #f59e0b !important; }
+    .p4 { border-left: 3px solid #8b5cf6 !important; }
+    .p5 { border-left: 3px solid #ef4444 !important; }
+    .p6 { border-left: 3px solid #06b6d4 !important; }
+
+    /* Overview grid */
+    .overview-grid {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 20px; max-width: 1100px; margin: 0 auto 48px;
+    }
+
+    .track-card { border-radius: 12px; padding: 20px 24px; border: 1px solid; }
+    .track-card h3 { font-size: 16px; font-weight: 700; margin-bottom: 6px; }
+    .track-card .when { font-size: 12px; opacity: .7; margin-bottom: 14px; }
+    .track-card .steps { display: flex; flex-direction: column; gap: 6px; }
+
+    .step-pill { display: flex; align-items: center; gap: 8px; font-size: 12px; }
+    .step-num-circle {
+      width: 22px; height: 22px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 11px; font-weight: 700; flex-shrink: 0;
+    }
+
+    .track-feature { background:#1e293b; border-color:#1e40af; }
+    .track-feature h3 { color:#60a5fa; }
+    .track-feature .step-num-circle { background:#1e3a5f; color:#60a5fa; }
+
+    .track-hotfix { background:#1e293b; border-color:#7f1d1d; }
+    .track-hotfix h3 { color:#f87171; }
+    .track-hotfix .step-num-circle { background:#3b1a1a; color:#f87171; }
+
+    .track-chore { background:#1e293b; border-color:#14532d; }
+    .track-chore h3 { color:#4ade80; }
+    .track-chore .step-num-circle { background:#1a2e1a; color:#4ade80; }
+
+    .track-spike { background:#1e293b; border-color:#78350f; }
+    .track-spike h3 { color:#fbbf24; }
+    .track-spike .step-num-circle { background:#2e2000; color:#fbbf24; }
+
+    .track-ui { background:#1e293b; border-color:#581c87; }
+    .track-ui h3 { color:#c084fc; }
+    .track-ui .step-num-circle { background:#2a1a3e; color:#c084fc; }
+
+    .role-table { width: 100%; max-width: 900px; margin: 0 auto 48px; border-collapse: collapse; }
+    .role-table th, .role-table td { padding: 10px 16px; text-align: left; border-bottom: 1px solid #1e293b; font-size: 13px; }
+    .role-table th { color: #64748b; font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; }
+    .role-table td:first-child { color: #60a5fa; font-family: monospace; font-size: 12px; }
+    .role-table td:nth-child(2) { color: #f1f5f9; }
+    .role-table td:nth-child(3) { color: #94a3b8; }
+
+    .legend { display: flex; gap: 20px; flex-wrap: wrap; justify-content: center; margin-bottom: 32px; }
+    .legend-item { display: flex; align-items: center; gap: 6px; font-size: 12px; color: #94a3b8; }
+    .legend-dot { width: 10px; height: 10px; border-radius: 50%; }
+
+    .coverage-table { width: 100%; max-width: 900px; margin: 0 auto 48px; border-collapse: collapse; }
+    .coverage-table th, .coverage-table td { padding: 10px 16px; text-align: left; border-bottom: 1px solid #1e293b; font-size: 13px; }
+    .coverage-table th { color: #64748b; font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; }
+    .coverage-table td:first-child { color: #f1f5f9; font-weight: 600; }
+    .tick { color: #4ade80; font-weight: 700; }
+    .cross { color: #f87171; font-weight: 700; }
+  </style>
+</head>
+<body>
+
+<h1>Engineering Pipeline</h1>
+<p class="subtitle">Personal Finance Tracker — 5 Tracks · Parallel Phases · Full Coverage</p>
+
+<div class="tabs">
+  <div class="tab overview active" onclick="show('overview')">Overview</div>
+  <div class="tab feature"  onclick="show('feature')">FEATURE</div>
+  <div class="tab hotfix"   onclick="show('hotfix')">HOTFIX</div>
+  <div class="tab chore"    onclick="show('chore')">CHORE</div>
+  <div class="tab spike"    onclick="show('spike')">SPIKE</div>
+  <div class="tab ui"       onclick="show('ui')">UI-ONLY</div>
+</div>
+
+<!-- ══════════════════ OVERVIEW ══════════════════ -->
+<div id="overview" class="pipeline active">
+  <p class="pipeline-title" style="color:#94a3b8">All 5 Tracks at a Glance</p>
+  <p class="pipeline-desc">Select a track tab above for the full pipeline. Use the table below to pick the right track.</p>
+
+  <div class="overview-grid">
+
+    <div class="track-card track-feature">
+      <h3>FEATURE</h3>
+      <p class="when">New capability · domain change · new bounded context</p>
+      <div class="steps">
+        <div class="step-pill"><div class="step-num-circle">0</div> Intake &amp; Track Selection</div>
+        <div class="step-pill"><div class="step-num-circle">1</div> Discovery (parallel) + Stakeholder Gate</div>
+        <div class="step-pill"><div class="step-num-circle">2</div> Branch + Backend + UX Design (parallel) → Frontend</div>
+        <div class="step-pill"><div class="step-num-circle">3</div> Arch + Security + Perf + Dep Review (parallel)</div>
+        <div class="step-pill"><div class="step-num-circle">4</div> QA Tests + Accessibility (parallel)</div>
+        <div class="step-pill"><div class="step-num-circle">5</div> Docs + Changelog + API Spec</div>
+        <div class="step-pill"><div class="step-num-circle">6</div> Deploy → Monitoring → Stakeholder Confirm</div>
+      </div>
+    </div>
+
+    <div class="track-card track-hotfix">
+      <h3>HOTFIX</h3>
+      <p class="when">Production bug · data integrity · security vulnerability</p>
+      <div class="steps">
+        <div class="step-pill"><div class="step-num-circle">0</div> Intake → HOTFIX classification</div>
+        <div class="step-pill"><div class="step-num-circle">1</div> tech-lead diagnoses root cause</div>
+        <div class="step-pill"><div class="step-num-circle">2</div> full-stack-dev targeted fix</div>
+        <div class="step-pill"><div class="step-num-circle">3</div> Architecture review only (3A)</div>
+        <div class="step-pill"><div class="step-num-circle">4</div> Targeted tests for broken behavior</div>
+        <div class="step-pill"><div class="step-num-circle">5</div> Deploy → Smoke test → Incident doc</div>
+      </div>
+    </div>
+
+    <div class="track-card track-chore">
+      <h3>CHORE</h3>
+      <p class="when">Dependency upgrade · refactor · no domain change</p>
+      <div class="steps">
+        <div class="step-pill"><div class="step-num-circle">0</div> Intake → CHORE classification</div>
+        <div class="step-pill"><div class="step-num-circle">1</div> <em style="opacity:.5">Skip — no domain analysis</em></div>
+        <div class="step-pill"><div class="step-num-circle">2</div> Implementation</div>
+        <div class="step-pill"><div class="step-num-circle">3</div> Architecture review only (3A) + Dep Review</div>
+        <div class="step-pill"><div class="step-num-circle">4</div> Tests — confirm nothing broken</div>
+        <div class="step-pill"><div class="step-num-circle">5</div> Normal deploy</div>
+      </div>
+    </div>
+
+    <div class="track-card track-spike">
+      <h3>SPIKE</h3>
+      <p class="when">Technical investigation · proof-of-concept · ADR research</p>
+      <div class="steps">
+        <div class="step-pill"><div class="step-num-circle">0</div> Intake → SPIKE classification</div>
+        <div class="step-pill"><div class="step-num-circle">1</div> tech-lead researches options (1B only)</div>
+        <div class="step-pill"><div class="step-num-circle">—</div> <em style="opacity:.5">No implementation, no deploy</em></div>
+        <div class="step-pill" style="margin-top:8px"><div class="step-num-circle" style="background:#2e2000;color:#fbbf24">↓</div> Output: ADR document only</div>
+      </div>
+    </div>
+
+    <div class="track-card track-ui">
+      <h3>UI-ONLY</h3>
+      <p class="when">Visual change · copy update · no API contract change</p>
+      <div class="steps">
+        <div class="step-pill"><div class="step-num-circle">0</div> Intake → UI-ONLY classification</div>
+        <div class="step-pill"><div class="step-num-circle">1</div> <em style="opacity:.5">Skip backend phases entirely</em></div>
+        <div class="step-pill"><div class="step-num-circle">2</div> UX design → Frontend implementation</div>
+        <div class="step-pill"><div class="step-num-circle">3</div> Partial arch check (no API changes?)</div>
+        <div class="step-pill"><div class="step-num-circle">4</div> Accessibility + visual review</div>
+        <div class="step-pill"><div class="step-num-circle">5</div> Deploy</div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Coverage checklist -->
+  <h2 style="text-align:center; margin:0 0 20px; font-size:18px; color:#94a3b8;">Process Coverage Checklist</h2>
+  <table class="coverage-table">
+    <thead>
+      <tr><th>Process Area</th><th>Covered In</th><th>Status</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Domain rules &amp; acceptance criteria</td><td>Phase 1A — personal-finance-analyst</td><td class="tick">✓ Covered</td></tr>
+      <tr><td>Architecture design &amp; ADR</td><td>Phase 1B — tech-lead</td><td class="tick">✓ Covered</td></tr>
+      <tr><td>Stakeholder sign-off before coding</td><td>Phase 1D — Stakeholder Gate</td><td class="tick">✓ Covered</td></tr>
+      <tr><td>Branch &amp; PR strategy</td><td>Phase 2 (pre-implementation step) <span class="new-badge">NEW</span></td><td class="tick">✓ Covered</td></tr>
+      <tr><td>Backend implementation</td><td>Phase 2A — full-stack-dev</td><td class="tick">✓ Covered</td></tr>
+      <tr><td>Frontend implementation</td><td>Phase 2B/2C — ux-ui-designer + full-stack-dev</td><td class="tick">✓ Covered</td></tr>
+      <tr><td>Architecture &amp; domain zone review</td><td>Phase 3A — tech-lead</td><td class="tick">✓ Covered</td></tr>
+      <tr><td>Security review (OWASP, auth)</td><td>Phase 3B — security-reviewer</td><td class="tick">✓ Covered</td></tr>
+      <tr><td>Performance review (N+1, indexes)</td><td>Phase 3C — performance-reviewer</td><td class="tick">✓ Covered</td></tr>
+      <tr><td>Dependency review (new libraries)</td><td>Phase 3D — tech-lead <span class="new-badge">NEW</span></td><td class="tick">✓ Covered</td></tr>
+      <tr><td>Unit + integration + acceptance tests</td><td>Phase 4A — qa-automation-tester</td><td class="tick">✓ Covered</td></tr>
+      <tr><td>Accessibility &amp; mobile review</td><td>Phase 4B — ux-ui-designer</td><td class="tick">✓ Covered</td></tr>
+      <tr><td>Data migration validation (existing data)</td><td>Phase 4A (migration test step) <span class="new-badge">NEW</span></td><td class="tick">✓ Covered</td></tr>
+      <tr><td>API documentation (OpenAPI/Swagger)</td><td>Phase 5A — docs step <span class="new-badge">NEW</span></td><td class="tick">✓ Covered</td></tr>
+      <tr><td>Changelog / release notes</td><td>Phase 5A — docs step <span class="new-badge">NEW</span></td><td class="tick">✓ Covered</td></tr>
+      <tr><td>Deployment</td><td>Phase 6 — devops-engineer</td><td class="tick">✓ Covered</td></tr>
+      <tr><td>Monitoring &amp; observability setup</td><td>Phase 6 post-deploy check <span class="new-badge">NEW</span></td><td class="tick">✓ Covered</td></tr>
+      <tr><td>Post-deploy stakeholder confirmation</td><td>Phase 6D — product-owner</td><td class="tick">✓ Covered</td></tr>
+    </tbody>
+  </table>
+
+  <!-- Role mapping -->
+  <h2 style="text-align:center; margin:0 0 20px; font-size:18px; color:#94a3b8;">Agent → Real Role Mapping</h2>
+  <table class="role-table">
+    <thead>
+      <tr><th>AI Agent</th><th>Real Engineering Role</th><th>Accountability</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>engineering-manager</td><td>Engineering Manager</td><td>Coordinates discovery, owns Feature Brief quality, tracks delivery</td></tr>
+      <tr><td>personal-finance-analyst</td><td>Product Owner + Domain Expert</td><td>Domain rules, acceptance criteria, financial correctness</td></tr>
+      <tr><td>tech-lead</td><td>Senior / Principal Engineer</td><td>Architecture decisions, ADR authorship, final sign-off</td></tr>
+      <tr><td>full-stack-dev</td><td>Full-Stack Engineer</td><td>Implementation — backend and frontend</td></tr>
+      <tr><td>ux-ui-designer</td><td>UX Designer + Frontend Engineer</td><td>Design system, mobile-first, accessibility</td></tr>
+      <tr><td>qa-automation-tester</td><td>QA Engineer / SDET</td><td>Test strategy, automation, coverage gates</td></tr>
+      <tr><td>devops-engineer</td><td>Platform / DevOps Engineer</td><td>Infrastructure, CI/CD, deployment</td></tr>
+      <tr><td>security-reviewer <span class="new-badge">NEW</span></td><td>Security Engineer / AppSec</td><td>OWASP, auth flows, financial data exposure</td></tr>
+      <tr><td>performance-reviewer <span class="new-badge">NEW</span></td><td>Performance Engineer</td><td>N+1 queries, DB indexes, frontend bundle size</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- ══════════════════ FEATURE ══════════════════ -->
+<div id="feature" class="pipeline feature">
+  <p class="pipeline-title" style="color:#60a5fa">FEATURE Track</p>
+  <p class="pipeline-desc">New capability · domain change · new bounded context — Full 7-phase pipeline</p>
+
+  <div class="legend">
+    <div class="legend-item"><div class="legend-dot" style="background:#64748b"></div> Phase 0 Intake</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#3b82f6"></div> Phase 1 Discovery</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#10b981"></div> Phase 2 Implementation</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#f59e0b"></div> Phase 3 Review</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#8b5cf6"></div> Phase 4 QA</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#06b6d4"></div> Phase 5 Docs</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#ef4444"></div> Phase 6 Deploy</div>
+  </div>
+
+  <div class="phases">
+
+    <!-- Phase 0 -->
+    <div class="phase-row">
+      <div class="phase full p0">
+        <div class="phase-num">Phase 0 — Intake &amp; Track Selection</div>
+        <div class="phase-name">Classify the Request</div>
+        <div class="badge-row"><span class="agent-badge" style="background:#1e293b;color:#94a3b8;">engineering-manager</span></div>
+        <ul>
+          <li>Classify into FEATURE / HOTFIX / CHORE / SPIKE / UI-ONLY</li>
+          <li>Identify affected bounded contexts</li>
+          <li>Assign severity and target milestone</li>
+          <li>Check for conflicts with in-flight work</li>
+        </ul>
+        <span class="gate-badge">GATE: Track confirmed before anything else starts</span>
+      </div>
+    </div>
+
+    <div class="connector"><div class="connector-line"></div><div class="connector-arrow"></div></div>
+
+    <!-- Phase 1 parallel -->
+    <div class="parallel-label">⟵ PARALLEL ⟶</div>
+    <div class="phase-row">
+      <div class="phase p1">
+        <div class="phase-num">Phase 1A — Domain Analysis</div>
+        <div class="phase-name">Rules, Criteria &amp; Edge Cases</div>
+        <div class="badge-row"><span class="agent-badge" style="background:#1e3a5f;color:#60a5fa;">personal-finance-analyst</span></div>
+        <ul>
+          <li>Domain rules (Money, soft-delete, @Transactional)</li>
+          <li>Given/When/Then acceptance criteria</li>
+          <li>Financial correctness constraints</li>
+          <li>Edge cases catalog</li>
+        </ul>
+      </div>
+      <div class="phase p1">
+        <div class="phase-num">Phase 1B — Architecture Brief</div>
+        <div class="phase-name">Ports, Adapters &amp; Implementation Order</div>
+        <div class="badge-row"><span class="agent-badge" style="background:#1e3a5f;color:#60a5fa;">tech-lead</span></div>
+        <ul>
+          <li>New inbound/outbound port interfaces</li>
+          <li>Domain service signatures (pure Java)</li>
+          <li>JPA entity &amp; Liquibase migration plan</li>
+          <li>N+1 risks, complexity estimate (S/M/L)</li>
+          <li>Implementation dependency order</li>
+          <li>ADR authored or referenced</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="connector"><div class="connector-line"></div><div class="connector-arrow"></div></div>
+
+    <div class="phase-row">
+      <div class="phase wide p1">
+        <div class="phase-num">Phase 1C — Convergence</div>
+        <div class="phase-name">Unified Feature Brief</div>
+        <div class="badge-row"><span class="agent-badge" style="background:#1e3a5f;color:#60a5fa;">engineering-manager</span></div>
+        <ul>
+          <li>Reconciles analyst + tech-lead outputs — conflicts resolved here, not in Phase 2</li>
+          <li>Out-of-scope explicitly listed</li>
+          <li>Security &amp; performance considerations captured</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="connector"><div class="connector-line"></div><div class="connector-arrow"></div></div>
+
+    <div class="phase-row">
+      <div class="phase wide p1">
+        <div class="phase-num">Phase 1D — Stakeholder Gate</div>
+        <div class="phase-name">Feature Brief Review &amp; Approval</div>
+        <div class="badge-row"><span class="agent-badge" style="background:#1e3a5f;color:#60a5fa;">product-owner</span></div>
+        <ul>
+          <li>Acceptance criteria correct and complete?</li>
+          <li>Scope right — nothing missing, nothing extra?</li>
+          <li>Complexity estimate acceptable for milestone?</li>
+          <li>Security / compliance concerns flagged?</li>
+        </ul>
+        <span class="gate-badge">GATE: Feature Brief approved — implementation cannot start until this passes</span>
+      </div>
+    </div>
+
+    <div class="connector"><div class="connector-line"></div><div class="connector-arrow"></div></div>
+
+    <!-- Phase 2 -->
+    <div class="phase-row">
+      <div class="phase full p2">
+        <div class="phase-num">Phase 2 — Pre-Implementation <span class="new-badge">NEW</span></div>
+        <div class="phase-name">Branch &amp; PR Strategy</div>
+        <div class="badge-row"><span class="agent-badge" style="background:#1a2e1a;color:#4ade80;">devops-engineer</span><span class="agent-badge" style="background:#1e3a5f;color:#60a5fa;">tech-lead</span></div>
+        <ul>
+          <li>Create feature branch from main (naming: feature/TICKET-description)</li>
+          <li>Define PR merge rules (squash vs merge, required reviewers)</li>
+          <li>Set up draft PR early so work is visible to the team</li>
+          <li>Confirm CI pipeline will run on push to feature branch</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="connector"><div class="connector-line"></div><div class="connector-arrow"></div></div>
+
+    <div class="parallel-label">⟵ PARALLEL ⟶</div>
+    <div class="phase-row">
+      <div class="phase p2">
+        <div class="phase-num">Phase 2A — Backend</div>
+        <div class="phase-name">Domain → Adapters → REST</div>
+        <div class="badge-row"><span class="agent-badge" style="background:#1e3a5f;color:#60a5fa;">full-stack-dev</span></div>
+        <ul>
+          <li>Domain model (pure Java — zero Spring/JPA)</li>
+          <li>Port interfaces (UseCase / Query / PersistencePort)</li>
+          <li>Domain service + Config @Bean wiring</li>
+          <li>JpaEntity, JpaMapper, Liquibase migration</li>
+          <li>REST controller + record DTOs</li>
+          <li>Cross-context ACL adapters if needed</li>
+        </ul>
+        <span class="gate-badge">GATE: ./gradlew test passes · ArchUnit clean · migrations run on fresh schema</span>
+      </div>
+      <div class="phase p2">
+        <div class="phase-num">Phase 2B — UX / Frontend Design</div>
+        <div class="phase-name">Components &amp; Design Spec</div>
+        <div class="badge-row"><span class="agent-badge" style="background:#2a1a3e;color:#c084fc;">ux-ui-designer</span></div>
+        <ul>
+          <li>Component hierarchy for new screens</li>
+          <li>Mobile-first breakpoints (375px)</li>
+          <li>Loading, empty, and error states specified</li>
+          <li>ARIA roles &amp; keyboard navigation spec</li>
+          <li>Design system tokens (shadcn/ui + Tailwind)</li>
+        </ul>
+        <span class="gate-badge">GATE: Design approved · mobile layouts specified</span>
+      </div>
+    </div>
+
+    <div class="connector"><div class="connector-line"></div><div class="connector-label">API contract stable</div><div class="connector-line"></div><div class="connector-arrow"></div></div>
+
+    <div class="phase-row">
+      <div class="phase wide p2">
+        <div class="phase-num">Phase 2C — Frontend Implementation</div>
+        <div class="phase-name">React + TypeScript Components</div>
+        <div class="badge-row"><span class="agent-badge" style="background:#1e3a5f;color:#60a5fa;">full-stack-dev</span></div>
+        <ul>
+          <li>React components per design spec</li>
+          <li>TypeScript types aligned with backend DTOs</li>
+          <li>API client functions (Authorization: Bearer token)</li>
+          <li>Form validation matching backend rules</li>
+          <li>No <code>any</code> types in new code</li>
+        </ul>
+        <span class="gate-badge">GATE: npm run build clean · no TypeScript errors · mobile renders correctly</span>
+      </div>
+    </div>
+
+    <div class="connector"><div class="connector-line"></div><div class="connector-arrow"></div></div>
+
+    <!-- Phase 3 -->
+    <div class="parallel-label">⟵ PARALLEL REVIEW STREAMS ⟶</div>
+    <div class="phase-row">
+      <div class="phase p3">
+        <div class="phase-num">Phase 3A — Architecture Review</div>
+        <div class="phase-name">Domain Zone &amp; ADR Compliance</div>
+        <div class="badge-row"><span class="agent-badge" style="background:#1e3a5f;color:#60a5fa;">tech-lead</span></div>
+        <ul>
+          <li>No Spring/JPA/Lombok in domain/ packages</li>
+          <li>Domain services via @Bean only (no @Service)</li>
+          <li>JpaEntity in adapter/outbound/persistence/ only</li>
+          <li>@Transactional at adapter layer only</li>
+          <li>Ports named correctly (UseCase/Query/Port)</li>
+          <li>Soft-delete enforced, no hard deletes</li>
+          <li>All list queries scoped to authenticated user</li>
+        </ul>
+      </div>
+      <div class="phase p3">
+        <div class="phase-num">Phase 3B — Security Review</div>
+        <div class="phase-name">Auth, OWASP &amp; Data Exposure</div>
+        <div class="badge-row"><span class="agent-badge" style="background:#3b1a1a;color:#f87171;">security-reviewer</span></div>
+        <ul>
+          <li>Auth token checked on every new endpoint</li>
+          <li>Other user's resources return 404, not 403</li>
+          <li>No financial data logged at INFO level</li>
+          <li>Parameterized SQL — no string concatenation</li>
+          <li>No sensitive fields in response DTOs</li>
+          <li>Inactive records excluded from all queries</li>
+        </ul>
+      </div>
+      <div class="phase p3">
+        <div class="phase-num">Phase 3C — Performance Review</div>
+        <div class="phase-name">Queries, Indexes &amp; Bundle</div>
+        <div class="badge-row"><span class="agent-badge" style="background:#2e2000;color:#fbbf24;">performance-reviewer</span></div>
+        <ul>
+          <li>No N+1 in new JPA repositories</li>
+          <li>JOIN FETCH / projections for collections</li>
+          <li>DB indexes for new filter/sort columns</li>
+          <li>List endpoints paginated or limited</li>
+          <li>Aggregates use DB-level, not in-memory</li>
+          <li>Frontend bundle size impact reviewed</li>
+        </ul>
+      </div>
+      <div class="phase p3">
+        <div class="phase-num">Phase 3D — Dependency Review <span class="new-badge">NEW</span></div>
+        <div class="phase-name">New Library Audit</div>
+        <div class="badge-row"><span class="agent-badge" style="background:#1e3a5f;color:#60a5fa;">tech-lead</span></div>
+        <ul>
+          <li>Any new Gradle / npm dependencies justified?</li>
+          <li>License compatible (no GPL in commercial code)?</li>
+          <li>Known CVEs? (check Dependabot / OWASP NVD)</li>
+          <li>Can existing dependencies solve the problem?</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="connector"><div class="connector-line"></div><div class="connector-arrow"></div></div>
+
+    <div class="phase-row">
+      <div class="phase wide p3">
+        <div class="phase-num">Phase 3E — Consolidation &amp; Remediation</div>
+        <div class="phase-name">Resolve All Review Findings → Final LGTM</div>
+        <div class="badge-row"><span class="agent-badge" style="background:#1e3a5f;color:#60a5fa;">tech-lead</span><span class="agent-badge" style="background:#1e3a5f;color:#60a5fa;">full-stack-dev</span></div>
+        <ul>
+          <li>tech-lead consolidates findings from all streams</li>
+          <li>Hard blockers from any stream must be resolved before merge</li>
+          <li>Advisory items addressed or documented as accepted risk</li>
+          <li>Developer fixes → re-requests review on changed files only</li>
+        </ul>
+        <span class="gate-badge">GATE: All hard blockers resolved · tech-lead LGTM · PR ready to merge</span>
+      </div>
+    </div>
+
+    <div class="connector"><div class="connector-line"></div><div class="connector-arrow"></div></div>
+
+    <!-- Phase 4 -->
+    <div class="parallel-label">⟵ PARALLEL ⟶</div>
+    <div class="phase-row">
+      <div class="phase p4">
+        <div class="phase-num">Phase 4A — Automated Tests</div>
+        <div class="phase-name">Unit + Integration + Coverage Gates</div>
+        <div class="badge-row"><span class="agent-badge" style="background:#2a1a3e;color:#8b5cf6;">qa-automation-tester</span></div>
+        <ul>
+          <li>Domain service unit tests (pure Java)</li>
+          <li>Repository tests for JPA adapters</li>
+          <li>Acceptance / integration tests vs real PostgreSQL</li>
+          <li>Every acceptance criterion has a passing test</li>
+          <li>Domain service coverage ≥ 90%</li>
+          <li>Every use case / query: 100% coverage</li>
+          <li><strong>Migration validation on seed data</strong> <span class="new-badge">NEW</span> — run Liquibase against a DB with production-like data to catch column/constraint errors</li>
+        </ul>
+      </div>
+      <div class="phase p4">
+        <div class="phase-num">Phase 4B — Accessibility &amp; Visual</div>
+        <div class="phase-name">WCAG 2.1 AA + Mobile Review</div>
+        <div class="badge-row"><span class="agent-badge" style="background:#2a1a3e;color:#c084fc;">ux-ui-designer</span></div>
+        <ul>
+          <li>WCAG 2.1 AA on all new screens</li>
+          <li>375px viewport — no overflow, no horizontal scroll</li>
+          <li>Keyboard nav on all interactive elements</li>
+          <li>Color contrast 4.5:1 (normal) / 3:1 (large)</li>
+          <li>Loading / empty / error states implemented</li>
+          <li>shadcn/ui variants correct — no one-off overrides</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="connector"><div class="connector-line"></div><div class="connector-arrow"></div></div>
+
+    <div class="phase-row">
+      <div class="phase wide p4">
+        <div class="phase-num">Phase 4C — QA Gate</div>
+        <div class="phase-name">All Checks Must Pass</div>
+        <div class="badge-row"><span class="agent-badge" style="background:#2a1a3e;color:#8b5cf6;">qa-automation-tester</span><span class="agent-badge" style="background:#2a1a3e;color:#c084fc;">ux-ui-designer</span></div>
+        <ul>
+          <li>All automated tests pass, no failures</li>
+          <li>Coverage thresholds met (90% domain, 100% use cases)</li>
+          <li>All acceptance criteria verified by a test</li>
+          <li>Accessibility checklist complete</li>
+          <li>Migration validation on seed data passed</li>
+        </ul>
+        <span class="gate-badge">GATE: QA gate passed — no exceptions</span>
+      </div>
+    </div>
+
+    <div class="connector"><div class="connector-line"></div><div class="connector-arrow"></div></div>
+
+    <!-- Phase 5 — Docs -->
+    <div class="phase-row">
+      <div class="phase full p6">
+        <div class="phase-num">Phase 5 — Documentation <span class="new-badge">NEW</span></div>
+        <div class="phase-name">API Spec, Changelog &amp; Release Notes</div>
+        <div class="badge-row"><span class="agent-badge" style="background:#0e2a2e;color:#06b6d4;">full-stack-dev</span><span class="agent-badge" style="background:#0e2a2e;color:#06b6d4;">tech-lead</span></div>
+        <ul>
+          <li><strong>API documentation</strong> — update OpenAPI/Swagger spec for all new or changed endpoints</li>
+          <li><strong>Changelog</strong> — add entry in CHANGELOG.md with version, date, and summary of changes</li>
+          <li><strong>Release notes</strong> — human-readable summary for stakeholders (what changed and why)</li>
+          <li><strong>ADR update</strong> — confirm architecture-decisions.md reflects any decisions made during implementation</li>
+          <li><strong>README update</strong> — if any new env vars, setup steps, or commands were added</li>
+        </ul>
+        <span class="gate-badge">GATE: API spec updated · changelog entry added · README accurate</span>
+      </div>
+    </div>
+
+    <div class="connector"><div class="connector-line"></div><div class="connector-arrow"></div></div>
+
+    <!-- Phase 6 — Deploy -->
+    <div class="phase-row">
+      <div class="phase p5">
+        <div class="phase-num">Phase 6A — Pre-Deploy Checklist</div>
+        <div class="phase-name">Deploy Readiness</div>
+        <div class="badge-row"><span class="agent-badge" style="background:#3b1a1a;color:#f87171;">devops-engineer</span></div>
+        <ul>
+          <li>Liquibase migration backward-compatible or maintenance window planned</li>
+          <li>No breaking API changes without version bump</li>
+          <li>Env vars / secrets updated in target environment</li>
+          <li>Docker images build successfully</li>
+          <li>CI pipeline green on the feature branch</li>
+          <li>PR merged to main</li>
+        </ul>
+      </div>
+      <div class="phase p5">
+        <div class="phase-num">Phase 6B/6C — Deploy + Smoke Test</div>
+        <div class="phase-name">Release &amp; Immediate Verification</div>
+        <div class="badge-row"><span class="agent-badge" style="background:#3b1a1a;color:#f87171;">devops-engineer</span><span class="agent-badge" style="background:#2a1a3e;color:#8b5cf6;">qa-automation-tester</span></div>
+        <ul>
+          <li>Deploy via CI/CD (make start)</li>
+          <li>App starts + health endpoint responds</li>
+          <li>Auth flow works end-to-end</li>
+          <li>Feature verified manually</li>
+          <li>Liquibase migrations applied cleanly</li>
+          <li>No error spike in logs within 5 min</li>
+        </ul>
+        <span class="gate-badge">GATE: Smoke test passes</span>
+      </div>
+      <div class="phase p5">
+        <div class="phase-num">Phase 6D — Monitoring Setup <span class="new-badge">NEW</span></div>
+        <div class="phase-name">Observability Verification</div>
+        <div class="badge-row"><span class="agent-badge" style="background:#3b1a1a;color:#f87171;">devops-engineer</span></div>
+        <ul>
+          <li>Confirm new endpoints appear in request logs</li>
+          <li>Confirm new DB queries are visible in slow query log if needed</li>
+          <li>Set up any new dashboard panels for the feature (error rate, latency)</li>
+          <li>Verify alerts fire correctly for new failure modes</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="connector"><div class="connector-line"></div><div class="connector-arrow"></div></div>
+
+    <div class="phase-row">
+      <div class="phase wide p5">
+        <div class="phase-num">Phase 6E — Stakeholder Confirmation</div>
+        <div class="phase-name">Close the Feature Loop</div>
+        <div class="badge-row"><span class="agent-badge" style="background:#3b1a1a;color:#f87171;">product-owner</span></div>
+        <ul>
+          <li>Requester confirms feature works as expected in production</li>
+          <li>Closes loop opened at Phase 1D Stakeholder Gate</li>
+          <li>Any follow-up items logged as new feature requests</li>
+        </ul>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ══════════════════ HOTFIX ══════════════════ -->
+<div id="hotfix" class="pipeline hotfix">
+  <p class="pipeline-title" style="color:#f87171">HOTFIX Track</p>
+  <p class="pipeline-desc">Production bug · data integrity · security vulnerability — Accelerated pipeline. Scope is strictly limited to the broken behavior.</p>
+
+  <div class="phases">
+
+    <div class="phase-row">
+      <div class="phase full p0">
+        <div class="phase-num">Phase 0 — Intake</div>
+        <div class="phase-name">HOTFIX Classification</div>
+        <div class="badge-row"><span class="agent-badge" style="background:#1e293b;color:#94a3b8;">engineering-manager</span></div>
+        <ul>
+          <li>Confirm production is broken, data at risk, or security is compromised</li>
+          <li>Scope strictly limited to the broken behavior — no other changes</li>
+          <li>Notify team of incident before any fix is written</li>
+        </ul>
+        <span class="gate-badge">GATE: Incident scope confirmed, team notified</span>
+      </div>
+    </div>
+
+    <div class="connector"><div class="connector-line" style="background:#7f1d1d"></div><div class="connector-arrow" style="border-top-color:#7f1d1d"></div></div>
+
+    <div class="phase-row">
+      <div class="phase p1" style="border-color:#7f1d1d;">
+        <div class="phase-num" style="color:#f87171;">Phase 1 — Diagnosis</div>
+        <div class="phase-name">Root Cause Analysis</div>
+        <div class="badge-row"><span class="agent-badge" style="background:#3b1a1a;color:#f87171;">tech-lead</span></div>
+        <ul>
+          <li>Identify exact root cause — not just symptoms</li>
+          <li>Determine minimal fix scope</li>
+          <li>Confirm no refactors bundled in</li>
+          <li>Domain zone rules still apply (no waivers)</li>
+        </ul>
+      </div>
+      <div class="phase p2" style="border-color:#7f1d1d;">
+        <div class="phase-num" style="color:#f87171;">Phase 2 — Fix</div>
+        <div class="phase-name">Targeted Implementation</div>
+        <div class="badge-row"><span class="agent-badge" style="background:#3b1a1a;color:#f87171;">full-stack-dev</span></div>
+        <ul>
+          <li>Apply minimal fix — no scope creep</li>
+          <li>No refactoring surrounding code</li>
+          <li>No new features bundled in</li>
+          <li>./gradlew test passes after fix</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="connector"><div class="connector-line" style="background:#7f1d1d"></div><div class="connector-arrow" style="border-top-color:#7f1d1d"></div></div>
+
+    <div class="phase-row">
+      <div class="phase wide p3" style="border-color:#7f1d1d;">
+        <div class="phase-num" style="color:#f87171;">Phase 3 — Architecture Review (3A only)</div>
+        <div class="phase-name">Domain Zone Check</div>
+        <div class="badge-row"><span class="agent-badge" style="background:#3b1a1a;color:#f87171;">tech-lead</span></div>
+        <ul>
+          <li>Domain zone checklist — same rules, accelerated pass</li>
+          <li>Security check only if the hotfix touches auth or data exposure</li>
+          <li>No full performance review needed</li>
+        </ul>
+        <span class="gate-badge">GATE: Architecture checklist clean</span>
+      </div>
+    </div>
+
+    <div class="connector"><div class="connector-line" style="background:#7f1d1d"></div><div class="connector-arrow" style="border-top-color:#7f1d1d"></div></div>
+
+    <div class="phase-row">
+      <div class="phase wide p4" style="border-color:#7f1d1d;">
+        <div class="phase-num" style="color:#f87171;">Phase 4 — Targeted Tests (4A only)</div>
+        <div class="phase-name">Verify the Bug is Fixed</div>
+        <div class="badge-row"><span class="agent-badge" style="background:#3b1a1a;color:#f87171;">qa-automation-tester</span></div>
+        <ul>
+          <li>Write a failing test that reproduces the bug first</li>
+          <li>Confirm the fix makes that test pass</li>
+          <li>Run full test suite — confirm no regressions</li>
+        </ul>
+        <span class="gate-badge">GATE: Bug-reproducing test passes · no regressions</span>
+      </div>
+    </div>
+
+    <div class="connector"><div class="connector-line" style="background:#7f1d1d"></div><div class="connector-arrow" style="border-top-color:#7f1d1d"></div></div>
+
+    <div class="phase-row">
+      <div class="phase full p5" style="border-color:#7f1d1d;">
+        <div class="phase-num" style="color:#f87171;">Phase 5 — Accelerated Deploy</div>
+        <div class="phase-name">Deploy + Incident Documentation</div>
+        <div class="badge-row"><span class="agent-badge" style="background:#3b1a1a;color:#f87171;">devops-engineer</span></div>
+        <ul>
+          <li>May bypass normal release schedule — team already notified (Phase 0)</li>
+          <li>Smoke test immediately after deploy</li>
+          <li>Incident documented: root cause, fix applied, affected users</li>
+          <li>Follow-up FEATURE or CHORE ticket logged if systemic fix is needed</li>
+        </ul>
+        <span class="gate-badge">GATE: Smoke test passes · incident doc written</span>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ══════════════════ CHORE ══════════════════ -->
+<div id="chore" class="pipeline chore">
+  <p class="pipeline-title" style="color:#4ade80">CHORE Track</p>
+  <p class="pipeline-desc">Dependency upgrade · refactor · no domain change — Abbreviated pipeline, no analyst or UX phases.</p>
+
+  <div class="phases">
+
+    <div class="phase-row">
+      <div class="phase full p0">
+        <div class="phase-num">Phase 0 — Intake</div>
+        <div class="phase-name">CHORE Classification</div>
+        <div class="badge-row"><span class="agent-badge" style="background:#1a2e1a;color:#4ade80;">engineering-manager</span></div>
+        <ul>
+          <li>Confirm: no domain model changes, no new ports, no new endpoints</li>
+          <li>Confirm: no API contract changes</li>
+          <li>If domain model changes needed → reclassify as FEATURE</li>
+        </ul>
+        <span class="gate-badge">GATE: Confirmed no domain change</span>
+      </div>
+    </div>
+
+    <div class="connector"><div class="connector-line" style="background:#14532d"></div><div class="connector-arrow" style="border-top-color:#14532d"></div></div>
+
+    <div class="phase-row">
+      <div class="phase full p2" style="border-color:#14532d;">
+        <div class="phase-num">Phase 2 — Implementation</div>
+        <div class="phase-name">Backend Only (no UX review unless frontend is affected)</div>
+        <div class="badge-row"><span class="agent-badge" style="background:#1a2e1a;color:#4ade80;">full-stack-dev</span></div>
+        <ul>
+          <li>Apply the targeted change (upgrade, refactor, cleanup)</li>
+          <li>No new abstractions beyond what is needed</li>
+          <li>./gradlew test passes after change</li>
+        </ul>
+        <span class="gate-badge">GATE: Build clean · tests pass</span>
+      </div>
+    </div>
+
+    <div class="connector"><div class="connector-line" style="background:#14532d"></div><div class="connector-arrow" style="border-top-color:#14532d"></div></div>
+
+    <div class="parallel-label">⟵ PARALLEL ⟶</div>
+    <div class="phase-row">
+      <div class="phase p3" style="border-color:#14532d;">
+        <div class="phase-num" style="color:#4ade80;">Phase 3A — Architecture Review</div>
+        <div class="phase-name">Verify No Domain Leakage</div>
+        <div class="badge-row"><span class="agent-badge" style="background:#1a2e1a;color:#4ade80;">tech-lead</span></div>
+        <ul>
+          <li>Domain zone checklist — no Spring/JPA in domain/ packages</li>
+          <li>No accidental cross-context imports</li>
+          <li>Liquibase migrations (if any) correct</li>
+        </ul>
+        <span class="gate-badge">GATE: No domain violations</span>
+      </div>
+      <div class="phase p3" style="border-color:#14532d;">
+        <div class="phase-num" style="color:#4ade80;">Phase 3D — Dependency Review <span class="new-badge">NEW</span></div>
+        <div class="phase-name">New Library Audit</div>
+        <div class="badge-row"><span class="agent-badge" style="background:#1a2e1a;color:#4ade80;">tech-lead</span></div>
+        <ul>
+          <li>Upgraded version — any breaking changes?</li>
+          <li>Known CVEs in new version?</li>
+          <li>License still compatible?</li>
+          <li>Bundle size impact if npm package</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="connector"><div class="connector-line" style="background:#14532d"></div><div class="connector-arrow" style="border-top-color:#14532d"></div></div>
+
+    <div class="phase-row">
+      <div class="phase full p4" style="border-color:#14532d;">
+        <div class="phase-num">Phase 4 — Tests (4A only)</div>
+        <div class="phase-name">Confirm Nothing Broken</div>
+        <div class="badge-row"><span class="agent-badge" style="background:#1a2e1a;color:#4ade80;">qa-automation-tester</span></div>
+        <ul>
+          <li>Run full test suite: ./gradlew test + ./gradlew integrationTest</li>
+          <li>All existing tests must pass — no regressions</li>
+          <li>No new tests required unless the chore fixes a coverage gap</li>
+        </ul>
+        <span class="gate-badge">GATE: All existing tests pass</span>
+      </div>
+    </div>
+
+    <div class="connector"><div class="connector-line" style="background:#14532d"></div><div class="connector-arrow" style="border-top-color:#14532d"></div></div>
+
+    <div class="phase-row">
+      <div class="phase full p5" style="border-color:#14532d;">
+        <div class="phase-num">Phase 5 — Normal Deploy</div>
+        <div class="phase-name">Standard Release</div>
+        <div class="badge-row"><span class="agent-badge" style="background:#1a2e1a;color:#4ade80;">devops-engineer</span></div>
+        <ul>
+          <li>Normal deploy via CI/CD</li>
+          <li>Smoke test: app starts, no error spike</li>
+          <li>No stakeholder confirmation required</li>
+        </ul>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ══════════════════ SPIKE ══════════════════ -->
+<div id="spike" class="pipeline spike">
+  <p class="pipeline-title" style="color:#fbbf24">SPIKE Track</p>
+  <p class="pipeline-desc">Technical investigation · proof-of-concept · ADR research — Output is a document, never production code.</p>
+
+  <div class="phases">
+
+    <div class="phase-row">
+      <div class="phase full p0">
+        <div class="phase-num">Phase 0 — Intake</div>
+        <div class="phase-name">SPIKE Classification</div>
+        <div class="badge-row"><span class="agent-badge" style="background:#2e2000;color:#fbbf24;">engineering-manager</span></div>
+        <ul>
+          <li>Confirm: output will be a document or ADR, not production code</li>
+          <li>Define the specific question the spike must answer</li>
+          <li>Set a time-box (do not let spikes run indefinitely)</li>
+        </ul>
+        <span class="gate-badge">GATE: Question defined · time-box set</span>
+      </div>
+    </div>
+
+    <div class="connector"><div class="connector-line" style="background:#78350f"></div><div class="connector-arrow" style="border-top-color:#78350f"></div></div>
+
+    <div class="phase-row">
+      <div class="phase full p1" style="border-color:#78350f;">
+        <div class="phase-num">Phase 1B — Architecture Research</div>
+        <div class="phase-name">Options Analysis &amp; ADR Authorship</div>
+        <div class="badge-row"><span class="agent-badge" style="background:#2e2000;color:#fbbf24;">tech-lead</span></div>
+        <ul>
+          <li>Research options for the architectural question</li>
+          <li>Evaluate against hexagonal architecture constraints (ADR-014)</li>
+          <li>Consider bounded context boundary impact</li>
+          <li>Prototype if needed — prototype code is never merged to main</li>
+          <li>Author ADR: Context → Options → Decision → Rationale → Consequences</li>
+          <li>Save to .claude/agent-memory/tech-lead/architecture-decisions.md</li>
+        </ul>
+        <span class="gate-badge">GATE: ADR complete and reviewed</span>
+      </div>
+    </div>
+
+    <div class="connector"><div class="connector-line" style="background:#78350f"></div><div class="connector-arrow" style="border-top-color:#78350f"></div></div>
+
+    <div class="phase-row">
+      <div class="phase full" style="border-color:#78350f; background:#1a1200;">
+        <div class="phase-num" style="color:#fbbf24;">Output — ADR Document Only</div>
+        <div class="phase-name" style="color:#fbbf24;">No Code · No Tests · No Deploy</div>
+        <ul>
+          <li>ADR filed in architecture-decisions.md</li>
+          <li>Decision and rationale documented for future reference</li>
+          <li>If spike reveals a new feature is needed → start a FEATURE track request</li>
+          <li>Prototype code discarded or kept in a branch marked "spike — do not merge"</li>
+        </ul>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ══════════════════ UI-ONLY ══════════════════ -->
+<div id="ui" class="pipeline ui">
+  <p class="pipeline-title" style="color:#c084fc">UI-ONLY Track</p>
+  <p class="pipeline-desc">Visual change · copy update · design system adjustment — No backend phases, no API contract changes.</p>
+
+  <div class="phases">
+
+    <div class="phase-row">
+      <div class="phase full p0">
+        <div class="phase-num">Phase 0 — Intake</div>
+        <div class="phase-name">UI-ONLY Classification</div>
+        <div class="badge-row"><span class="agent-badge" style="background:#2a1a3e;color:#c084fc;">engineering-manager</span></div>
+        <ul>
+          <li>Confirm: no new API endpoints, no DTO changes, no domain model changes</li>
+          <li>Confirm: change is purely in frontend/ directory</li>
+          <li>If an API change is needed → reclassify as FEATURE</li>
+        </ul>
+        <span class="gate-badge">GATE: Confirmed frontend-only change</span>
+      </div>
+    </div>
+
+    <div class="connector"><div class="connector-line" style="background:#581c87"></div><div class="connector-arrow" style="border-top-color:#581c87"></div></div>
+
+    <div class="phase-row">
+      <div class="phase wide p2" style="border-color:#581c87;">
+        <div class="phase-num">Phase 2B — UX / Frontend Design</div>
+        <div class="phase-name">Design Review &amp; Approval</div>
+        <div class="badge-row"><span class="agent-badge" style="background:#2a1a3e;color:#c084fc;">ux-ui-designer</span></div>
+        <ul>
+          <li>Review proposed change against the design system</li>
+          <li>Confirm shadcn/ui components used correctly</li>
+          <li>Verify mobile-first — 375px viewport reviewed first</li>
+          <li>Specify loading/empty/error states if affected</li>
+        </ul>
+        <span class="gate-badge">GATE: Design approved</span>
+      </div>
+    </div>
+
+    <div class="connector"><div class="connector-line" style="background:#581c87"></div><div class="connector-arrow" style="border-top-color:#581c87"></div></div>
+
+    <div class="phase-row">
+      <div class="phase wide p2" style="border-color:#581c87;">
+        <div class="phase-num">Phase 2C — Frontend Implementation</div>
+        <div class="phase-name">React + TypeScript Changes</div>
+        <div class="badge-row"><span class="agent-badge" style="background:#2a1a3e;color:#c084fc;">full-stack-dev</span></div>
+        <ul>
+          <li>Implement visual changes per design approval</li>
+          <li>npm run build clean — no TypeScript errors</li>
+          <li>No new <code>any</code> types</li>
+          <li>No accidental API client changes</li>
+        </ul>
+        <span class="gate-badge">GATE: Build clean</span>
+      </div>
+    </div>
+
+    <div class="connector"><div class="connector-line" style="background:#581c87"></div><div class="connector-arrow" style="border-top-color:#581c87"></div></div>
+
+    <div class="phase-row">
+      <div class="phase wide p3" style="border-color:#581c87;">
+        <div class="phase-num">Phase 3 — Partial Architecture Review</div>
+        <div class="phase-name">Confirm No API Contract Changes Crept In</div>
+        <div class="badge-row"><span class="agent-badge" style="background:#2a1a3e;color:#c084fc;">tech-lead</span></div>
+        <ul>
+          <li>Confirm no new API calls or existing ones modified</li>
+          <li>Confirm no backend files touched</li>
+          <li>If any API changes found → stop, reclassify as FEATURE</li>
+        </ul>
+        <span class="gate-badge">GATE: Confirmed frontend-only diff</span>
+      </div>
+    </div>
+
+    <div class="connector"><div class="connector-line" style="background:#581c87"></div><div class="connector-arrow" style="border-top-color:#581c87"></div></div>
+
+    <div class="phase-row">
+      <div class="phase wide p4" style="border-color:#581c87;">
+        <div class="phase-num">Phase 4B — Accessibility + Visual Review</div>
+        <div class="phase-name">WCAG 2.1 AA + Mobile Verification</div>
+        <div class="badge-row"><span class="agent-badge" style="background:#2a1a3e;color:#c084fc;">ux-ui-designer</span></div>
+        <ul>
+          <li>WCAG 2.1 AA compliance on changed screens</li>
+          <li>Mobile viewport (375px) confirmed — no overflow</li>
+          <li>Keyboard navigation still works</li>
+          <li>Color contrast ratios verified</li>
+          <li>Visual consistency with design system confirmed</li>
+        </ul>
+        <span class="gate-badge">GATE: Accessibility checklist passed</span>
+      </div>
+    </div>
+
+    <div class="connector"><div class="connector-line" style="background:#581c87"></div><div class="connector-arrow" style="border-top-color:#581c87"></div></div>
+
+    <div class="phase-row">
+      <div class="phase full p5" style="border-color:#581c87;">
+        <div class="phase-num">Phase 5 — Deploy</div>
+        <div class="phase-name">Frontend Build + Deploy</div>
+        <div class="badge-row"><span class="agent-badge" style="background:#2a1a3e;color:#c084fc;">devops-engineer</span></div>
+        <ul>
+          <li>Frontend build deployed via CI/CD</li>
+          <li>Quick visual smoke test in production</li>
+          <li>No stakeholder confirmation required (unless PM-requested copy change)</li>
+        </ul>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  function show(id) {
+    document.querySelectorAll('.pipeline').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+    document.querySelectorAll('.tab').forEach(t => {
+      if (t.getAttribute('onclick') === `show('${id}')`) t.classList.add('active');
+    });
+  }
+</script>
+
+</body>
+</html>

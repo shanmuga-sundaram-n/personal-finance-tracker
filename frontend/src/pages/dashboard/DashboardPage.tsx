@@ -161,7 +161,11 @@ export function DashboardPage() {
             {donutData.length === 0 ? (
               <p className="text-sm text-muted-foreground">No expenses this month</p>
             ) : (
-              <div className="relative h-[260px] w-full">
+              <div
+                role="img"
+                aria-label={`Donut chart showing top expense categories. Total spent: ${dashboard.currency} ${donutTotal.toFixed(2)}`}
+                className="relative h-[260px] w-full"
+              >
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
                     <Pie
@@ -233,7 +237,14 @@ export function DashboardPage() {
                           <MoneyDisplay amount={alert.amount} currency={dashboard.currency} className="text-sm" />
                         </span>
                       </div>
-                      <div className={`h-2 rounded-full ${trackColor}`}>
+                      <div
+                        role="progressbar"
+                        aria-valuenow={pct}
+                        aria-valuemin={0}
+                        aria-valuemax={100}
+                        aria-label={`${alert.categoryName} budget: ${alert.percentUsed.toFixed(0)}% used`}
+                        className={`h-2 rounded-full ${trackColor}`}
+                      >
                         <div
                           className={`h-2 rounded-full transition-all ${barColor}`}
                           style={{ width: `${pct}%` }}

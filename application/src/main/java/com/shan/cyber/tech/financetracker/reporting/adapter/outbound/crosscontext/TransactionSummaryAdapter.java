@@ -1,4 +1,4 @@
-package com.shan.cyber.tech.financetracker.reporting.adapter.outbound;
+package com.shan.cyber.tech.financetracker.reporting.adapter.outbound.crosscontext;
 
 import com.shan.cyber.tech.financetracker.reporting.domain.port.inbound.CategorySpendingSummary;
 import com.shan.cyber.tech.financetracker.reporting.domain.port.inbound.RecentTransactionSummary;

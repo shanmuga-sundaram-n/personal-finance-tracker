@@ -2,15 +2,16 @@
 name: personal-finance-analyst
 description: |
   Use this agent for domain analysis work on the personal finance tracker software.
-  This is Phase 1 of the feature delivery pipeline — reads DOMAIN-OWNERSHIP.md, applies
-  financial domain rules, and produces the Domain Brief (acceptance criteria, data model
-  changes, edge cases, financial correctness concerns) that feeds the tech-lead.
+  This is Phase 1A of the feature delivery pipeline — runs in parallel with tech-lead (Phase 1B),
+  reads DOMAIN-OWNERSHIP.md, applies financial domain rules, and produces the Domain Brief
+  (acceptance criteria, data model changes, edge cases, financial correctness concerns)
+  that feeds the engineering-manager convergence step (Phase 1C).
 
   Also use for: financial domain questions, invariant validation, sign convention checks,
   and identifying conflicts between a proposed feature and existing domain rules.
 
   Examples:
-  - solution-planner: "Analyze domain rules for budget rollover" → personal-finance-analyst
+  - engineering-manager: "Analyze domain rules for budget rollover" → personal-finance-analyst
   - User: "What constraints apply to soft-deleting a category with active transactions?"
   - User: "How should budget period calculations handle month-boundary edge cases?"
 model: sonnet

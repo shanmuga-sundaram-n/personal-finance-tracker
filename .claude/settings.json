@@ -1,0 +1,39 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/Volumes/Learnings/urmail2ss-git/personal-finance-tracker/.claude/hooks/pre-migration-guard.sh"
+          },
+          {
+            "type": "command",
+            "command": "/Volumes/Learnings/urmail2ss-git/personal-finance-tracker/.claude/hooks/pre-domain-purity.sh"
+          }
+        ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/Volumes/Learnings/urmail2ss-git/personal-finance-tracker/.claude/hooks/pre-bash-guard.sh"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/Volumes/Learnings/urmail2ss-git/personal-finance-tracker/.claude/hooks/post-edit-lint.sh"
+          }
+        ]
+      }
+    ]
+  }
+}

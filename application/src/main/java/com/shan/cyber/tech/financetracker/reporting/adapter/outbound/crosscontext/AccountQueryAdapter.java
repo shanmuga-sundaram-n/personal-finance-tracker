@@ -1,4 +1,4 @@
-package com.shan.cyber.tech.financetracker.reporting.adapter.outbound;
+package com.shan.cyber.tech.financetracker.reporting.adapter.outbound.crosscontext;
 
 import com.shan.cyber.tech.financetracker.account.domain.port.inbound.AccountView;
 import com.shan.cyber.tech.financetracker.account.domain.port.inbound.GetAccountsQuery;

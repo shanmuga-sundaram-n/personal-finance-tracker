@@ -1,0 +1,2102 @@
+openapi: 3.0.1
+info:
+  title: Personal Finance Tracker API
+  description: RESTful API for managing personal finances
+  version: v1
+
+servers:
+  - url: http://localhost:8080
+    description: Local development
+
+security:
+  - bearerAuth: []
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: UUID
+      description: Session token from POST /api/v1/auth/login
+
+  schemas:
+    ErrorResponseDto:
+      type: object
+      properties:
+        status:
+          type: integer
+          example: 404
+        error:
+          type: string
+          example: Not Found
+        message:
+          type: string
+          example: Account not found
+        timestamp:
+          type: string
+          format: date-time
+
+    FieldErrorDto:
+      type: object
+      properties:
+        field:
+          type: string
+          example: amount
+        message:
+          type: string
+          example: must be greater than 0
+
+    # ---------- Identity ----------
+    RegisterRequestDto:
+      type: object
+      required: [username, email, password, firstName, lastName]
+      properties:
+        username:
+          type: string
+          example: jsmith
+        email:
+          type: string
+          format: email
+          example: jsmith@example.com
+        password:
+          type: string
+          format: password
+          example: "S3cur3P@ss!"
+        firstName:
+          type: string
+          example: John
+        lastName:
+          type: string
+          example: Smith
+
+    LoginRequestDto:
+      type: object
+      required: [username, password]
+      properties:
+        username:
+          type: string
+          example: jsmith
+        password:
+          type: string
+          format: password
+          example: "S3cur3P@ss!"
+
+    LoginResponseDto:
+      type: object
+      properties:
+        token:
+          type: string
+          format: uuid
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        expiresAt:
+          type: string
+          format: date-time
+
+    UserProfileResponseDto:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          example: 1
+        username:
+          type: string
+          example: jsmith
+        email:
+          type: string
+          example: jsmith@example.com
+        firstName:
+          type: string
+          example: John
+        lastName:
+          type: string
+          example: Smith
+        preferredCurrency:
+          type: string
+          example: USD
+        createdAt:
+          type: string
+          format: date-time
+
+    UpdateProfileRequestDto:
+      type: object
+      properties:
+        firstName:
+          type: string
+          example: John
+        lastName:
+          type: string
+          example: Smith
+        preferredCurrency:
+          type: string
+          example: USD
+
+    # ---------- Accounts ----------
+    CreateAccountRequestDto:
+      type: object
+      required: [name, accountTypeCode, initialBalance, currency]
+      properties:
+        name:
+          type: string
+          example: Chase Checking
+        accountTypeCode:
+          type: string
+          example: CHECKING
+          description: "Allowed values: CHECKING, SAVINGS, CREDIT_CARD, LOAN, INVESTMENT, CASH, OTHER"
+        initialBalance:
+          type: string
+          example: "1500.0000"
+          description: Decimal string (NUMERIC 19,4)
+        currency:
+          type: string
+          example: USD
+        institutionName:
+          type: string
+          example: Chase Bank
+        accountNumberLast4:
+          type: string
+          example: "4321"
+
+    UpdateAccountRequestDto:
+      type: object
+      required: [name]
+      properties:
+        name:
+          type: string
+          example: Chase Checking (Updated)
+        institutionName:
+          type: string
+          example: Chase Bank
+
+    AccountResponseDto:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          example: 1
+        name:
+          type: string
+          example: Chase Checking
+        accountTypeCode:
+          type: string
+          example: CHECKING
+        accountTypeName:
+          type: string
+          example: Checking Account
+        currentBalance:
+          type: string
+          example: "1250.0000"
+        initialBalance:
+          type: string
+          example: "1500.0000"
+        currency:
+          type: string
+          example: USD
+        institutionName:
+          type: string
+          example: Chase Bank
+        accountNumberLast4:
+          type: string
+          example: "4321"
+        active:
+          type: boolean
+          example: true
+        includeInNetWorth:
+          type: boolean
+          example: true
+        liability:
+          type: boolean
+          example: false
+        createdAt:
+          type: string
+          format: date-time
+
+    NetWorthResponseDto:
+      type: object
+      properties:
+        totalAssets:
+          type: string
+          example: "25000.0000"
+        totalLiabilities:
+          type: string
+          example: "5000.0000"
+        netWorth:
+          type: string
+          example: "20000.0000"
+        currency:
+          type: string
+          example: USD
+
+    # ---------- Categories ----------
+    CreateCategoryRequestDto:
+      type: object
+      required: [categoryTypeCode, name]
+      properties:
+        categoryTypeCode:
+          type: string
+          example: EXPENSE
+          description: "Allowed values: INCOME, EXPENSE, TRANSFER"
+        parentCategoryId:
+          type: integer
+          format: int64
+          nullable: true
+          example: 3
+        name:
+          type: string
+          example: Groceries
+        icon:
+          type: string
+          example: "🛒"
+        color:
+          type: string
+          example: "#4CAF50"
+
+    UpdateCategoryRequestDto:
+      type: object
+      required: [name]
+      properties:
+        name:
+          type: string
+          example: Groceries & Household
+        icon:
+          type: string
+          example: "🛒"
+        color:
+          type: string
+          example: "#4CAF50"
+
+    CategoryResponseDto:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          example: 5
+        name:
+          type: string
+          example: Groceries
+        categoryTypeCode:
+          type: string
+          example: EXPENSE
+        categoryTypeName:
+          type: string
+          example: Expense
+        parentCategoryId:
+          type: integer
+          format: int64
+          nullable: true
+          example: 3
+        parentCategoryName:
+          type: string
+          nullable: true
+          example: Food & Dining
+        icon:
+          type: string
+          example: "🛒"
+        color:
+          type: string
+          example: "#4CAF50"
+        system:
+          type: boolean
+          example: false
+        active:
+          type: boolean
+          example: true
+        createdAt:
+          type: string
+          format: date-time
+
+    # ---------- Transactions ----------
+    CreateTransactionRequestDto:
+      type: object
+      required: [accountId, categoryId, amount, currency, type, transactionDate]
+      properties:
+        accountId:
+          type: integer
+          format: int64
+          example: 1
+        categoryId:
+          type: integer
+          format: int64
+          example: 5
+        amount:
+          type: string
+          example: "45.9900"
+        currency:
+          type: string
+          example: USD
+        type:
+          type: string
+          example: EXPENSE
+          description: "Allowed values: INCOME, EXPENSE"
+        transactionDate:
+          type: string
+          format: date
+          example: "2025-03-15"
+        description:
+          type: string
+          example: Weekly grocery run
+        merchantName:
+          type: string
+          example: Whole Foods
+        referenceNumber:
+          type: string
+          example: TXN-001
+
+    UpdateTransactionRequestDto:
+      type: object
+      required: [categoryId, amount, currency, transactionDate]
+      properties:
+        categoryId:
+          type: integer
+          format: int64
+          example: 5
+        amount:
+          type: string
+          example: "52.3400"
+        currency:
+          type: string
+          example: USD
+        transactionDate:
+          type: string
+          format: date
+          example: "2025-03-15"
+        description:
+          type: string
+          example: Weekly grocery run (corrected)
+        merchantName:
+          type: string
+          example: Whole Foods
+        referenceNumber:
+          type: string
+          example: TXN-001
+
+    ReconcileTransactionRequestDto:
+      type: object
+      required: [reconciled]
+      properties:
+        reconciled:
+          type: boolean
+          example: true
+
+    TransactionResponseDto:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          example: 42
+        accountId:
+          type: integer
+          format: int64
+          example: 1
+        accountName:
+          type: string
+          example: Chase Checking
+        categoryId:
+          type: integer
+          format: int64
+          example: 5
+        categoryName:
+          type: string
+          example: Groceries
+        amount:
+          type: string
+          example: "45.9900"
+        currency:
+          type: string
+          example: USD
+        type:
+          type: string
+          example: EXPENSE
+        transactionDate:
+          type: string
+          format: date
+          example: "2025-03-15"
+        description:
+          type: string
+          example: Weekly grocery run
+        merchantName:
+          type: string
+          example: Whole Foods
+        referenceNumber:
+          type: string
+          example: TXN-001
+        transferPairId:
+          type: integer
+          format: int64
+          nullable: true
+        recurring:
+          type: boolean
+          example: false
+        reconciled:
+          type: boolean
+          example: false
+        createdAt:
+          type: string
+          format: date-time
+
+    CreateTransferRequestDto:
+      type: object
+      required: [fromAccountId, toAccountId, categoryId, amount, currency, transactionDate]
+      properties:
+        fromAccountId:
+          type: integer
+          format: int64
+          example: 1
+        toAccountId:
+          type: integer
+          format: int64
+          example: 2
+        categoryId:
+          type: integer
+          format: int64
+          example: 10
+        amount:
+          type: string
+          example: "500.0000"
+        currency:
+          type: string
+          example: USD
+        transactionDate:
+          type: string
+          format: date
+          example: "2025-03-15"
+        description:
+          type: string
+          example: Monthly savings transfer
+
+    TransferResultResponseDto:
+      type: object
+      properties:
+        outboundTransactionId:
+          type: integer
+          format: int64
+          example: 43
+        inboundTransactionId:
+          type: integer
+          format: int64
+          example: 44
+
+    PageResponseDto:
+      type: object
+      properties:
+        content:
+          type: array
+          items: {}
+        page:
+          type: integer
+          example: 0
+        size:
+          type: integer
+          example: 30
+        totalElements:
+          type: integer
+          format: int64
+          example: 142
+        totalPages:
+          type: integer
+          example: 5
+
+    # ---------- Budgets ----------
+    CreateBudgetRequestDto:
+      type: object
+      required: [categoryId, periodType, amount, currency, startDate]
+      properties:
+        categoryId:
+          type: integer
+          format: int64
+          example: 5
+        periodType:
+          type: string
+          example: MONTHLY
+          description: "Allowed values: WEEKLY, MONTHLY, QUARTERLY, YEARLY, CUSTOM"
+        amount:
+          type: string
+          example: "400.0000"
+        currency:
+          type: string
+          example: USD
+        startDate:
+          type: string
+          format: date
+          example: "2025-01-01"
+        endDate:
+          type: string
+          format: date
+          nullable: true
+          example: "2025-12-31"
+        rolloverEnabled:
+          type: boolean
+          example: false
+        alertThresholdPct:
+          type: number
+          format: double
+          nullable: true
+          example: 80.0
+
+    UpdateBudgetRequestDto:
+      type: object
+      required: [amount, currency]
+      properties:
+        amount:
+          type: string
+          example: "450.0000"
+        currency:
+          type: string
+          example: USD
+        endDate:
+          type: string
+          format: date
+          nullable: true
+          example: "2025-12-31"
+        rolloverEnabled:
+          type: boolean
+          example: false
+        alertThresholdPct:
+          type: number
+          format: double
+          nullable: true
+          example: 80.0
+
+    UpsertBudgetByCategoryRequestDto:
+      type: object
+      required: [categoryId, periodType, amount, currency, startDate]
+      properties:
+        categoryId:
+          type: integer
+          format: int64
+          example: 5
+        periodType:
+          type: string
+          example: MONTHLY
+        amount:
+          type: string
+          example: "400.0000"
+        currency:
+          type: string
+          example: USD
+        startDate:
+          type: string
+          format: date
+          example: "2025-01-01"
+        endDate:
+          type: string
+          format: date
+          nullable: true
+          example: "2025-12-31"
+
+    BudgetResponseDto:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          example: 10
+        categoryId:
+          type: integer
+          format: int64
+          example: 5
+        categoryName:
+          type: string
+          example: Groceries
+        periodType:
+          type: string
+          example: MONTHLY
+        amount:
+          type: string
+          example: "400.0000"
+        currency:
+          type: string
+          example: USD
+        startDate:
+          type: string
+          format: date
+          example: "2025-01-01"
+        endDate:
+          type: string
+          format: date
+          nullable: true
+          example: "2025-12-31"
+        rolloverEnabled:
+          type: boolean
+          example: false
+        alertThresholdPct:
+          type: number
+          format: double
+          nullable: true
+          example: 80.0
+        active:
+          type: boolean
+          example: true
+        spentAmount:
+          type: string
+          example: "312.5000"
+        remainingAmount:
+          type: string
+          example: "87.5000"
+        percentUsed:
+          type: number
+          format: double
+          example: 78.1
+        alertTriggered:
+          type: boolean
+          example: false
+        rolloverAmountAdded:
+          type: string
+          example: "0.0000"
+        effectiveBudgetThisPeriod:
+          type: string
+          example: "400.0000"
+        createdAt:
+          type: string
+          format: date-time
+
+    BudgetPlanResponseDto:
+      type: object
+      properties:
+        startDate:
+          type: string
+          example: "2025-01-01"
+        endDate:
+          type: string
+          example: "2025-12-31"
+        currency:
+          type: string
+          example: USD
+        incomeRows:
+          type: array
+          items:
+            $ref: '#/components/schemas/BudgetPlanCategoryRowDto'
+        expenseGroups:
+          type: array
+          items:
+            $ref: '#/components/schemas/BudgetPlanCategoryGroupDto'
+        incomeTotals:
+          $ref: '#/components/schemas/BudgetPlanTotalsDto'
+        expenseTotals:
+          $ref: '#/components/schemas/BudgetPlanTotalsDto'
+
+    BudgetPlanCategoryRowDto:
+      type: object
+      properties:
+        categoryId:
+          type: integer
+          format: int64
+          example: 5
+        categoryName:
+          type: string
+          example: Groceries
+        budgetId:
+          type: integer
+          format: int64
+          nullable: true
+          example: 10
+        budgetedAmount:
+          type: string
+          example: "400.0000"
+        actualAmount:
+          type: string
+          example: "312.5000"
+        varianceAmount:
+          type: string
+          example: "87.5000"
+        percentUsed:
+          type: number
+          format: double
+          example: 78.1
+        hasBudget:
+          type: boolean
+          example: true
+        frequency:
+          type: string
+          example: MONTHLY
+        monthlyAmount:
+          type: string
+          example: "400.0000"
+        yearlyAmount:
+          type: string
+          example: "4800.0000"
+
+    BudgetPlanCategoryGroupDto:
+      type: object
+      properties:
+        parentCategoryId:
+          type: integer
+          format: int64
+          example: 3
+        parentCategoryName:
+          type: string
+          example: Food & Dining
+        rows:
+          type: array
+          items:
+            $ref: '#/components/schemas/BudgetPlanCategoryRowDto'
+        groupMonthlyTotal:
+          type: string
+          example: "600.0000"
+        groupYearlyTotal:
+          type: string
+          example: "7200.0000"
+        groupActualTotal:
+          type: string
+          example: "450.0000"
+        alertTriggered:
+          type: boolean
+          example: false
+
+    BudgetPlanTotalsDto:
+      type: object
+      properties:
+        totalBudgeted:
+          type: string
+          example: "1200.0000"
+        totalActual:
+          type: string
+          example: "980.0000"
+        totalVariance:
+          type: string
+          example: "220.0000"
+        totalPercentUsed:
+          type: number
+          format: double
+          example: 81.7
+        totalMonthly:
+          type: string
+          example: "1200.0000"
+        totalYearly:
+          type: string
+          example: "14400.0000"
+
+    # ---------- Reporting ----------
+    DashboardResponseDto:
+      type: object
+      description: Aggregated financial snapshot for the authenticated user
+      properties:
+        netWorth:
+          type: string
+          example: "20000.0000"
+        totalAssets:
+          type: string
+          example: "25000.0000"
+        totalLiabilities:
+          type: string
+          example: "5000.0000"
+        currency:
+          type: string
+          example: USD
+        currentMonthIncome:
+          type: string
+          example: "4500.0000"
+        currentMonthExpense:
+          type: string
+          example: "3200.0000"
+        netCashFlow:
+          type: string
+          example: "1300.0000"
+        accountBalances:
+          type: array
+          items:
+            type: object
+        topExpenseCategories:
+          type: array
+          items:
+            type: object
+        recentTransactions:
+          type: array
+          items:
+            type: object
+        budgetAlerts:
+          type: array
+          items:
+            type: object
+
+    SpendingReportResponseDto:
+      type: object
+      properties:
+        month:
+          type: string
+          example: "2025-03"
+        totalIncome:
+          type: string
+          example: "4500.0000"
+        totalExpense:
+          type: string
+          example: "3200.0000"
+        netFlow:
+          type: string
+          example: "1300.0000"
+        categoryBreakdown:
+          type: array
+          items:
+            type: object
+
+    MonthlyTrendResponseDto:
+      type: object
+      properties:
+        trend:
+          type: array
+          items:
+            type: object
+            properties:
+              month:
+                type: string
+                example: "2025-03"
+              income:
+                type: string
+                example: "4500.0000"
+              expense:
+                type: string
+                example: "3200.0000"
+              netFlow:
+                type: string
+                example: "1300.0000"
+
+tags:
+  - name: Authentication
+    description: User registration, login, logout, and session operations
+  - name: Users
+    description: Manage the authenticated user's profile settings
+  - name: Accounts
+    description: Create and manage financial accounts (checking, savings, credit cards, loans, etc.)
+  - name: Categories
+    description: Manage transaction categories (income, expense, transfer). Includes system and user-defined categories.
+  - name: Transactions
+    description: Record and manage financial transactions — income, expenses, and transfers
+  - name: Transfers
+    description: Create and delete paired account-to-account transfers. Each transfer produces two linked transactions (debit + credit).
+  - name: Budgets
+    description: Create and manage spending budgets by category and period. Includes budget plan (spreadsheet) view.
+  - name: Reporting
+    description: Read-only financial summaries — dashboard, spending analysis, and monthly trends
+
+paths:
+  # ===== Authentication =====
+  /api/v1/auth/register:
+    post:
+      tags: [Authentication]
+      summary: Register a new user
+      description: Creates a new user account. Username and email must be unique. Returns the created user profile.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRequestDto'
+      responses:
+        "201":
+          description: User registered successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserProfileResponseDto'
+        "400":
+          description: Validation failed — missing or invalid fields
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+        "422":
+          description: Business rule violation — username or email already taken
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+
+  /api/v1/auth/login:
+    post:
+      tags: [Authentication]
+      summary: Authenticate a user
+      description: Validates credentials and returns an opaque session token (UUID). Pass the token as 'Authorization: Bearer {token}' on subsequent requests.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequestDto'
+      responses:
+        "200":
+          description: Login successful — returns session token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponseDto'
+        "400":
+          description: Validation failed — missing username or password
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+        "401":
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+
+  /api/v1/auth/logout:
+    post:
+      tags: [Authentication]
+      summary: Invalidate the current session
+      description: Revokes the bearer token supplied in the Authorization header. No-op if the token is already expired or absent.
+      responses:
+        "204":
+          description: Session invalidated — no content returned
+        "401":
+          description: Missing or invalid bearer token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+
+  /api/v1/auth/me:
+    get:
+      tags: [Authentication]
+      summary: Get the authenticated user's profile
+      description: Returns the profile of the user identified by the current session token.
+      responses:
+        "200":
+          description: Returns the authenticated user's profile
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserProfileResponseDto'
+        "401":
+          description: Missing or invalid bearer token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+
+  # ===== Users =====
+  /api/v1/users/me:
+    put:
+      tags: [Users]
+      summary: Update the authenticated user's profile
+      description: Updates first name, last name, and preferred currency for the currently logged-in user.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateProfileRequestDto'
+      responses:
+        "200":
+          description: Profile updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserProfileResponseDto'
+        "400":
+          description: Validation failed — invalid field values
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+        "401":
+          description: Missing or invalid bearer token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+
+  # ===== Accounts =====
+  /api/v1/accounts:
+    get:
+      tags: [Accounts]
+      summary: List all active accounts
+      description: Returns all active accounts owned by the authenticated user, ordered by creation date.
+      responses:
+        "200":
+          description: List of accounts (may be empty)
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AccountResponseDto'
+        "401":
+          description: Missing or invalid bearer token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+    post:
+      tags: [Accounts]
+      summary: Create a new account
+      description: Creates a financial account for the authenticated user.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateAccountRequestDto'
+      responses:
+        "201":
+          description: Account created — Location header contains the resource URI
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccountResponseDto'
+        "400":
+          description: Validation failed — missing or invalid fields
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+        "401":
+          description: Missing or invalid bearer token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+        "422":
+          description: Business rule violation — unknown account type code
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+
+  /api/v1/accounts/net-worth:
+    get:
+      tags: [Accounts]
+      summary: Get net worth summary
+      description: Returns aggregated total assets, total liabilities, and net worth across all active accounts included in net worth calculations.
+      responses:
+        "200":
+          description: Net worth summary
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NetWorthResponseDto'
+        "401":
+          description: Missing or invalid bearer token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+
+  /api/v1/accounts/{id}:
+    get:
+      tags: [Accounts]
+      summary: Get an account by ID
+      description: Returns a single account. Returns 404 if the account does not exist or belongs to a different user.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Account ID
+          schema:
+            type: integer
+            format: int64
+            example: 1
+      responses:
+        "200":
+          description: Account found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccountResponseDto'
+        "401":
+          description: Missing or invalid bearer token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+        "404":
+          description: Account not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+    put:
+      tags: [Accounts]
+      summary: Update an account
+      description: Updates the display name and institution name of an account.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Account ID
+          schema:
+            type: integer
+            format: int64
+            example: 1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateAccountRequestDto'
+      responses:
+        "200":
+          description: Account updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccountResponseDto'
+        "400":
+          description: Validation failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+        "401":
+          description: Missing or invalid bearer token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+        "404":
+          description: Account not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+    delete:
+      tags: [Accounts]
+      summary: Deactivate (soft-delete) an account
+      description: Marks the account as inactive. All associated transactions remain intact.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Account ID
+          schema:
+            type: integer
+            format: int64
+            example: 1
+      responses:
+        "204":
+          description: Account deactivated — no content returned
+        "401":
+          description: Missing or invalid bearer token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+        "404":
+          description: Account not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+
+  # ===== Categories =====
+  /api/v1/categories:
+    get:
+      tags: [Categories]
+      summary: List categories
+      description: Returns all active categories visible to the authenticated user. Optionally filter by type.
+      parameters:
+        - name: type
+          in: query
+          required: false
+          description: "Filter by category type code: INCOME, EXPENSE, or TRANSFER"
+          schema:
+            type: string
+            example: EXPENSE
+      responses:
+        "200":
+          description: List of categories (may be empty)
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CategoryResponseDto'
+        "401":
+          description: Missing or invalid bearer token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+    post:
+      tags: [Categories]
+      summary: Create a custom category
+      description: Creates a user-defined category. Optionally nest it under an existing parent category.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateCategoryRequestDto'
+      responses:
+        "201":
+          description: Category created — Location header contains the resource URI
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CategoryResponseDto'
+        "400":
+          description: Validation failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+        "401":
+          description: Missing or invalid bearer token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+        "404":
+          description: Parent category not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+        "422":
+          description: Business rule violation — unknown category type code
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+
+  /api/v1/categories/{id}:
+    get:
+      tags: [Categories]
+      summary: Get a category by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Category ID
+          schema:
+            type: integer
+            format: int64
+            example: 5
+      responses:
+        "200":
+          description: Category found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CategoryResponseDto'
+        "401":
+          description: Missing or invalid bearer token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+        "404":
+          description: Category not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+    put:
+      tags: [Categories]
+      summary: Update a category
+      description: Updates the name, icon, and color of a user-defined category. System categories cannot be modified.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Category ID
+          schema:
+            type: integer
+            format: int64
+            example: 5
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateCategoryRequestDto'
+      responses:
+        "200":
+          description: Category updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CategoryResponseDto'
+        "400":
+          description: Validation failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+        "401":
+          description: Missing or invalid bearer token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+        "404":
+          description: Category not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+        "422":
+          description: Business rule violation — attempt to modify a system category
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+    delete:
+      tags: [Categories]
+      summary: Deactivate (soft-delete) a category
+      description: Marks the category as inactive. System categories cannot be deactivated.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Category ID
+          schema:
+            type: integer
+            format: int64
+            example: 5
+      responses:
+        "204":
+          description: Category deactivated — no content returned
+        "401":
+          description: Missing or invalid bearer token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+        "404":
+          description: Category not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+        "422":
+          description: Business rule violation — attempt to deactivate a system category
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+
+  # ===== Transactions =====
+  /api/v1/transactions:
+    get:
+      tags: [Transactions]
+      summary: List transactions with optional filters
+      description: Returns a paginated list of transactions. Supports filtering by account, category, type, date range, and amount range.
+      parameters:
+        - name: accountId
+          in: query
+          required: false
+          description: Filter by account ID
+          schema:
+            type: integer
+            format: int64
+            example: 1
+        - name: categoryId
+          in: query
+          required: false
+          description: Filter by category ID
+          schema:
+            type: integer
+            format: int64
+            example: 3
+        - name: type
+          in: query
+          required: false
+          description: "Filter by transaction type: INCOME, EXPENSE, or TRANSFER"
+          schema:
+            type: string
+            example: EXPENSE
+        - name: from
+          in: query
+          required: false
+          description: Start date filter (inclusive), format yyyy-MM-dd
+          schema:
+            type: string
+            format: date
+            example: "2025-01-01"
+        - name: to
+          in: query
+          required: false
+          description: End date filter (inclusive), format yyyy-MM-dd
+          schema:
+            type: string
+            format: date
+            example: "2025-12-31"
+        - name: minAmount
+          in: query
+          required: false
+          description: Minimum absolute amount filter
+          schema:
+            type: number
+            example: 10.00
+        - name: maxAmount
+          in: query
+          required: false
+          description: Maximum absolute amount filter
+          schema:
+            type: number
+            example: 500.00
+        - name: page
+          in: query
+          required: false
+          description: Zero-based page number
+          schema:
+            type: integer
+            default: 0
+            example: 0
+        - name: size
+          in: query
+          required: false
+          description: Page size (capped at server maximum)
+          schema:
+            type: integer
+            example: 30
+      responses:
+        "200":
+          description: Paginated transaction list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PageResponseDto'
+        "401":
+          description: Missing or invalid bearer token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+    post:
+      tags: [Transactions]
+      summary: Create a transaction
+      description: Records a new INCOME or EXPENSE transaction. For transfers between accounts, use POST /api/v1/transfers instead.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateTransactionRequestDto'
+      responses:
+        "201":
+          description: Transaction created — Location header contains the resource URI
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransactionResponseDto'
+        "400":
+          description: Validation failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+        "401":
+          description: Missing or invalid bearer token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+        "404":
+          description: Account or category not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+        "422":
+          description: Business rule violation — type mismatch with category
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+
+  /api/v1/transactions/transfers:
+    post:
+      tags: [Transactions]
+      summary: Create a transfer (deprecated)
+      description: "Deprecated. Use POST /api/v1/transfers instead."
+      deprecated: true
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateTransferRequestDto'
+      responses:
+        "201":
+          description: Transfer created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransferResultResponseDto'
+        "400":
+          description: Validation failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+        "401":
+          description: Missing or invalid bearer token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+        "404":
+          description: Source or destination account not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+
+  /api/v1/transactions/{id}:
+    get:
+      tags: [Transactions]
+      summary: Get a transaction by ID
+      description: Returns a single transaction. Returns 404 if it does not exist or belongs to a different user.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Transaction ID
+          schema:
+            type: integer
+            format: int64
+            example: 42
+      responses:
+        "200":
+          description: Transaction found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransactionResponseDto'
+        "401":
+          description: Missing or invalid bearer token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+        "404":
+          description: Transaction not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+    put:
+      tags: [Transactions]
+      summary: Update a transaction
+      description: Updates editable fields of a transaction. The account and transaction type are immutable.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Transaction ID
+          schema:
+            type: integer
+            format: int64
+            example: 42
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateTransactionRequestDto'
+      responses:
+        "200":
+          description: Transaction updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransactionResponseDto'
+        "400":
+          description: Validation failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+        "401":
+          description: Missing or invalid bearer token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+        "404":
+          description: Transaction or category not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+    delete:
+      tags: [Transactions]
+      summary: Delete a transaction
+      description: Permanently deletes a single transaction and reverses its effect on the account balance.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Transaction ID
+          schema:
+            type: integer
+            format: int64
+            example: 42
+      responses:
+        "204":
+          description: Transaction deleted — no content returned
+        "401":
+          description: Missing or invalid bearer token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+        "404":
+          description: Transaction not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+
+  /api/v1/transactions/{id}/reconcile:
+    patch:
+      tags: [Transactions]
+      summary: Mark a transaction as reconciled or unreconciled
+      description: Toggles the reconciled flag on a transaction.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Transaction ID
+          schema:
+            type: integer
+            format: int64
+            example: 42
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReconcileTransactionRequestDto'
+      responses:
+        "200":
+          description: Reconciliation status updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransactionResponseDto'
+        "401":
+          description: Missing or invalid bearer token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+        "404":
+          description: Transaction not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+
+  # ===== Transfers =====
+  /api/v1/transfers:
+    post:
+      tags: [Transfers]
+      summary: Create a transfer between two accounts
+      description: Atomically creates a debit transaction on the source account and a credit transaction on the destination account.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateTransferRequestDto'
+      responses:
+        "201":
+          description: Transfer created — Location header points to the outbound transaction
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransferResultResponseDto'
+        "400":
+          description: Validation failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+        "401":
+          description: Missing or invalid bearer token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+        "404":
+          description: Source or destination account not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+        "422":
+          description: Business rule violation — source and destination accounts are the same
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+
+  /api/v1/transfers/{id}:
+    delete:
+      tags: [Transfers]
+      summary: Delete both legs of a transfer
+      description: Permanently deletes both the outbound and inbound transactions that form a transfer pair. Supply the outbound transaction ID.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Outbound transaction ID of the transfer pair
+          schema:
+            type: integer
+            format: int64
+            example: 7
+      responses:
+        "204":
+          description: Both transfer legs deleted — no content returned
+        "401":
+          description: Missing or invalid bearer token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+        "404":
+          description: Transfer not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+
+  # ===== Budgets =====
+  /api/v1/budgets:
+    get:
+      tags: [Budgets]
+      summary: List active budgets
+      description: Returns a paginated list of all active budgets for the authenticated user. Default page size is 50.
+      parameters:
+        - name: page
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 0
+        - name: size
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 50
+      responses:
+        "200":
+          description: Paginated list of budgets
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PageResponseDto'
+        "401":
+          description: Missing or invalid bearer token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+    post:
+      tags: [Budgets]
+      summary: Create a budget
+      description: Creates a new budget for a category and period.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateBudgetRequestDto'
+      responses:
+        "201":
+          description: Budget created — Location header contains the resource URI
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BudgetResponseDto'
+        "400":
+          description: Validation failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+        "401":
+          description: Missing or invalid bearer token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+        "404":
+          description: Category not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+        "422":
+          description: Business rule violation — duplicate budget for category and period
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+
+  /api/v1/budgets/plan:
+    get:
+      tags: [Budgets]
+      summary: Get the budget plan (spreadsheet view)
+      description: Returns a structured budget plan for a date range — income rows and expense groups with budgeted vs actual amounts, variances, and projected totals.
+      parameters:
+        - name: startDate
+          in: query
+          required: true
+          description: Plan start date (yyyy-MM-dd)
+          schema:
+            type: string
+            format: date
+            example: "2025-01-01"
+        - name: endDate
+          in: query
+          required: true
+          description: Plan end date (yyyy-MM-dd)
+          schema:
+            type: string
+            format: date
+            example: "2025-12-31"
+      responses:
+        "200":
+          description: Budget plan for the specified date range
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BudgetPlanResponseDto'
+        "400":
+          description: Missing or invalid startDate/endDate query parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+        "401":
+          description: Missing or invalid bearer token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+
+  /api/v1/budgets/upsert-by-category:
+    post:
+      tags: [Budgets]
+      summary: Upsert a budget by category
+      description: Creates a new budget or updates an existing one for the given category. Idempotent.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpsertBudgetByCategoryRequestDto'
+      responses:
+        "200":
+          description: Budget created or updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BudgetResponseDto'
+        "400":
+          description: Validation failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+        "401":
+          description: Missing or invalid bearer token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+        "404":
+          description: Category not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+
+  /api/v1/budgets/{id}:
+    get:
+      tags: [Budgets]
+      summary: Get a budget by ID
+      description: Returns a single budget including current spend, remaining amount, and alert status.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Budget ID
+          schema:
+            type: integer
+            format: int64
+            example: 10
+      responses:
+        "200":
+          description: Budget found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BudgetResponseDto'
+        "401":
+          description: Missing or invalid bearer token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+        "404":
+          description: Budget not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+    put:
+      tags: [Budgets]
+      summary: Update a budget
+      description: Updates the budgeted amount, end date, rollover setting, and alert threshold percentage.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Budget ID
+          schema:
+            type: integer
+            format: int64
+            example: 10
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateBudgetRequestDto'
+      responses:
+        "200":
+          description: Budget updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BudgetResponseDto'
+        "400":
+          description: Validation failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+        "401":
+          description: Missing or invalid bearer token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+        "404":
+          description: Budget not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+    delete:
+      tags: [Budgets]
+      summary: Deactivate (soft-delete) a budget
+      description: Marks the budget as inactive. Historical spend data is retained.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Budget ID
+          schema:
+            type: integer
+            format: int64
+            example: 10
+      responses:
+        "204":
+          description: Budget deactivated — no content returned
+        "401":
+          description: Missing or invalid bearer token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+        "404":
+          description: Budget not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+
+  # ===== Reporting =====
+  /api/v1/reports/dashboard:
+    get:
+      tags: [Reporting]
+      summary: Get the financial dashboard
+      description: Returns a snapshot of the user's financial position — net worth, account balances, current-month income/expense, top expense categories, recent transactions, and budget alerts.
+      responses:
+        "200":
+          description: Dashboard data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DashboardResponseDto'
+        "401":
+          description: Missing or invalid bearer token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+
+  /api/v1/reports/spending:
+    get:
+      tags: [Reporting]
+      summary: Get the monthly spending report
+      description: Returns income, expense, and net cash flow broken down by category for a given month. Defaults to the current month.
+      parameters:
+        - name: month
+          in: query
+          required: false
+          description: Month in yyyy-MM format. Defaults to the current month.
+          schema:
+            type: string
+            example: "2025-03"
+      responses:
+        "200":
+          description: Monthly spending report
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SpendingReportResponseDto'
+        "400":
+          description: Invalid month format — expected yyyy-MM
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+        "401":
+          description: Missing or invalid bearer token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'
+
+  /api/v1/reports/trend:
+    get:
+      tags: [Reporting]
+      summary: Get monthly trend data
+      description: Returns income, expense, and net cash flow aggregates for the most recent N months.
+      parameters:
+        - name: months
+          in: query
+          required: false
+          description: Number of months to include in the trend (default 6)
+          schema:
+            type: integer
+            default: 6
+            example: 6
+      responses:
+        "200":
+          description: Monthly trend data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MonthlyTrendResponseDto'
+        "401":
+          description: Missing or invalid bearer token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseDto'

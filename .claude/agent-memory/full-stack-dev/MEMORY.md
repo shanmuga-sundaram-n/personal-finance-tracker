@@ -101,3 +101,31 @@ Each context structure:
 ## Known Bugs to Fix (Phase 0)
 
 See `.claude/agent-memory/tech-lead/MEMORY.md` for BUG-001 through BUG-011 before starting any feature work.
+
+---
+
+## Application Health Feedback Loop (run after every backend change)
+
+After any backend or frontend code change, verify the app is healthy:
+```bash
+.claude/hooks/verify-app-health.sh          # full check after backend changes
+.claude/hooks/verify-app-health.sh --quick  # layers 4+5 only after UI-only changes
+```
+
+**5 layers must all be green before handing off:**
+| Layer | Command | What it catches |
+|---|---|---|
+| 1 | `./gradlew :application:compileJava` | Compile errors |
+| 2 | `./gradlew :application:test` | Logic bugs + Spring bean wiring (`ApplicationContextLoadTest`) |
+| 3 | `npm run build` | TypeScript errors, bad imports |
+| 4 | `docker compose ps` | Container not running |
+| 5 | `curl :8080` + `curl :3000` | Runtime startup failures |
+
+**Critical rule — domain service + application service pattern:**
+- Domain service (e.g. `TransactionCommandService`) must NOT implement inbound port interfaces.
+- Only the application service in `config/` (e.g. `TransactionApplicationService`) implements inbound ports.
+- Both implementing the same interface = duplicate Spring bean = startup crash (caught by Layer 2).
+
+## Pipeline Entry
+All tracks (FEATURE, HOTFIX, CHORE, UI-ONLY) enter via `engineering-manager`.
+full-stack-dev is spawned by engineering-manager at the appropriate phase.

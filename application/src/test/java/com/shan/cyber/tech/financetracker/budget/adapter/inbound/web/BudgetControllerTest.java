@@ -38,7 +38,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(BudgetController.class)
-@Import(GlobalExceptionHandler.class)
+@Import({GlobalExceptionHandler.class, BudgetRequestMapper.class})
 class BudgetControllerTest {
 
     @Autowired private MockMvc mockMvc;

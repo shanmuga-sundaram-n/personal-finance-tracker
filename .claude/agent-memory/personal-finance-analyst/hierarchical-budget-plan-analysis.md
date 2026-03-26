@@ -7,13 +7,13 @@ type: project
 # Feature: Category-Hierarchical Budget Plan with Set Budget Dialog
 **Analysed by**: personal-finance-analyst
 **Date**: 2026-03-19
-**Status**: Complete — ready for solution-planner and tech-lead
+**Status**: Complete — ready for engineering-manager and tech-lead
 
 ## Why
 User requested a budget plan view matching a spreadsheet layout: income as flat rows, expenses grouped by parent category with bold headers and subtotals. Each leaf row has a "Set Budget" inline dialog with frequency selection (including BI_WEEKLY and SEMI_ANNUAL which are missing from the current BudgetPeriod enum).
 
 ## How to Apply
-Use this file as the authoritative domain brief when the solution-planner coordinates the tech-lead and full-stack-dev for implementation. QA should use the acceptance criteria directly as the test specification basis.
+Use this file as the authoritative domain brief when the engineering-manager coordinates the tech-lead and full-stack-dev for implementation. QA should use the acceptance criteria directly as the test specification basis.
 
 ## Blockers (Must Fix Before Implementation)
 1. BudgetPeriod enum missing BI_WEEKLY and SEMI_ANNUAL

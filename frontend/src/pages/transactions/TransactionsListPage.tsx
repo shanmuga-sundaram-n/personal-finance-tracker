@@ -338,8 +338,9 @@ export function TransactionsListPage() {
           </div>
 
           <div className="space-y-1">
-            <label className="text-sm font-medium">Category</label>
+            <label htmlFor="filter-category" className="text-sm font-medium">Category</label>
             <CategorySelect
+              id="filter-category"
               categories={categories.filter((c) => c.isActive)}
               value={filters.categoryId ? String(filters.categoryId) : 'all'}
               onValueChange={(v) =>

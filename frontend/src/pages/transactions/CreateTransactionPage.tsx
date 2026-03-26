@@ -97,7 +97,7 @@ export function CreateTransactionPage() {
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>Type</Label>
+                <Label htmlFor="type">Type</Label>
                 <Select
                   value={selectedType}
                   onValueChange={(v) => {
@@ -105,7 +105,7 @@ export function CreateTransactionPage() {
                     setValue('categoryId', '')
                   }}
                 >
-                  <SelectTrigger>
+                  <SelectTrigger id="type" aria-describedby={errors.type ? 'type-error' : undefined}>
                     <SelectValue placeholder="Select type" />
                   </SelectTrigger>
                   <SelectContent>
@@ -113,13 +113,13 @@ export function CreateTransactionPage() {
                     <SelectItem value="INCOME">Income</SelectItem>
                   </SelectContent>
                 </Select>
-                {errors.type && <p className="text-sm text-destructive">{errors.type.message}</p>}
+                {errors.type && <p id="type-error" role="alert" className="text-sm text-destructive">{errors.type.message}</p>}
               </div>
 
               <div className="space-y-2">
-                <Label>Account</Label>
+                <Label htmlFor="accountId">Account</Label>
                 <Select onValueChange={(v) => setValue('accountId', v)}>
-                  <SelectTrigger>
+                  <SelectTrigger id="accountId" aria-describedby={errors.accountId ? 'accountId-error' : undefined}>
                     <SelectValue placeholder="Select account" />
                   </SelectTrigger>
                   <SelectContent>
@@ -130,30 +130,47 @@ export function CreateTransactionPage() {
                     ))}
                   </SelectContent>
                 </Select>
-                {errors.accountId && <p className="text-sm text-destructive">{errors.accountId.message}</p>}
+                {errors.accountId && <p id="accountId-error" role="alert" className="text-sm text-destructive">{errors.accountId.message}</p>}
               </div>
             </div>
 
             <div className="space-y-2">
-              <Label>Category</Label>
+              <Label htmlFor="categoryId">Category</Label>
               <CategorySelect
+                id="categoryId"
                 categories={filteredCategories}
                 onValueChange={(v) => setValue('categoryId', v)}
+                aria-describedby={errors.categoryId ? 'categoryId-error' : undefined}
               />
-              {errors.categoryId && <p className="text-sm text-destructive">{errors.categoryId.message}</p>}
+              {errors.categoryId && <p id="categoryId-error" role="alert" className="text-sm text-destructive">{errors.categoryId.message}</p>}
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="amount">Amount</Label>
-                <Input id="amount" type="number" step="0.01" min="0.01" placeholder="0.00" {...register('amount')} />
-                {errors.amount && <p className="text-sm text-destructive">{errors.amount.message}</p>}
+                <Input
+                  id="amount"
+                  type="number"
+                  step="0.01"
+                  min="0.01"
+                  placeholder="0.00"
+                  aria-describedby={errors.amount ? 'amount-error' : undefined}
+                  aria-invalid={!!errors.amount}
+                  {...register('amount')}
+                />
+                {errors.amount && <p id="amount-error" role="alert" className="text-sm text-destructive">{errors.amount.message}</p>}
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="transactionDate">Date</Label>
-                <Input id="transactionDate" type="date" {...register('transactionDate')} />
-                {errors.transactionDate && <p className="text-sm text-destructive">{errors.transactionDate.message}</p>}
+                <Input
+                  id="transactionDate"
+                  type="date"
+                  aria-describedby={errors.transactionDate ? 'transactionDate-error' : undefined}
+                  aria-invalid={!!errors.transactionDate}
+                  {...register('transactionDate')}
+                />
+                {errors.transactionDate && <p id="transactionDate-error" role="alert" className="text-sm text-destructive">{errors.transactionDate.message}</p>}
               </div>
             </div>
 

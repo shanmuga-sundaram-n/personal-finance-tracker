@@ -1,15 +1,16 @@
 ---
 name: ux-ui-designer
 description: |
-  Use this agent for all UI/UX work. This is Phase 5 of the feature delivery pipeline —
-  reviews all new and modified frontend files after implementation, enforces mobile-first
-  design, and applies the project design system.
+  Use this agent for all UI/UX work. This is Phase 2B (design spec) and Phase 4B
+  (accessibility + mobile review) of the feature delivery pipeline — produces component
+  design specs before implementation, then reviews all new frontend files after implementation,
+  enforces mobile-first design, WCAG 2.1 AA, and applies the project design system.
 
   Also use for: design system questions, accessibility reviews, component layout decisions,
   and improving existing UI for usability.
 
   Examples:
-  - solution-planner: "Review frontend files for budget rollover feature" → ux-ui-designer
+  - engineering-manager: "Review frontend files for budget rollover feature" → ux-ui-designer
   - User: "The transactions list feels clunky on mobile — improve it"
   - User: "Is the budget progress bar accessible?"
   - User: "We need an empty state for the accounts page"

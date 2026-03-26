@@ -132,7 +132,6 @@ public class AccountCommandService implements CreateAccountUseCase, UpdateAccoun
 
     private Account findAccountOrThrow(AccountId accountId, UserId ownerId) {
         return accountPersistencePort.findById(accountId, ownerId)
-                .filter(Account::isActive)
                 .orElseThrow(() -> new AccountNotFoundException(accountId.value()));
     }
 

@@ -5,11 +5,16 @@ description: |
   Covers: Dockerfile changes, docker-compose configuration, GitHub Actions workflows,
   Makefile targets, Gradle build configuration, Nginx configuration, and deployment.
 
+  Also used in the feature delivery pipeline:
+  - Phase 2 (branch & PR strategy) — with tech-lead
+  - Phase 6A (pre-deploy checklist), 6B (deploy), 6C (smoke test), 6D (monitoring setup)
+
   Examples:
   - User: 'Update the CI pipeline to run integration tests in parallel'
   - User: 'The Docker build is taking too long — optimize it'
   - User: 'Add a health check to the postgres service in docker-compose'
   - User: 'Set up staging environment configuration'
+  - engineering-manager: 'Phase 2 branch setup and Phase 6 deploy'
 model: sonnet
 color: orange
 ---

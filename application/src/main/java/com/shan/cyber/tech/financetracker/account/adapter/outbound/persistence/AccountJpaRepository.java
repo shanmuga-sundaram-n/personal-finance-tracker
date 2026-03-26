@@ -11,7 +11,7 @@ public interface AccountJpaRepository extends JpaRepository<AccountJpaEntity, Lo
 
     List<AccountJpaEntity> findByUserIdAndIsActiveTrue(Long userId);
 
-    Optional<AccountJpaEntity> findByIdAndUserId(Long id, Long userId);
+    Optional<AccountJpaEntity> findByIdAndUserIdAndIsActiveTrue(Long id, Long userId);
 
     long countByUserIdAndIsActiveTrue(Long userId);
 

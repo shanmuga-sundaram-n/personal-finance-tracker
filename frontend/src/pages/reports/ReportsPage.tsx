@@ -123,6 +123,10 @@ export function ReportsPage() {
               {categoryChartData.length === 0 ? (
                 <p className="text-sm text-muted-foreground">No expenses for this month</p>
               ) : (
+                <div
+                  role="img"
+                  aria-label={`Horizontal bar chart showing expense breakdown by category for ${formatMonthLabel(selectedMonth)}`}
+                >
                 <ResponsiveContainer
                   width="100%"
                   height={Math.max(200, categoryChartData.length * 42)}
@@ -158,6 +162,7 @@ export function ReportsPage() {
                     />
                   </BarChart>
                 </ResponsiveContainer>
+                </div>
               )}
             </CardContent>
           </Card>
@@ -177,6 +182,7 @@ export function ReportsPage() {
           ) : trendError ? (
             <ErrorAlert message={trendError} />
           ) : trendChartData.length > 0 ? (
+            <div role="img" aria-label="Line chart showing 6-month trend of income, expense, and net cash flow">
             <ResponsiveContainer width="100%" height={300}>
               <LineChart data={trendChartData} margin={{ top: 4, right: 24, bottom: 4, left: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" />
@@ -219,6 +225,7 @@ export function ReportsPage() {
                 />
               </LineChart>
             </ResponsiveContainer>
+            </div>
           ) : (
             <p className="text-sm text-muted-foreground">No trend data available</p>
           )}

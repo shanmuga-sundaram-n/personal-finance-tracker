@@ -9,23 +9,18 @@ import com.shan.cyber.tech.financetracker.transaction.domain.exception.TransferS
 import com.shan.cyber.tech.financetracker.transaction.domain.model.Transaction;
 import com.shan.cyber.tech.financetracker.transaction.domain.model.TransactionType;
 import com.shan.cyber.tech.financetracker.transaction.domain.port.inbound.CreateTransactionCommand;
-import com.shan.cyber.tech.financetracker.transaction.domain.port.inbound.CreateTransactionUseCase;
 import com.shan.cyber.tech.financetracker.transaction.domain.port.inbound.CreateTransferCommand;
-import com.shan.cyber.tech.financetracker.transaction.domain.port.inbound.CreateTransferUseCase;
-import com.shan.cyber.tech.financetracker.transaction.domain.port.inbound.DeleteTransactionUseCase;
 import com.shan.cyber.tech.financetracker.transaction.domain.port.inbound.ReconcileTransactionCommand;
-import com.shan.cyber.tech.financetracker.transaction.domain.port.inbound.ReconcileTransactionUseCase;
 import com.shan.cyber.tech.financetracker.transaction.domain.port.inbound.TransactionView;
 import com.shan.cyber.tech.financetracker.transaction.domain.port.inbound.TransferResult;
 import com.shan.cyber.tech.financetracker.transaction.domain.port.inbound.UpdateTransactionCommand;
-import com.shan.cyber.tech.financetracker.transaction.domain.port.inbound.UpdateTransactionUseCase;
 import com.shan.cyber.tech.financetracker.transaction.domain.port.outbound.BalanceUpdatePort;
 import com.shan.cyber.tech.financetracker.transaction.domain.port.outbound.TransactionEventPublisherPort;
 import com.shan.cyber.tech.financetracker.transaction.domain.port.outbound.TransactionPersistencePort;
 
 import java.util.List;
 
-public class TransactionCommandService implements CreateTransactionUseCase, CreateTransferUseCase, DeleteTransactionUseCase, UpdateTransactionUseCase, ReconcileTransactionUseCase {
+public class TransactionCommandService {
 
     private final TransactionPersistencePort persistencePort;
     private final TransactionEventPublisherPort eventPublisherPort;
@@ -39,7 +34,6 @@ public class TransactionCommandService implements CreateTransactionUseCase, Crea
         this.balanceUpdatePort = balanceUpdatePort;
     }
 
-    @Override
     public TransactionId createTransaction(CreateTransactionCommand command) {
         Transaction transaction = Transaction.create(
                 command.userId(), command.accountId(), command.categoryId(),
@@ -61,7 +55,6 @@ public class TransactionCommandService implements CreateTransactionUseCase, Crea
         return saved.getId();
     }
 
-    @Override
     public TransferResult createTransfer(CreateTransferCommand command) {
         if (command.fromAccountId().equals(command.toAccountId())) {
             throw new TransferSameAccountException();
@@ -105,7 +98,6 @@ public class TransactionCommandService implements CreateTransactionUseCase, Crea
         return new TransferResult(savedOutbound.getId(), savedInbound.getId());
     }
 
-    @Override
     public TransactionView updateTransaction(UpdateTransactionCommand command) {
         Transaction transaction = persistencePort.findById(command.transactionId(), command.userId())
                 .orElseThrow(() -> new TransactionNotFoundException(command.transactionId().value()));
@@ -132,7 +124,6 @@ public class TransactionCommandService implements CreateTransactionUseCase, Crea
                 .orElseThrow(() -> new TransactionNotFoundException(command.transactionId().value()));
     }
 
-    @Override
     public void deleteTransaction(TransactionId transactionId, com.shan.cyber.tech.financetracker.shared.domain.model.UserId userId) {
         Transaction transaction = persistencePort.findById(transactionId, userId)
                 .orElseThrow(() -> new TransactionNotFoundException(transactionId.value()));
@@ -179,7 +170,6 @@ public class TransactionCommandService implements CreateTransactionUseCase, Crea
                 transaction.getAmount(), transaction.getType()));
     }
 
-    @Override
     public TransactionView reconcileTransaction(ReconcileTransactionCommand command) {
         Transaction transaction = persistencePort.findById(command.transactionId(), command.userId())
                 .orElseThrow(() -> new TransactionNotFoundException(command.transactionId().value()));

@@ -1,15 +1,15 @@
 ---
 name: qa-automation-tester
 description: |
-  Use this agent to write and run tests. This is Phase 6 of the feature delivery pipeline —
-  writes domain service unit tests, controller integration tests (MockMvc), and accessibility
-  checks for new frontend elements after implementation.
+  Use this agent to write and run tests. This is Phase 4 of the feature delivery pipeline —
+  writes domain service unit tests, controller integration tests (MockMvc), runs migration
+  validation on seed data, and verifies all acceptance criteria have passing tests.
 
   Also use for: reviewing test coverage gaps, auditing accessibility of existing components,
   and verifying bug fix correctness.
 
   Examples:
-  - solution-planner: "Write tests for budget rollover feature" → qa-automation-tester
+  - engineering-manager: "Write tests for budget rollover feature" → qa-automation-tester
   - User: "Write unit tests for RecurringTransactionDomainService"
   - User: "Add MockMvc tests for the new /api/v1/budgets/{id}/rollover endpoint"
   - User: "Check if the transaction form is accessible"
@@ -40,7 +40,7 @@ You are an elite QA Automation Engineer writing and running tests for the person
 
 ## Required Coverage Per Feature
 
-When invoked from the solution-planner for a feature, always produce:
+When invoked from the engineering-manager for a feature, always produce:
 
 ### 1. Domain Service Unit Tests
 - Happy path for each use case method

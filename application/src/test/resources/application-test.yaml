@@ -1,0 +1,33 @@
+spring:
+  datasource:
+    # Values injected dynamically from TestContainersConfig via @DynamicPropertySource
+    url: jdbc:postgresql://localhost:5432/personal-finance-tracker
+    username: pft-app-user
+    password: pft-app-user-secret
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        default_schema: finance_tracker
+    show-sql: true
+    open-in-view: false
+  liquibase:
+    change-log: classpath:db.changelog/db.changelog-master.yaml
+    default-schema: finance_tracker
+    liquibase-schema: public
+
+app:
+  session:
+    duration-days: 7
+  auth:
+    rate-limit:
+      max-attempts: 5
+      window-minutes: 5
+  pagination:
+    default-size: 30
+    max-size: 100
+  cors:
+    allowed-origins: http://localhost:5173

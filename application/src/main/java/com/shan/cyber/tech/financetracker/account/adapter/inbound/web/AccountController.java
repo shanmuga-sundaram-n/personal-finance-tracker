@@ -12,6 +12,15 @@ import com.shan.cyber.tech.financetracker.shared.adapter.inbound.web.SecurityCon
 import com.shan.cyber.tech.financetracker.shared.domain.model.AccountId;
 import com.shan.cyber.tech.financetracker.shared.domain.model.Money;
 import com.shan.cyber.tech.financetracker.shared.domain.model.UserId;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -28,6 +37,8 @@ import org.springframework.web.bind.annotation.RestController;
 import java.net.URI;
 import java.util.List;
 
+@Tag(name = "Accounts", description = "Create and manage financial accounts (checking, savings, credit cards, loans, etc.)")
+@SecurityRequirement(name = "bearerAuth")
 @RestController
 @RequestMapping("/api/v1/accounts")
 public class AccountController {
@@ -47,6 +58,16 @@ public class AccountController {
         this.getAccountsQuery = getAccountsQuery;
     }
 
+    @Operation(
+        summary = "List all active accounts",
+        description = "Returns all active accounts owned by the authenticated user, ordered by creation date."
+    )
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "List of accounts (may be empty)",
+            content = @Content(array = @ArraySchema(schema = @Schema(implementation = AccountResponseDto.class)))),
+        @ApiResponse(responseCode = "401", description = "Missing or invalid bearer token",
+            content = @Content(schema = @Schema(ref = "#/components/schemas/ErrorResponseDto")))
+    })
     @GetMapping
     public List<AccountResponseDto> list() {
         UserId userId = currentUserId();
@@ -55,6 +76,20 @@ public class AccountController {
                 .toList();
     }
 
+    @Operation(
+        summary = "Create a new account",
+        description = "Creates a financial account for the authenticated user. The initial balance sets the starting balance; subsequent transactions adjust the running balance."
+    )
+    @ApiResponses({
+        @ApiResponse(responseCode = "201", description = "Account created — Location header contains the resource URI",
+            content = @Content(schema = @Schema(implementation = AccountResponseDto.class))),
+        @ApiResponse(responseCode = "400", description = "Validation failed — missing or invalid fields",
+            content = @Content(schema = @Schema(ref = "#/components/schemas/ErrorResponseDto"))),
+        @ApiResponse(responseCode = "401", description = "Missing or invalid bearer token",
+            content = @Content(schema = @Schema(ref = "#/components/schemas/ErrorResponseDto"))),
+        @ApiResponse(responseCode = "422", description = "Business rule violation — unknown account type code",
+            content = @Content(schema = @Schema(ref = "#/components/schemas/ErrorResponseDto")))
+    })
     @PostMapping
     public ResponseEntity<AccountResponseDto> create(@Valid @RequestBody CreateAccountRequestDto dto) {
         UserId userId = currentUserId();
@@ -69,29 +104,82 @@ public class AccountController {
                 .body(response);
     }
 
+    @Operation(
+        summary = "Get an account by ID",
+        description = "Returns a single account. Returns 404 if the account does not exist or belongs to a different user."
+    )
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Account found",
+            content = @Content(schema = @Schema(implementation = AccountResponseDto.class))),
+        @ApiResponse(responseCode = "401", description = "Missing or invalid bearer token",
+            content = @Content(schema = @Schema(ref = "#/components/schemas/ErrorResponseDto"))),
+        @ApiResponse(responseCode = "404", description = "Account not found",
+            content = @Content(schema = @Schema(ref = "#/components/schemas/ErrorResponseDto")))
+    })
     @GetMapping("/{id}")
-    public AccountResponseDto getById(@PathVariable Long id) {
+    public AccountResponseDto getById(
+            @Parameter(description = "Account ID", required = true, example = "1")
+            @PathVariable Long id) {
         UserId userId = currentUserId();
         AccountView view = getAccountsQuery.getAccountById(new AccountId(id), userId);
         return toResponseDto(view);
     }
 
+    @Operation(
+        summary = "Update an account",
+        description = "Updates the display name and institution name of an account. Account type and currency cannot be changed after creation."
+    )
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Account updated",
+            content = @Content(schema = @Schema(implementation = AccountResponseDto.class))),
+        @ApiResponse(responseCode = "400", description = "Validation failed — missing or invalid fields",
+            content = @Content(schema = @Schema(ref = "#/components/schemas/ErrorResponseDto"))),
+        @ApiResponse(responseCode = "401", description = "Missing or invalid bearer token",
+            content = @Content(schema = @Schema(ref = "#/components/schemas/ErrorResponseDto"))),
+        @ApiResponse(responseCode = "404", description = "Account not found",
+            content = @Content(schema = @Schema(ref = "#/components/schemas/ErrorResponseDto")))
+    })
     @PutMapping("/{id}")
-    public AccountResponseDto update(@PathVariable Long id,
-                                      @Valid @RequestBody UpdateAccountRequestDto dto) {
+    public AccountResponseDto update(
+            @Parameter(description = "Account ID", required = true, example = "1")
+            @PathVariable Long id,
+            @Valid @RequestBody UpdateAccountRequestDto dto) {
         UserId userId = currentUserId();
         AccountView view = updateAccountUseCase.updateAccount(new UpdateAccountCommand(
                 new AccountId(id), userId, dto.name(), dto.institutionName()));
         return toResponseDto(view);
     }
 
+    @Operation(
+        summary = "Deactivate (soft-delete) an account",
+        description = "Marks the account as inactive. The account is not physically deleted. All associated transactions remain intact."
+    )
+    @ApiResponses({
+        @ApiResponse(responseCode = "204", description = "Account deactivated — no content returned"),
+        @ApiResponse(responseCode = "401", description = "Missing or invalid bearer token",
+            content = @Content(schema = @Schema(ref = "#/components/schemas/ErrorResponseDto"))),
+        @ApiResponse(responseCode = "404", description = "Account not found",
+            content = @Content(schema = @Schema(ref = "#/components/schemas/ErrorResponseDto")))
+    })
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void deactivate(@PathVariable Long id) {
+    public void deactivate(
+            @Parameter(description = "Account ID", required = true, example = "1")
+            @PathVariable Long id) {
         UserId userId = currentUserId();
         deactivateAccountUseCase.deactivateAccount(new AccountId(id), userId);
     }
 
+    @Operation(
+        summary = "Get net worth summary",
+        description = "Returns aggregated total assets, total liabilities, and net worth across all active accounts that are included in net worth calculations."
+    )
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Net worth summary",
+            content = @Content(schema = @Schema(implementation = NetWorthResponseDto.class))),
+        @ApiResponse(responseCode = "401", description = "Missing or invalid bearer token",
+            content = @Content(schema = @Schema(ref = "#/components/schemas/ErrorResponseDto")))
+    })
     @GetMapping("/net-worth")
     public NetWorthResponseDto netWorth() {
         UserId userId = currentUserId();

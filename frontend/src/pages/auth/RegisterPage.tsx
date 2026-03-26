@@ -79,38 +79,68 @@ export function RegisterPage() {
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="firstName">First name</Label>
-                <Input id="firstName" {...register('firstName')} />
+                <Input
+                  id="firstName"
+                  aria-describedby={errors.firstName ? 'firstName-error' : undefined}
+                  aria-invalid={!!errors.firstName}
+                  {...register('firstName')}
+                />
                 {errors.firstName && (
-                  <p className="text-sm text-destructive">{errors.firstName.message}</p>
+                  <p id="firstName-error" role="alert" className="text-sm text-destructive">{errors.firstName.message}</p>
                 )}
               </div>
               <div className="space-y-2">
                 <Label htmlFor="lastName">Last name</Label>
-                <Input id="lastName" {...register('lastName')} />
+                <Input
+                  id="lastName"
+                  aria-describedby={errors.lastName ? 'lastName-error' : undefined}
+                  aria-invalid={!!errors.lastName}
+                  {...register('lastName')}
+                />
                 {errors.lastName && (
-                  <p className="text-sm text-destructive">{errors.lastName.message}</p>
+                  <p id="lastName-error" role="alert" className="text-sm text-destructive">{errors.lastName.message}</p>
                 )}
               </div>
             </div>
             <div className="space-y-2">
               <Label htmlFor="username">Username</Label>
-              <Input id="username" autoComplete="username" {...register('username')} />
+              <Input
+                id="username"
+                autoComplete="username"
+                aria-describedby={errors.username ? 'username-error' : undefined}
+                aria-invalid={!!errors.username}
+                {...register('username')}
+              />
               {errors.username && (
-                <p className="text-sm text-destructive">{errors.username.message}</p>
+                <p id="username-error" role="alert" className="text-sm text-destructive">{errors.username.message}</p>
               )}
             </div>
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
-              <Input id="email" type="email" autoComplete="email" {...register('email')} />
+              <Input
+                id="email"
+                type="email"
+                autoComplete="email"
+                aria-describedby={errors.email ? 'email-error' : undefined}
+                aria-invalid={!!errors.email}
+                {...register('email')}
+              />
               {errors.email && (
-                <p className="text-sm text-destructive">{errors.email.message}</p>
+                <p id="email-error" role="alert" className="text-sm text-destructive">{errors.email.message}</p>
               )}
             </div>
             <div className="space-y-2">
               <Label htmlFor="password">Password</Label>
-              <Input id="password" type="password" autoComplete="new-password" {...register('password')} />
+              <Input
+                id="password"
+                type="password"
+                autoComplete="new-password"
+                aria-describedby={errors.password ? 'password-error' : undefined}
+                aria-invalid={!!errors.password}
+                {...register('password')}
+              />
               {errors.password && (
-                <p className="text-sm text-destructive">{errors.password.message}</p>
+                <p id="password-error" role="alert" className="text-sm text-destructive">{errors.password.message}</p>
               )}
             </div>
             <div className="space-y-2">
@@ -119,10 +149,12 @@ export function RegisterPage() {
                 id="confirmPassword"
                 type="password"
                 autoComplete="new-password"
+                aria-describedby={errors.confirmPassword ? 'confirmPassword-error' : undefined}
+                aria-invalid={!!errors.confirmPassword}
                 {...register('confirmPassword')}
               />
               {errors.confirmPassword && (
-                <p className="text-sm text-destructive">{errors.confirmPassword.message}</p>
+                <p id="confirmPassword-error" role="alert" className="text-sm text-destructive">{errors.confirmPassword.message}</p>
               )}
             </div>
           </CardContent>

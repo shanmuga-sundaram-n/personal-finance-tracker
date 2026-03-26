@@ -1,5 +1,5 @@
 # QA Automation Tester — Persistent Memory
-**Last updated**: 2026-03-01
+**Last updated**: 2026-03-26
 **Project**: Personal Finance Tracker
 
 ---
@@ -134,6 +134,34 @@ The test suite has 2 compile errors that block `./gradlew :application:test`. Th
 Both are pre-existing and must be fixed before any `./gradlew :application:test` run will succeed.
 
 ---
+
+## Application Health Feedback Loop (your gate: Layer 2)
+
+QA is responsible for Layer 2 of the health feedback loop — all tests must pass including `ApplicationContextLoadTest`.
+
+```bash
+./gradlew :application:test --no-daemon    # must pass before any track is done
+```
+
+**`ApplicationContextLoadTest`** lives at:
+`application/src/test/java/com/shan/cyber/tech/financetracker/ApplicationContextLoadTest.java`
+
+It is a `@SpringBootTest` that just loads the Spring context. It catches:
+- Duplicate bean definitions (two classes implementing the same inbound port interface)
+- Missing `@Bean` declarations
+- Circular dependencies
+- Misconfigured `@Configuration` classes
+
+This test MUST be included in every test run. If it fails, stop and fix before proceeding.
+
+**Lesson (2026-03-26)**: `TransactionCommandService` and `TransactionApplicationService` both implemented
+`CreateTransferUseCase` + `DeleteTransactionUseCase`. Spring couldn't resolve which to inject into
+`TransferController` → startup crash. `ApplicationContextLoadTest` would have caught this at Layer 2
+before docker. Now mandatory on all tracks.
+
+## Pipeline Entry
+All tracks enter via `engineering-manager`. qa-automation-tester is spawned at Phase 4A (FEATURE)
+or equivalent QA phase in other tracks.
 
 ## Note on SecurityContextHolder in @WebMvcTest
 

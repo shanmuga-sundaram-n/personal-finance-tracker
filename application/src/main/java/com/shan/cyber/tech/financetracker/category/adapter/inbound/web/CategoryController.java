@@ -10,6 +10,15 @@ import com.shan.cyber.tech.financetracker.category.domain.port.inbound.UpdateCat
 import com.shan.cyber.tech.financetracker.shared.adapter.inbound.web.SecurityContextHolder;
 import com.shan.cyber.tech.financetracker.shared.domain.model.CategoryId;
 import com.shan.cyber.tech.financetracker.shared.domain.model.UserId;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -27,6 +36,8 @@ import org.springframework.web.bind.annotation.RestController;
 import java.net.URI;
 import java.util.List;
 
+@Tag(name = "Categories", description = "Manage transaction categories (income, expense, transfer). Includes system and user-defined categories.")
+@SecurityRequirement(name = "bearerAuth")
 @RestController
 @RequestMapping("/api/v1/categories")
 public class CategoryController {
@@ -46,8 +57,20 @@ public class CategoryController {
         this.getCategoriesQuery = getCategoriesQuery;
     }
 
+    @Operation(
+        summary = "List categories",
+        description = "Returns all active categories visible to the authenticated user (system defaults plus user-defined). Optionally filter by type: INCOME, EXPENSE, or TRANSFER."
+    )
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "List of categories (may be empty)",
+            content = @Content(array = @ArraySchema(schema = @Schema(implementation = CategoryResponseDto.class)))),
+        @ApiResponse(responseCode = "401", description = "Missing or invalid bearer token",
+            content = @Content(schema = @Schema(ref = "#/components/schemas/ErrorResponseDto")))
+    })
     @GetMapping
-    public List<CategoryResponseDto> list(@RequestParam(required = false) String type) {
+    public List<CategoryResponseDto> list(
+            @Parameter(description = "Filter by category type code: INCOME, EXPENSE, or TRANSFER. Omit for all types.", example = "EXPENSE")
+            @RequestParam(required = false) String type) {
         UserId userId = currentUserId();
         List<CategoryView> views = (type != null && !type.isBlank())
                 ? getCategoriesQuery.getByType(userId, type)
@@ -55,6 +78,22 @@ public class CategoryController {
         return views.stream().map(this::toResponseDto).toList();
     }
 
+    @Operation(
+        summary = "Create a custom category",
+        description = "Creates a user-defined category. Optionally nest it under an existing parent category. System categories cannot be modified."
+    )
+    @ApiResponses({
+        @ApiResponse(responseCode = "201", description = "Category created — Location header contains the resource URI",
+            content = @Content(schema = @Schema(implementation = CategoryResponseDto.class))),
+        @ApiResponse(responseCode = "400", description = "Validation failed — missing or invalid fields",
+            content = @Content(schema = @Schema(ref = "#/components/schemas/ErrorResponseDto"))),
+        @ApiResponse(responseCode = "401", description = "Missing or invalid bearer token",
+            content = @Content(schema = @Schema(ref = "#/components/schemas/ErrorResponseDto"))),
+        @ApiResponse(responseCode = "404", description = "Parent category not found",
+            content = @Content(schema = @Schema(ref = "#/components/schemas/ErrorResponseDto"))),
+        @ApiResponse(responseCode = "422", description = "Business rule violation — unknown category type code",
+            content = @Content(schema = @Schema(ref = "#/components/schemas/ErrorResponseDto")))
+    })
     @PostMapping
     public ResponseEntity<CategoryResponseDto> create(@Valid @RequestBody CreateCategoryRequestDto dto) {
         UserId userId = currentUserId();
@@ -69,25 +108,72 @@ public class CategoryController {
                 .body(response);
     }
 
+    @Operation(
+        summary = "Get a category by ID",
+        description = "Returns a single category. Returns 404 if it does not exist or belongs to a different user (unless it is a system category)."
+    )
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Category found",
+            content = @Content(schema = @Schema(implementation = CategoryResponseDto.class))),
+        @ApiResponse(responseCode = "401", description = "Missing or invalid bearer token",
+            content = @Content(schema = @Schema(ref = "#/components/schemas/ErrorResponseDto"))),
+        @ApiResponse(responseCode = "404", description = "Category not found",
+            content = @Content(schema = @Schema(ref = "#/components/schemas/ErrorResponseDto")))
+    })
     @GetMapping("/{id}")
-    public CategoryResponseDto getById(@PathVariable Long id) {
+    public CategoryResponseDto getById(
+            @Parameter(description = "Category ID", required = true, example = "5")
+            @PathVariable Long id) {
         UserId userId = currentUserId();
         CategoryView view = getCategoriesQuery.getById(new CategoryId(id), userId);
         return toResponseDto(view);
     }
 
+    @Operation(
+        summary = "Update a category",
+        description = "Updates the name, icon, and color of a user-defined category. System categories cannot be modified."
+    )
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Category updated",
+            content = @Content(schema = @Schema(implementation = CategoryResponseDto.class))),
+        @ApiResponse(responseCode = "400", description = "Validation failed — missing or invalid fields",
+            content = @Content(schema = @Schema(ref = "#/components/schemas/ErrorResponseDto"))),
+        @ApiResponse(responseCode = "401", description = "Missing or invalid bearer token",
+            content = @Content(schema = @Schema(ref = "#/components/schemas/ErrorResponseDto"))),
+        @ApiResponse(responseCode = "404", description = "Category not found",
+            content = @Content(schema = @Schema(ref = "#/components/schemas/ErrorResponseDto"))),
+        @ApiResponse(responseCode = "422", description = "Business rule violation — attempt to modify a system category",
+            content = @Content(schema = @Schema(ref = "#/components/schemas/ErrorResponseDto")))
+    })
     @PutMapping("/{id}")
-    public CategoryResponseDto update(@PathVariable Long id,
-                                       @Valid @RequestBody UpdateCategoryRequestDto dto) {
+    public CategoryResponseDto update(
+            @Parameter(description = "Category ID", required = true, example = "5")
+            @PathVariable Long id,
+            @Valid @RequestBody UpdateCategoryRequestDto dto) {
         UserId userId = currentUserId();
         CategoryView view = updateCategoryUseCase.updateCategory(new UpdateCategoryCommand(
                 new CategoryId(id), userId, dto.name(), dto.icon(), dto.color()));
         return toResponseDto(view);
     }
 
+    @Operation(
+        summary = "Deactivate (soft-delete) a category",
+        description = "Marks the category as inactive. System categories cannot be deactivated. Transactions referencing the category are not affected."
+    )
+    @ApiResponses({
+        @ApiResponse(responseCode = "204", description = "Category deactivated — no content returned"),
+        @ApiResponse(responseCode = "401", description = "Missing or invalid bearer token",
+            content = @Content(schema = @Schema(ref = "#/components/schemas/ErrorResponseDto"))),
+        @ApiResponse(responseCode = "404", description = "Category not found",
+            content = @Content(schema = @Schema(ref = "#/components/schemas/ErrorResponseDto"))),
+        @ApiResponse(responseCode = "422", description = "Business rule violation — attempt to deactivate a system category",
+            content = @Content(schema = @Schema(ref = "#/components/schemas/ErrorResponseDto")))
+    })
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void deactivate(@PathVariable Long id) {
+    public void deactivate(
+            @Parameter(description = "Category ID", required = true, example = "5")
+            @PathVariable Long id) {
         UserId userId = currentUserId();
         deactivateCategoryUseCase.deactivateCategory(new CategoryId(id), userId);
     }

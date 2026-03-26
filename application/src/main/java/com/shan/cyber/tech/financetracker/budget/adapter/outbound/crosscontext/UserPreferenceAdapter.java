@@ -1,4 +1,4 @@
-package com.shan.cyber.tech.financetracker.budget.adapter.outbound;
+package com.shan.cyber.tech.financetracker.budget.adapter.outbound.crosscontext;
 
 import com.shan.cyber.tech.financetracker.budget.domain.port.outbound.UserPreferenceQueryPort;
 import com.shan.cyber.tech.financetracker.identity.domain.port.inbound.GetCurrentUserQuery;

@@ -63,16 +63,29 @@ export function LoginPage() {
             {error && <ErrorAlert message={error} />}
             <div className="space-y-2">
               <Label htmlFor="username">Username</Label>
-              <Input id="username" autoComplete="username" {...register('username')} />
+              <Input
+                id="username"
+                autoComplete="username"
+                aria-describedby={errors.username ? 'username-error' : undefined}
+                aria-invalid={!!errors.username}
+                {...register('username')}
+              />
               {errors.username && (
-                <p className="text-sm text-destructive">{errors.username.message}</p>
+                <p id="username-error" role="alert" className="text-sm text-destructive">{errors.username.message}</p>
               )}
             </div>
             <div className="space-y-2">
               <Label htmlFor="password">Password</Label>
-              <Input id="password" type="password" autoComplete="current-password" {...register('password')} />
+              <Input
+                id="password"
+                type="password"
+                autoComplete="current-password"
+                aria-describedby={errors.password ? 'password-error' : undefined}
+                aria-invalid={!!errors.password}
+                {...register('password')}
+              />
               {errors.password && (
-                <p className="text-sm text-destructive">{errors.password.message}</p>
+                <p id="password-error" role="alert" className="text-sm text-destructive">{errors.password.message}</p>
               )}
             </div>
           </CardContent>

@@ -14,6 +14,7 @@ A full-stack personal finance management application built with **Spring Boot 3*
 - [Project Structure](#project-structure)
 - [Development](#development)
 - [Architecture Overview](#architecture-overview)
+- [Agent Pipeline](#agent-pipeline)
 
 ---
 
@@ -266,6 +267,24 @@ Liquibase runs automatically on backend startup and applies all pending migratio
 This project implements **Hexagonal Architecture** (Ports & Adapters) with **6 DDD bounded contexts**. Each bounded context is fully self-contained with its own domain model, inbound/outbound ports, domain services, and adapters.
 
 For detailed architecture documentation, see [ARCHITECTURE.md](./ARCHITECTURE.md).
+
+---
+
+## Agent Pipeline
+
+All engineering work on this project is driven by a **9-agent Claude Code crew** with a mandatory 5-track pipeline. Every request — feature, bug, refactor, research, or UI change — flows through `engineering-manager` as the single entry point.
+
+| Track | When to use |
+|---|---|
+| **FEATURE** | New capability, new endpoint, domain model change |
+| **HOTFIX** | Production bug, startup failure, data integrity issue |
+| **CHORE** | Dependency upgrade, refactor, rename |
+| **SPIKE** | Research / investigation — output is a doc, never code |
+| **UI-ONLY** | Visual or copy change, no API contract change |
+
+Full documentation: [`docs/agent-pipeline.md`](./docs/agent-pipeline.md)
+
+Interactive pipeline visual: [`docs/engineering-pipeline.html`](./docs/engineering-pipeline.html)
 
 ---
 

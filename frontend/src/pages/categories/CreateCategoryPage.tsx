@@ -92,14 +92,20 @@ export function CreateCategoryPage() {
 
             <div className="space-y-2">
               <Label htmlFor="name">Category Name</Label>
-              <Input id="name" placeholder="e.g., Groceries" {...register('name')} />
-              {errors.name && <p className="text-sm text-destructive">{errors.name.message}</p>}
+              <Input
+                id="name"
+                placeholder="e.g., Groceries"
+                aria-describedby={errors.name ? 'name-error' : undefined}
+                aria-invalid={!!errors.name}
+                {...register('name')}
+              />
+              {errors.name && <p id="name-error" role="alert" className="text-sm text-destructive">{errors.name.message}</p>}
             </div>
 
             <div className="space-y-2">
-              <Label>Category Type</Label>
+              <Label htmlFor="categoryTypeCode">Category Type</Label>
               <Select onValueChange={(v) => setValue('categoryTypeCode', v)}>
-                <SelectTrigger>
+                <SelectTrigger id="categoryTypeCode" aria-describedby={errors.categoryTypeCode ? 'categoryTypeCode-error' : undefined}>
                   <SelectValue placeholder="Select category type" />
                 </SelectTrigger>
                 <SelectContent>
@@ -111,7 +117,7 @@ export function CreateCategoryPage() {
                 </SelectContent>
               </Select>
               {errors.categoryTypeCode && (
-                <p className="text-sm text-destructive">{errors.categoryTypeCode.message}</p>
+                <p id="categoryTypeCode-error" role="alert" className="text-sm text-destructive">{errors.categoryTypeCode.message}</p>
               )}
             </div>
 
@@ -140,8 +146,15 @@ export function CreateCategoryPage() {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="color">Color (optional)</Label>
-                <Input id="color" type="color" {...register('color')} />
-                {errors.color && <p className="text-sm text-destructive">{errors.color.message}</p>}
+                <Input
+                  id="color"
+                  type="color"
+                  aria-label="Choose category color"
+                  aria-describedby={errors.color ? 'color-error' : undefined}
+                  aria-invalid={!!errors.color}
+                  {...register('color')}
+                />
+                {errors.color && <p id="color-error" role="alert" className="text-sm text-destructive">{errors.color.message}</p>}
               </div>
             </div>
 

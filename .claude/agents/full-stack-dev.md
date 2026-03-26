@@ -1,15 +1,15 @@
 ---
 name: full-stack-dev
 description: |
-  Use this agent to implement features spanning backend and frontend. This is Phase 4
-  of the feature delivery pipeline — receives a Feature Brief from solution-planner and
-  executes the Implementation Checklist end-to-end.
+  Use this agent to implement features spanning backend and frontend. This is Phase 2
+  of the feature delivery pipeline — receives a Feature Brief from engineering-manager and
+  executes the Implementation Checklist end-to-end (backend Phase 2A, frontend Phase 2C).
 
   Also use for: bug fixes (after tech-lead diagnosis), refactoring specific files,
   and building new backend endpoints or frontend components.
 
   Examples:
-  - solution-planner: "Implement the budget rollover Feature Brief" → full-stack-dev
+  - engineering-manager: "Implement the budget rollover Feature Brief" → full-stack-dev
   - User: "Fix the bug in BudgetDomainService where rollover calculation is wrong"
   - User: "Add a new REST endpoint for account balance history"
   - User: "Build the RecurringTransactions list page component"

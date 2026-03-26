@@ -1,6 +1,6 @@
 # UX/UI Designer — Persistent Memory
 **Project**: Personal Finance Tracker
-**Last updated**: 2026-03-20
+**Last updated**: 2026-03-26
 
 ---
 
@@ -93,6 +93,20 @@ Registration, Login, Dashboard, Accounts List, Add/Edit Account, Account Detail,
 - **Search clear button**: when search has content, render an `X` icon button `absolute right-3` inside the search input wrapper with `aria-label="Clear search"`. Use `pr-9` on the Input to prevent text overlapping the clear button.
 - **SectionHeader component (CategoriesListPage)**: separates "Your categories" (custom) from "System categories" in the same tab. Uses `border-l-4` accent + small icon (FolderOpen for custom, Lock for system) + `text-xs font-semibold uppercase tracking-wide text-foreground/60` label + muted count. Hidden during search (show flat results instead).
 - **DialogDescription required**: every Dialog must include a `DialogDescription` (even one sentence) — this satisfies the `aria-describedby` association that some screen readers require and avoids shadcn/ui console warnings.
+- **CardTitle renders as `<div>`, not `<h3>`**: changed `frontend/src/components/ui/card.tsx` to emit `<div>` instead of `<h3>`. All page sections already use `<h1>` directly; card section labels are visual affordances, not document-outline headings. Using `<h3>` skipped heading levels (h1 → h3) — WCAG 2.1 SC 1.3.1 violation.
+- **CategorySelect requires `id` prop for label association**: `SelectTrigger` must receive `id` so that a `<Label htmlFor="…">` can point to it. All three usages updated: CreateTransactionPage (`id="categoryId"`), EditTransactionPage (`id="categoryId"`), TransactionsListPage filter (`id="filter-category"`).
+- **CategorySelect `aria-describedby` prop**: added to `CategorySelectProps` interface and forwarded to `SelectTrigger`. Pass `errors.categoryId ? 'categoryId-error' : undefined` from parent forms.
+- **Test infrastructure (F-4 accessibility)**: vitest configured in `vite.config.ts` (via `vitest/config`), `test` script added to `package.json`. Setup file at `frontend/src/test/setup.ts` registers `toHaveNoViolations` via `expect.extend({ toHaveNoViolations })` from `vitest-axe/matchers`. Test files excluded from production `tsconfig.app.json` via `exclude` array; `tsconfig.test.json` created for test-only type checking. Two test files: `DashboardPage.test.tsx` (4 tests — heading, chart role/aria-label, progressbar ARIA, axe scan) and `CreateTransactionPage.test.tsx` (6 tests — aria-describedby on inputs, aria-invalid, error message IDs, axe scan). All 10 pass.
+
+## Pipeline Entry & Health Gate
+All tracks enter via `engineering-manager`. ux-ui-designer is spawned at Phase 2B (design spec)
+and Phase 4B (WCAG 2.1 AA accessibility + mobile review).
+
+After frontend changes, `engineering-manager` runs:
+```bash
+.claude/hooks/verify-app-health.sh --quick   # layers 4+5: containers + HTTP responding
+```
+Also verify: `npm run build` (Layer 3) and `npm run test` (axe-core tests: DashboardPage + CreateTransactionPage — 10 tests must pass).
 
 ## Files Reference
 

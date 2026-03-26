@@ -38,8 +38,28 @@ dependencies {
     testImplementation(platform("org.junit:junit-bom:5.9.1"))
     testImplementation("org.junit.jupiter:junit-jupiter")
     testImplementation("com.tngtech.archunit:archunit-junit5:1.4.1")
+
+    // Testcontainers for persistence adapter tests
+    testImplementation(platform("org.testcontainers:testcontainers-bom:1.19.6"))
+    testImplementation("org.testcontainers:postgresql")
+    testImplementation("org.testcontainers:junit-jupiter")
 }
 
+// Domain unit tests + Architecture tests (fast, no Docker)
 tasks.test {
-    useJUnitPlatform()
+    useJUnitPlatform {
+        excludeTags("integration", "adapter")
+    }
+}
+
+// Persistence adapter tests (Docker required)
+tasks.register<Test>("adapterTest") {
+    useJUnitPlatform {
+        includeTags("adapter")
+    }
+    group = "verification"
+    description = "Persistence adapter tests using Testcontainers"
+    shouldRunAfter("test")
+    testClassesDirs = sourceSets["test"].output.classesDirs
+    classpath = sourceSets["test"].runtimeClasspath
 }

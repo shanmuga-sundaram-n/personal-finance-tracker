@@ -1,4 +1,4 @@
-package com.shan.cyber.tech.financetracker.reporting.adapter.outbound;
+package com.shan.cyber.tech.financetracker.reporting.adapter.outbound.crosscontext;
 
 import com.shan.cyber.tech.financetracker.budget.domain.port.inbound.BudgetView;
 import com.shan.cyber.tech.financetracker.budget.domain.port.inbound.GetBudgetsQuery;

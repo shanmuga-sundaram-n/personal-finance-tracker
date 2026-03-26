@@ -123,26 +123,42 @@ export function EditTransactionPage() {
             {error && <ErrorAlert message={error} />}
 
             <div className="space-y-2">
-              <Label>Category</Label>
+              <Label htmlFor="categoryId">Category</Label>
               <CategorySelect
+                id="categoryId"
                 categories={filteredCategories}
                 value={String(transaction.categoryId)}
                 onValueChange={(v) => setValue('categoryId', v)}
+                aria-describedby={errors.categoryId ? 'categoryId-error' : undefined}
               />
-              {errors.categoryId && <p className="text-sm text-destructive">{errors.categoryId.message}</p>}
+              {errors.categoryId && <p id="categoryId-error" role="alert" className="text-sm text-destructive">{errors.categoryId.message}</p>}
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="amount">Amount ({transaction.currency})</Label>
-                <Input id="amount" type="number" step="0.01" min="0.01" {...register('amount')} />
-                {errors.amount && <p className="text-sm text-destructive">{errors.amount.message}</p>}
+                <Input
+                  id="amount"
+                  type="number"
+                  step="0.01"
+                  min="0.01"
+                  aria-describedby={errors.amount ? 'amount-error' : undefined}
+                  aria-invalid={!!errors.amount}
+                  {...register('amount')}
+                />
+                {errors.amount && <p id="amount-error" role="alert" className="text-sm text-destructive">{errors.amount.message}</p>}
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="transactionDate">Date</Label>
-                <Input id="transactionDate" type="date" {...register('transactionDate')} />
-                {errors.transactionDate && <p className="text-sm text-destructive">{errors.transactionDate.message}</p>}
+                <Input
+                  id="transactionDate"
+                  type="date"
+                  aria-describedby={errors.transactionDate ? 'transactionDate-error' : undefined}
+                  aria-invalid={!!errors.transactionDate}
+                  {...register('transactionDate')}
+                />
+                {errors.transactionDate && <p id="transactionDate-error" role="alert" className="text-sm text-destructive">{errors.transactionDate.message}</p>}
               </div>
             </div>
 

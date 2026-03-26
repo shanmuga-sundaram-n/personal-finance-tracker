@@ -1,5 +1,5 @@
 # Tech Lead Memory — Personal Finance Tracker
-**Last Updated**: 2026-03-19
+**Last Updated**: 2026-03-26
 **Model**: claude-sonnet-4-6
 
 This file is loaded into every session. Keep it under 200 lines. Link to topic files for details.
@@ -55,6 +55,23 @@ This file is loaded into every session. Keep it under 200 lines. Link to topic f
 
 ---
 
+## Pipeline Entry & Health Gate
+All tracks enter via `engineering-manager`. tech-lead is spawned at Phase 1B, 3A, 3D, 3E.
+
+**Health feedback loop** — tech-lead must verify Layer 2 passes after any architecture fix:
+```bash
+./gradlew :application:test --no-daemon   # includes ApplicationContextLoadTest
+```
+
+`ApplicationContextLoadTest` at `application/src/test/java/com/shan/cyber/tech/financetracker/`
+catches Spring bean wiring bugs before docker. If context load fails, fix before any other review.
+
+**Wiring rule (learned 2026-03-26)**: Domain service (e.g. `TransactionCommandService`) must NOT
+implement inbound port interfaces. Only the application service in `config/` implements those ports.
+Both implementing the same interface = two beans for same interface = startup crash at injection point.
+
+---
+
 ## Known Bugs to Fix Before Any Feature Work (see `implementation-plan.md` Phase 0)
 
 1. **BUG-001**: `application.yaml` changelog path wrong (`changelog/` vs `db.changelog/`)
@@ -68,6 +85,7 @@ This file is loaded into every session. Keep it under 200 lines. Link to topic f
 9. **BUG-009**: Remove `swagger-codegen-maven-plugin` from `implementation` scope
 10. **BUG-010**: Remove `spring-boot-starter-log4j2` (conflicts with Logback)
 11. **BUG-011**: Remove explicit `postgresql:42.1.4` version pin (2017 CVE-laden version)
+12. **BUG-012** *(fixed 2026-03-26)*: `TransactionCommandService` and `TransactionApplicationService` both implemented `CreateTransferUseCase`/`DeleteTransactionUseCase` — duplicate Spring bean, startup crash at `TransferController` injection. Fix: removed `implements` clause from domain service; only application service in `config/` implements inbound port interfaces. Caught by `ApplicationContextLoadTest`.
 
 ---
 
