@@ -80,3 +80,16 @@ export interface BudgetPlan {
   incomeTotals: BudgetPlanTotals
   expenseTotals: BudgetPlanTotals
 }
+
+export interface CopyBudgetsRequest {
+  targetYear: number
+  targetMonth: number // 1-12
+  overwriteExisting: boolean
+}
+
+export interface CopyBudgetsResult {
+  copiedCount: number
+  skippedCount: number
+  conflictCount: number
+  overwrittenCount: number
+}

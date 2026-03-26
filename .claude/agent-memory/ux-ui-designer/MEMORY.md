@@ -98,6 +98,10 @@ Registration, Login, Dashboard, Accounts List, Add/Edit Account, Account Detail,
 - **CategorySelect `aria-describedby` prop**: added to `CategorySelectProps` interface and forwarded to `SelectTrigger`. Pass `errors.categoryId ? 'categoryId-error' : undefined` from parent forms.
 - **Test infrastructure (F-4 accessibility)**: vitest configured in `vite.config.ts` (via `vitest/config`), `test` script added to `package.json`. Setup file at `frontend/src/test/setup.ts` registers `toHaveNoViolations` via `expect.extend({ toHaveNoViolations })` from `vitest-axe/matchers`. Test files excluded from production `tsconfig.app.json` via `exclude` array; `tsconfig.test.json` created for test-only type checking. Two test files: `DashboardPage.test.tsx` (4 tests — heading, chart role/aria-label, progressbar ARIA, axe scan) and `CreateTransactionPage.test.tsx` (6 tests — aria-describedby on inputs, aria-invalid, error message IDs, axe scan). All 10 pass.
 
+## Feature Specs
+
+- `feature-specs/budget-copy-from-previous-month.md` — Design spec for "Copy from Previous Month" button on BudgetPlanPage. Covers: Copy button (outline, h-11, current-month only, Copy icon + Loader2), overwrite AlertDialog, toast messages, responsive layout at 375px, full WCAG 2.1 AA checklist. Uses existing AlertDialog, Button, sonner imports — no new packages. Two API additions to budgets.api.ts: CopyBudgetsRequest, CopyBudgetsResult, copyBudgetsFromPreviousMonth(). Two-call flow: first call with overwriteExisting=false discovers conflicts; second call with overwriteExisting=true only if user confirms.
+
 ## Pipeline Entry & Health Gate
 All tracks enter via `engineering-manager`. ux-ui-designer is spawned at Phase 2B (design spec)
 and Phase 4B (WCAG 2.1 AA accessibility + mobile review).
@@ -115,3 +119,4 @@ Also verify: `npm run build` (Layer 3) and `npm run test` (axe-core tests: Dashb
 - user-flows.md — 7 flows with decision points and error branches
 - component-library.md — 12 components with props, states, ARIA, mobile notes
 - navigation.md — sitemap, React Router config, sidebar/bottomtabs, focus management
+- budget-copy-spec.md — Phase 2B design spec for "Copy from Previous Month" feature (BudgetPlanPage)

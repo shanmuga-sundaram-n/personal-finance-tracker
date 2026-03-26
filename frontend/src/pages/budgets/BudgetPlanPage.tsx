@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import {
   ChevronLeft,
@@ -10,6 +10,9 @@ import {
   Pencil,
   Plus,
   Trash2,
+  Copy,
+  Loader2,
+  AlertTriangle,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -26,10 +29,10 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
 import { useBudgetPlan } from '@/hooks/useBudgetPlan'
-import { deleteBudget } from '@/api/budgets.api'
+import { deleteBudget, copyBudgetsFromPreviousMonth } from '@/api/budgets.api'
 import { SetBudgetDialog } from '@/components/budgets/SetBudgetDialog'
 import { ErrorAlert } from '@/components/shared/ErrorAlert'
-import type { BudgetPlanCategoryRow, BudgetPlanCategoryGroup, BudgetPlanTotals } from '@/types/budget.types'
+import type { BudgetPlanCategoryRow, BudgetPlanCategoryGroup, BudgetPlanTotals, CopyBudgetsResult } from '@/types/budget.types'
 
 // ── Date helpers ──────────────────────────────────────────────────────────────
 
@@ -47,6 +50,11 @@ function lastDayOfMonth(year: number, month: number): Date {
 
 function monthLabel(year: number, month: number): string {
   return new Date(year, month, 1).toLocaleString(undefined, { month: 'long', year: 'numeric' })
+}
+
+function prevMonthLabel(year: number, month: number): string {
+  // month is 0-based; new Date handles month=-1 → Dec of (year-1) automatically
+  return new Date(year, month - 1, 1).toLocaleString(undefined, { month: 'long', year: 'numeric' })
 }
 
 // ── Number formatting ─────────────────────────────────────────────────────────
@@ -776,6 +784,19 @@ export function BudgetPlanPage() {
   const [deleteTarget, setDeleteTarget] = useState<{ id: number; name: string } | null>(null)
   const [deleting, setDeleting] = useState(false)
 
+  // Copy from previous month state
+  const [isCopying, setIsCopying] = useState(false)
+  const [showOverwriteDialog, setShowOverwriteDialog] = useState(false)
+  const [pendingConflictCount, setPendingConflictCount] = useState(0)
+  const [pendingCopiedCount, setPendingCopiedCount] = useState(0)
+  // Ref for focus restoration after overwrite dialog closes (WCAG 2.4.3)
+  const copyButtonRef = useRef<HTMLButtonElement>(null)
+
+  const isCurrentMonth = useMemo(() => {
+    const n = new Date()
+    return year === n.getFullYear() && month === n.getMonth()
+  }, [year, month])
+
   const handleDeleteBudget = async () => {
     if (!deleteTarget) return
     setDeleting(true)
@@ -809,6 +830,85 @@ export function BudgetPlanPage() {
     setDialogRow(null)
   }
 
+  // ── Copy from previous month handlers ──────────────────────────────────────
+
+  const handleCopyFromPreviousMonth = async () => {
+    setIsCopying(true)
+    try {
+      const result: CopyBudgetsResult = await copyBudgetsFromPreviousMonth({
+        targetYear: year,
+        targetMonth: month + 1, // convert 0-based to 1-based
+        overwriteExisting: false,
+      })
+
+      if (result.copiedCount === 0 && result.conflictCount === 0) {
+        toast.info(`No budgets found in ${prevMonthLabel(year, month)}`)
+        return
+      }
+
+      if (result.conflictCount > 0) {
+        setPendingConflictCount(result.conflictCount)
+        setPendingCopiedCount(result.copiedCount)
+        setShowOverwriteDialog(true)
+        return
+      }
+
+      // No conflicts — clean copy
+      toast.success(
+        `Copied ${result.copiedCount} budget${result.copiedCount !== 1 ? 's' : ''} from ${prevMonthLabel(year, month)}`
+      )
+      refresh().catch(() => toast.error('Failed to refresh plan'))
+    } catch {
+      toast.error('Failed to copy budgets. Please try again.')
+    } finally {
+      setIsCopying(false)
+    }
+  }
+
+  const handleConfirmOverwrite = async () => {
+    setShowOverwriteDialog(false)
+    setIsCopying(true)
+    try {
+      const result: CopyBudgetsResult = await copyBudgetsFromPreviousMonth({
+        targetYear: year,
+        targetMonth: month + 1,
+        overwriteExisting: true,
+      })
+
+      const parts: string[] = []
+      if (result.copiedCount > 0)
+        parts.push(`Copied ${result.copiedCount} budget${result.copiedCount !== 1 ? 's' : ''}`)
+      if (result.overwrittenCount > 0)
+        parts.push(`updated ${result.overwrittenCount}`)
+
+      toast.success(
+        parts.length > 0
+          ? parts.join(' and ') + ` from ${prevMonthLabel(year, month)}`
+          : `Budgets copied from ${prevMonthLabel(year, month)}`
+      )
+      refresh().catch(() => toast.error('Failed to refresh plan'))
+    } catch {
+      toast.error('Failed to copy budgets. Please try again.')
+    } finally {
+      setIsCopying(false)
+      setPendingConflictCount(0)
+      setPendingCopiedCount(0)
+      // Return focus to copy button after overwrite completes (WCAG 2.4.3)
+      setTimeout(() => copyButtonRef.current?.focus(), 0)
+    }
+  }
+
+  const handleCancelOverwrite = () => {
+    setShowOverwriteDialog(false)
+    setPendingConflictCount(0)
+    setPendingCopiedCount(0)
+    // Refresh so non-conflicting budgets written during the first call are visible
+    refresh()
+    // Return focus to the copy button (WCAG 2.4.3 — button is disabled while dialog
+    // is open, so defer until React re-enables it in the next paint)
+    setTimeout(() => copyButtonRef.current?.focus(), 0)
+  }
+
   // Planned totals — from budgeted amounts, not actuals
   const plannedIncome = plan ? parseFloat(getTotalsMonthly(plan.incomeTotals)) : 0
   const plannedIncomeYearly = plan ? parseFloat(getTotalsYearly(plan.incomeTotals)) : 0
@@ -829,33 +929,58 @@ export function BudgetPlanPage() {
         </p>
       </div>
 
-      {/* ── Month navigation ── */}
-      <div className="flex items-center justify-center gap-2 sm:justify-start">
-        <Button
-          variant="outline"
-          size="icon"
-          onClick={prevMonth}
-          className="h-11 w-11 shrink-0"
-          aria-label="Previous month"
-        >
-          <ChevronLeft className="h-5 w-5" />
-        </Button>
-        <span
-          className="min-w-[180px] text-center text-base font-semibold select-none"
-          aria-live="polite"
-          aria-atomic="true"
-        >
-          {monthLabel(year, month)}
-        </span>
-        <Button
-          variant="outline"
-          size="icon"
-          onClick={nextMonth}
-          className="h-11 w-11 shrink-0"
-          aria-label="Next month"
-        >
-          <ChevronRight className="h-5 w-5" />
-        </Button>
+      {/* ── Month navigation + copy action ── */}
+      <div className="flex items-center justify-between gap-3">
+        {/* Left: prev / month-label / next */}
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={prevMonth}
+            className="h-11 w-11 shrink-0"
+            aria-label="Previous month"
+          >
+            <ChevronLeft className="h-5 w-5" />
+          </Button>
+          <span
+            className="min-w-[160px] sm:min-w-[180px] text-center text-base font-semibold select-none"
+            aria-live="polite"
+            aria-atomic="true"
+          >
+            {monthLabel(year, month)}
+          </span>
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={nextMonth}
+            className="h-11 w-11 shrink-0"
+            aria-label="Next month"
+          >
+            <ChevronRight className="h-5 w-5" />
+          </Button>
+        </div>
+
+        {/* Right: copy button — only for current month */}
+        {isCurrentMonth && (
+          <Button
+            ref={copyButtonRef}
+            variant="outline"
+            size="sm"
+            className="h-11 gap-2 px-3 text-sm shrink-0"
+            onClick={handleCopyFromPreviousMonth}
+            disabled={isCopying || showOverwriteDialog || isLoading}
+            aria-label="Copy budgets from previous month"
+            aria-busy={isCopying}
+          >
+            {isCopying ? (
+              <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+            ) : (
+              <Copy className="h-4 w-4" aria-hidden="true" />
+            )}
+            <span className="hidden sm:inline">Copy from Previous Month</span>
+            <span className="sm:hidden">Copy</span>
+          </Button>
+        )}
       </div>
 
       {/* ── Loading skeleton ── */}
@@ -942,6 +1067,39 @@ export function BudgetPlanPage() {
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               {deleting ? 'Removing...' : 'Remove Budget'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* ── Copy from Previous Month: Overwrite Confirmation ── */}
+      <AlertDialog
+        open={showOverwriteDialog}
+        onOpenChange={(open) => { if (!open) handleCancelOverwrite() }}
+      >
+        <AlertDialogContent className="max-w-md">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Overwrite existing budgets?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {pendingConflictCount} budget{pendingConflictCount !== 1 ? 's' : ''} from this
+              month will be replaced with last month's amounts.
+              {pendingCopiedCount > 0 && (
+                <> {pendingCopiedCount} new budget{pendingCopiedCount !== 1 ? 's' : ''} will
+                also be added.</>
+              )}
+              {' '}This cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={handleCancelOverwrite} className="h-11">
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleConfirmOverwrite}
+              className="h-11 bg-destructive text-destructive-foreground hover:bg-destructive/90 focus-visible:ring-destructive"
+            >
+              <AlertTriangle className="h-4 w-4 mr-1.5" aria-hidden="true" />
+              Yes, overwrite
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

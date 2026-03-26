@@ -5,6 +5,9 @@ import com.shan.cyber.tech.financetracker.budget.domain.port.inbound.BudgetPlanC
 import com.shan.cyber.tech.financetracker.budget.domain.port.inbound.BudgetPlanTotals;
 import com.shan.cyber.tech.financetracker.budget.domain.port.inbound.BudgetPlanView;
 import com.shan.cyber.tech.financetracker.budget.domain.port.inbound.BudgetView;
+import com.shan.cyber.tech.financetracker.budget.domain.port.inbound.CopyBudgetsFromPreviousMonthCommand;
+import com.shan.cyber.tech.financetracker.budget.domain.port.inbound.CopyBudgetsFromPreviousMonthUseCase;
+import com.shan.cyber.tech.financetracker.budget.domain.port.inbound.CopyBudgetsResult;
 import com.shan.cyber.tech.financetracker.budget.domain.port.inbound.CreateBudgetCommand;
 import com.shan.cyber.tech.financetracker.budget.domain.port.inbound.CreateBudgetUseCase;
 import com.shan.cyber.tech.financetracker.budget.domain.port.inbound.DeactivateBudgetUseCase;
@@ -61,6 +64,7 @@ public class BudgetController {
     private final GetBudgetsQuery getBudgetsQuery;
     private final GetBudgetPlanQuery getBudgetPlanQuery;
     private final UpsertBudgetByCategoryUseCase upsertBudgetByCategoryUseCase;
+    private final CopyBudgetsFromPreviousMonthUseCase copyBudgetsFromPreviousMonthUseCase;
     private final BudgetRequestMapper budgetRequestMapper;
 
     public BudgetController(CreateBudgetUseCase createBudgetUseCase,
@@ -69,6 +73,7 @@ public class BudgetController {
                              GetBudgetsQuery getBudgetsQuery,
                              GetBudgetPlanQuery getBudgetPlanQuery,
                              UpsertBudgetByCategoryUseCase upsertBudgetByCategoryUseCase,
+                             CopyBudgetsFromPreviousMonthUseCase copyBudgetsFromPreviousMonthUseCase,
                              BudgetRequestMapper budgetRequestMapper) {
         this.createBudgetUseCase = createBudgetUseCase;
         this.updateBudgetUseCase = updateBudgetUseCase;
@@ -76,6 +81,7 @@ public class BudgetController {
         this.getBudgetsQuery = getBudgetsQuery;
         this.getBudgetPlanQuery = getBudgetPlanQuery;
         this.upsertBudgetByCategoryUseCase = upsertBudgetByCategoryUseCase;
+        this.copyBudgetsFromPreviousMonthUseCase = copyBudgetsFromPreviousMonthUseCase;
         this.budgetRequestMapper = budgetRequestMapper;
     }
 
@@ -240,6 +246,40 @@ public class BudgetController {
                 dto.endDate()));
         BudgetView view = getBudgetsQuery.getById(id, userId);
         return ResponseEntity.ok(toResponseDto(view));
+    }
+
+    @Operation(
+        summary = "Copy budgets from previous month",
+        description = "Copies all eligible active budgets from the previous calendar month into the target month. " +
+                "The target month must be the current calendar month. " +
+                "Set overwriteExisting=false for a dry-run that returns conflict counts without writing. " +
+                "Set overwriteExisting=true to overwrite existing budgets and create new ones atomically."
+    )
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Copy result — counts of copied, skipped, conflicted, and overwritten budgets",
+            content = @Content(schema = @Schema(implementation = CopyBudgetsResultDto.class))),
+        @ApiResponse(responseCode = "400", description = "Validation failed — missing or invalid fields",
+            content = @Content(schema = @Schema(ref = "#/components/schemas/ErrorResponseDto"))),
+        @ApiResponse(responseCode = "401", description = "Missing or invalid bearer token",
+            content = @Content(schema = @Schema(ref = "#/components/schemas/ErrorResponseDto"))),
+        @ApiResponse(responseCode = "422", description = "Target month is not the current month",
+            content = @Content(schema = @Schema(ref = "#/components/schemas/ErrorResponseDto")))
+    })
+    @PostMapping("/copy-from-previous-month")
+    public ResponseEntity<CopyBudgetsResultDto> copyFromPreviousMonth(
+            @Valid @RequestBody CopyBudgetsFromPreviousMonthRequestDto dto) {
+        UserId userId = currentUserId();
+        CopyBudgetsResult result = copyBudgetsFromPreviousMonthUseCase.copyFromPreviousMonth(
+                new CopyBudgetsFromPreviousMonthCommand(
+                        userId,
+                        dto.targetYear(),
+                        dto.targetMonth(),
+                        dto.overwriteExisting()));
+        return ResponseEntity.ok(new CopyBudgetsResultDto(
+                result.copiedCount(),
+                result.skippedCount(),
+                result.conflictCount(),
+                result.overwrittenCount()));
     }
 
     @Operation(

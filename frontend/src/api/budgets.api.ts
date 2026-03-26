@@ -1,5 +1,5 @@
 import { api } from './client'
-import type { Budget, BudgetPlan, CreateBudgetRequest, UpdateBudgetRequest } from '@/types/budget.types'
+import type { Budget, BudgetPlan, CreateBudgetRequest, CopyBudgetsRequest, CopyBudgetsResult, UpdateBudgetRequest } from '@/types/budget.types'
 
 const BASE = '/api/v1/budgets'
 
@@ -38,4 +38,8 @@ export function getBudgetPlan(startDate: string, endDate: string): Promise<Budge
 
 export function upsertBudgetByCategory(data: UpsertBudgetByCategoryRequest): Promise<Budget> {
   return api.post<Budget>(`${BASE}/upsert-by-category`, data)
+}
+
+export function copyBudgetsFromPreviousMonth(data: CopyBudgetsRequest): Promise<CopyBudgetsResult> {
+  return api.post<CopyBudgetsResult>(`${BASE}/copy-from-previous-month`, data)
 }

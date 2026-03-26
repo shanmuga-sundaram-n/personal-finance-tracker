@@ -26,7 +26,7 @@ public class BudgetPersistenceAdapter implements BudgetPersistencePort {
     @Override
     public Budget save(Budget budget) {
         BudgetJpaEntity entity = mapper.toJpaEntity(budget);
-        BudgetJpaEntity saved = repository.save(entity);
+        BudgetJpaEntity saved = repository.saveAndFlush(entity);
         return mapper.toDomain(saved);
     }
 

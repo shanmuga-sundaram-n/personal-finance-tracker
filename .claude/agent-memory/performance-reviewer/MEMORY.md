@@ -27,7 +27,7 @@ Phase 3C — Performance review in the FEATURE pipeline. Runs in parallel with 3
 
 | Feature | Date | Result | Key Findings |
 |---|---|---|---|
-| — | — | — | — |
+| Budget Copy from Previous Month | 2026-03-26 | APPROVED (with 2 advisories) | Dry-run side-effect (ADV-001), `parentCategoryId` type mismatch risk (ADV-002) |
 
 ## Pipeline Entry
 All tracks enter via `engineering-manager`. performance-reviewer is spawned at Phase 3C (parallel with 3A, 3B, 3D).
@@ -42,4 +42,10 @@ All 5 layers must pass. If a performance fix changes a JPA query method signatur
 the Spring context — flag for `ApplicationContextLoadTest` (Layer 2).
 
 ## Recurring Patterns to Watch
-Nothing recorded yet. Update after first few reviews.
+
+### Pattern: Dry-run with side effects
+First seen in: Budget Copy from Previous Month (2026-03-26).
+The "dry-run" call with `overwriteExisting=false` actually writes new budgets to the DB (the non-conflicting ones), then a second call with `overwriteExisting=true` writes the overwritten ones. This is not a pure dry-run. Watch for features that describe a two-phase API where the first phase unexpectedly mutates state. The risk is partial writes if the user navigates away or the second call fails.
+
+### Pattern: `parentCategoryId` as `Long` in Set membership check
+`CategorySummary.parentCategoryId()` is typed `Long` (nullable). When collecting to `Set<Long>` and checking membership with another `Long` from `b.getCategoryId().value()`, Java autoboxing is safe for equality. But if the type ever changes to a typed ID wrapper, the set check would silently return false. Flag this at next refactor.

@@ -8,6 +8,8 @@ import com.shan.cyber.tech.financetracker.budget.domain.port.inbound.BudgetPlanC
 import com.shan.cyber.tech.financetracker.budget.domain.port.inbound.BudgetPlanTotals;
 import com.shan.cyber.tech.financetracker.budget.domain.port.inbound.BudgetPlanView;
 import com.shan.cyber.tech.financetracker.budget.domain.port.inbound.BudgetView;
+import com.shan.cyber.tech.financetracker.budget.domain.port.inbound.CopyBudgetsFromPreviousMonthUseCase;
+import com.shan.cyber.tech.financetracker.budget.domain.port.inbound.CopyBudgetsResult;
 import com.shan.cyber.tech.financetracker.budget.domain.port.inbound.CreateBudgetUseCase;
 import com.shan.cyber.tech.financetracker.budget.domain.port.inbound.DeactivateBudgetUseCase;
 import com.shan.cyber.tech.financetracker.budget.domain.port.inbound.GetBudgetPlanQuery;
@@ -16,6 +18,7 @@ import com.shan.cyber.tech.financetracker.budget.domain.port.inbound.UpdateBudge
 import com.shan.cyber.tech.financetracker.budget.domain.port.inbound.UpsertBudgetByCategoryUseCase;
 import com.shan.cyber.tech.financetracker.shared.adapter.inbound.web.GlobalExceptionHandler;
 import com.shan.cyber.tech.financetracker.shared.adapter.inbound.web.SecurityContextHolder;
+import com.shan.cyber.tech.financetracker.shared.domain.exception.BusinessRuleException;
 import com.shan.cyber.tech.financetracker.shared.domain.model.BudgetId;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -29,6 +32,7 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.YearMonth;
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
@@ -50,6 +54,7 @@ class BudgetControllerTest {
     @MockBean private GetBudgetsQuery getBudgetsQuery;
     @MockBean private GetBudgetPlanQuery getBudgetPlanQuery;
     @MockBean private UpsertBudgetByCategoryUseCase upsertBudgetByCategoryUseCase;
+    @MockBean private CopyBudgetsFromPreviousMonthUseCase copyBudgetsFromPreviousMonthUseCase;
 
     private static final Long TEST_USER_ID = 1L;
     private static final BudgetView SAMPLE_VIEW = new BudgetView(
@@ -331,6 +336,124 @@ class BudgetControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(body))
                 .andExpect(status().isUnprocessableEntity());
+    }
+
+    // -------------------------------------------------------------------------
+    // POST /api/v1/budgets/copy-from-previous-month
+    // -------------------------------------------------------------------------
+
+    @Test
+    void copyFromPreviousMonth_validRequest_returns200WithResultCounts() throws Exception {
+        // Arrange: the use case returns a successful copy result
+        YearMonth current = YearMonth.now();
+        CopyBudgetsResult result = new CopyBudgetsResult(5, 2, 0, 0);
+        when(copyBudgetsFromPreviousMonthUseCase.copyFromPreviousMonth(any())).thenReturn(result);
+
+        String body = objectMapper.writeValueAsString(new CopyBudgetsFromPreviousMonthRequestDto(
+                current.getYear(), current.getMonthValue(), false));
+
+        mockMvc.perform(post("/api/v1/budgets/copy-from-previous-month")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.copiedCount").value(5))
+                .andExpect(jsonPath("$.skippedCount").value(2))
+                .andExpect(jsonPath("$.conflictCount").value(0))
+                .andExpect(jsonPath("$.overwrittenCount").value(0));
+
+        verify(copyBudgetsFromPreviousMonthUseCase).copyFromPreviousMonth(any());
+    }
+
+    @Test
+    void copyFromPreviousMonth_overwriteTrue_returns200WithOverwrittenCount() throws Exception {
+        // Arrange: second call with overwriteExisting=true returns overwritten count
+        YearMonth current = YearMonth.now();
+        CopyBudgetsResult result = new CopyBudgetsResult(3, 1, 0, 4);
+        when(copyBudgetsFromPreviousMonthUseCase.copyFromPreviousMonth(any())).thenReturn(result);
+
+        String body = objectMapper.writeValueAsString(new CopyBudgetsFromPreviousMonthRequestDto(
+                current.getYear(), current.getMonthValue(), true));
+
+        mockMvc.perform(post("/api/v1/budgets/copy-from-previous-month")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.overwrittenCount").value(4))
+                .andExpect(jsonPath("$.copiedCount").value(3))
+                .andExpect(jsonPath("$.conflictCount").value(0));
+    }
+
+    @Test
+    void copyFromPreviousMonth_missingOverwriteExistingField_returns422() throws Exception {
+        // overwriteExisting is @NotNull — omitting it triggers MethodArgumentNotValidException → 422
+        String body = "{\"targetYear\":" + YearMonth.now().getYear()
+                + ",\"targetMonth\":" + YearMonth.now().getMonthValue() + "}";
+
+        mockMvc.perform(post("/api/v1/budgets/copy-from-previous-month")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body))
+                .andExpect(status().isUnprocessableEntity());
+    }
+
+    @Test
+    void copyFromPreviousMonth_targetMonthZero_returns422() throws Exception {
+        // targetMonth @Min(1) — value 0 violates constraint → 422
+        String body = "{\"targetYear\":2026,\"targetMonth\":0,\"overwriteExisting\":false}";
+
+        mockMvc.perform(post("/api/v1/budgets/copy-from-previous-month")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body))
+                .andExpect(status().isUnprocessableEntity());
+    }
+
+    @Test
+    void copyFromPreviousMonth_targetMonth13_returns422() throws Exception {
+        // targetMonth @Max(12) — value 13 violates constraint → 422
+        String body = "{\"targetYear\":2026,\"targetMonth\":13,\"overwriteExisting\":false}";
+
+        mockMvc.perform(post("/api/v1/budgets/copy-from-previous-month")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body))
+                .andExpect(status().isUnprocessableEntity());
+    }
+
+    @Test
+    void copyFromPreviousMonth_noAuthUser_returns500() throws Exception {
+        // When the ThreadLocal has no user (simulating a request reaching the controller
+        // without SessionAuthFilter setting the user ID), getCurrentUserId() throws
+        // IllegalStateException which the generic handler maps to 500.
+        //
+        // Note: actual 401 enforcement happens at the Servlet filter level (SessionAuthFilter)
+        // which is not loaded in @WebMvcTest slices. Real 401 behavior is covered in
+        // integration tests (AuthorizationIntegrationTest).
+        SecurityContextHolder.clear();
+
+        YearMonth current = YearMonth.now();
+        String body = objectMapper.writeValueAsString(new CopyBudgetsFromPreviousMonthRequestDto(
+                current.getYear(), current.getMonthValue(), false));
+
+        mockMvc.perform(post("/api/v1/budgets/copy-from-previous-month")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body))
+                .andExpect(status().isInternalServerError());
+    }
+
+    @Test
+    void copyFromPreviousMonth_targetMonthNotCurrentMonth_returns422() throws Exception {
+        // The domain service throws BusinessRuleException (a DomainException) when the
+        // target month is not the current month — GlobalExceptionHandler maps this to 422.
+        when(copyBudgetsFromPreviousMonthUseCase.copyFromPreviousMonth(any()))
+                .thenThrow(new BusinessRuleException("TARGET_MONTH_NOT_CURRENT",
+                        "Budget copy is only allowed for the current month"));
+
+        // Use a past month as the body value (the mock will throw regardless)
+        String body = "{\"targetYear\":2025,\"targetMonth\":1,\"overwriteExisting\":false}";
+
+        mockMvc.perform(post("/api/v1/budgets/copy-from-previous-month")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body))
+                .andExpect(status().isUnprocessableEntity())
+                .andExpect(jsonPath("$.error").value("TARGET_MONTH_NOT_CURRENT"));
     }
 
     // -------------------------------------------------------------------------

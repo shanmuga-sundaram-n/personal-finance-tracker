@@ -66,6 +66,9 @@ Runs automatically as part of `./gradlew :application:test` (Layer 2).
 | Feature | Date | Brief Location | Status |
 |---|---|---|---|
 | MVP Pipeline Sprint | 2026-03-26 | N/A (CHORE+HOTFIX+FEATURE tracks, no formal brief) | Delivered — 13 items across 3 tracks |
+| Budget Copy from Previous Month | 2026-03-26 | `.claude/agent-memory/engineering-manager/feature-briefs/budget-copy-from-previous-month.md` | Complete — all phases passed |
 
 ## Estimation Accuracy
-Nothing recorded yet. Update with S/M/L estimate vs actual effort after each feature.
+| Feature | Estimate | Actual | Notes |
+|---|---|---|---|
+| Budget Copy from Previous Month | S | S | Accurate. No schema changes, single bounded context, straightforward domain logic. |

@@ -1,5 +1,8 @@
 package com.shan.cyber.tech.financetracker.budget.config;
 
+import com.shan.cyber.tech.financetracker.budget.domain.port.inbound.CopyBudgetsFromPreviousMonthCommand;
+import com.shan.cyber.tech.financetracker.budget.domain.port.inbound.CopyBudgetsFromPreviousMonthUseCase;
+import com.shan.cyber.tech.financetracker.budget.domain.port.inbound.CopyBudgetsResult;
 import com.shan.cyber.tech.financetracker.budget.domain.port.inbound.CreateBudgetCommand;
 import com.shan.cyber.tech.financetracker.budget.domain.port.inbound.CreateBudgetUseCase;
 import com.shan.cyber.tech.financetracker.budget.domain.port.inbound.DeactivateBudgetUseCase;
@@ -15,7 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @Transactional
-public class BudgetApplicationService implements CreateBudgetUseCase, UpdateBudgetUseCase, DeactivateBudgetUseCase, UpsertBudgetByCategoryUseCase {
+public class BudgetApplicationService implements CreateBudgetUseCase, UpdateBudgetUseCase, DeactivateBudgetUseCase, UpsertBudgetByCategoryUseCase, CopyBudgetsFromPreviousMonthUseCase {
 
     private final BudgetCommandService commandService;
 
@@ -41,5 +44,10 @@ public class BudgetApplicationService implements CreateBudgetUseCase, UpdateBudg
     @Override
     public BudgetId upsertBudget(UpsertBudgetByCategoryCommand command) {
         return commandService.upsertBudget(command);
+    }
+
+    @Override
+    public CopyBudgetsResult copyFromPreviousMonth(CopyBudgetsFromPreviousMonthCommand command) {
+        return commandService.copyFromPreviousMonth(command);
     }
 }
