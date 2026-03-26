@@ -347,7 +347,7 @@
   <a href="#project">Project Overview</a>
   <a href="#challenge">The Challenge</a>
   <a href="#pipeline">Delivery Pipeline</a>
-  <a href="#planner">solution-planner</a>
+  <a href="#planner">engineering-manager</a>
   <a href="#analyst">personal-finance-analyst</a>
   <a href="#techlead">tech-lead</a>
   <a href="#dev">full-stack-dev</a>
@@ -515,7 +515,7 @@
     <!-- Phases -->
     <div style="border:1px solid #16a34a;border-radius:10px;padding:1rem;background:#07120a;">
       <div style="font-size:.65rem;color:#16a34a;letter-spacing:.08em;text-transform:uppercase;margin-bottom:.7rem;">
-        solution-planner orchestrates →
+        engineering-manager orchestrates →
       </div>
       <div class="pipeline">
         <div class="pipeline-step" style="border-color:#dc2626;">
@@ -533,7 +533,7 @@
         <div class="pipeline-step" style="border-color:#16a34a;background:#0a1f12;">
           <div class="phase">Phase 3</div>
           <div class="name c-green">Synthesis</div>
-          <div class="agent c-green">solution-planner</div>
+          <div class="agent c-green">engineering-manager</div>
         </div>
         <div class="pipeline-arrow">→</div>
         <div class="pipeline-step" style="border-color:#0891b2;">
@@ -568,7 +568,7 @@
       <div class="card">
         <h3>Execution order</h3>
         <ul>
-          <li><strong>solution-planner starts first</strong> — receives user request</li>
+          <li><strong>engineering-manager starts first</strong> — receives user request</li>
           <li>Phases 1→2→3→4 run <strong>sequentially</strong> (each feeds the next)</li>
           <li>Phases 5 &amp; 6 run <strong>in parallel</strong> after Phase 4</li>
           <li>Phase 7 waits for both 5 and 6 to complete</li>
@@ -586,10 +586,10 @@
     </div>
   </div>
 
-  <!-- ── 5. solution-planner ── -->
+  <!-- ── 5. engineering-manager ── -->
   <div class="section" id="planner">
     <div class="section-num">05</div>
-    <h2>Agent: <span class="c-green">solution-planner</span></h2>
+    <h2>Agent: <span class="c-green">engineering-manager</span></h2>
     <div class="badge-row">
       <span class="pill pill-amber">model: opus</span>
       <span class="pill pill-green">orchestrator</span>
@@ -620,7 +620,7 @@ Date: 2026-03-23   Status: Ready for implementation   Phase: 2
 - [ ] Domain service      - [ ] Outbound port       - [ ] JPA entity + mapper
 - [ ] REST controller     - [ ] @Bean wiring        - [ ] Frontend hook
 - [ ] Frontend component  - [ ] Unit tests          - [ ] Controller tests</code></pre>
-    <p class="c-muted" style="font-size:.85rem;">Saved to: <code class="inline">.claude/agent-memory/solution-planner/feature-briefs/</code></p>
+    <p class="c-muted" style="font-size:.85rem;">Saved to: <code class="inline">.claude/agent-memory/engineering-manager/feature-briefs/</code></p>
   </div>
 
   <!-- ── 6. personal-finance-analyst ── -->
@@ -1020,7 +1020,7 @@ Migration sequence:
 ├── <span class="c-orange">devops-engineer/</span>
 │   └── MEMORY.md                    <span class="c-muted"># infra snapshot, port mappings, CI/CD notes</span>
 │
-└── <span class="c-green">solution-planner/</span>
+└── <span class="c-green">engineering-manager/</span>
     ├── MEMORY.md                    <span class="c-muted"># feature briefs table, estimation accuracy</span>
     └── feature-briefs/              <span class="c-muted"># one file per shipped feature</span>
     </div>
@@ -1088,10 +1088,10 @@ BUG-003: users/sessions tables use INT PK — must be BIGINT</code></pre>
       </div>
       <div class="flow-connector green"></div>
 
-      <!-- solution-planner wrapper start -->
+      <!-- engineering-manager wrapper start -->
       <div style="border:1px solid #16a34a;border-radius:10px;padding:1rem;background:#07120a;">
         <div style="font-size:.65rem;color:#16a34a;letter-spacing:.08em;text-transform:uppercase;margin-bottom:.8rem;display:flex;align-items:center;gap:.5rem;">
-          <span>⬤</span> solution-planner — orchestrator starts first · drives all phases below
+          <span>⬤</span> engineering-manager — orchestrator starts first · drives all phases below
         </div>
 
         <div class="flow">
@@ -1134,12 +1134,12 @@ BUG-003: users/sessions tables use INT PK — must be BIGINT</code></pre>
           <div class="flow-node" style="background:#0a1f12;border:1px solid #16a34a;">
             <div class="flow-node-header">
               <span class="flow-phase">Phase 3</span>
-              <span class="c-green">solution-planner — synthesis</span>
+              <span class="c-green">engineering-manager — synthesis</span>
             </div>
             <div class="flow-tag">Input: Domain Brief + Architecture Brief</div>
             <ul style="margin:.4rem 0 .4rem 1.2rem;color:var(--muted);">
               <li>Merges both briefs into Feature Brief with 12-item Implementation Checklist</li>
-              <li>Saves to <code class="inline">.claude/agent-memory/solution-planner/feature-briefs/budget-rollover.md</code></li>
+              <li>Saves to <code class="inline">.claude/agent-memory/engineering-manager/feature-briefs/budget-rollover.md</code></li>
             </ul>
             <div style="background:#0f1a0f;border:1px solid #16a34a;border-radius:6px;padding:.5rem .7rem;margin-top:.5rem;font-size:.82rem;">
               ⚠ <strong class="c-green">User confirmation checkpoint</strong> — Feature Brief shown to user. Phase 4 only starts after approval.
@@ -1218,7 +1218,7 @@ BUG-003: users/sessions tables use INT PK — must be BIGINT</code></pre>
           </div>
 
         </div><!-- inner flow -->
-      </div><!-- solution-planner wrapper -->
+      </div><!-- engineering-manager wrapper -->
 
     </div><!-- outer flow -->
   </div>
@@ -1233,7 +1233,7 @@ BUG-003: users/sessions tables use INT PK — must be BIGINT</code></pre>
       </thead>
       <tbody>
         <tr style="border-left:3px solid #22c55e;">
-          <td style="padding-left:.6rem;"><strong class="c-green">solution-planner</strong></td>
+          <td style="padding-left:.6rem;"><strong class="c-green">engineering-manager</strong></td>
           <td><span class="pill pill-amber">opus</span></td>
           <td><span style="font-size:.75rem;color:var(--muted);">Orchestrator · entry point</span></td>
           <td>Coordinates all phases · produces Feature Brief · user confirmation checkpoint</td>

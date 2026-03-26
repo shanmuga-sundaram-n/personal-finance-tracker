@@ -30,7 +30,7 @@ Scroll normally. A progress bar at the top of the page tracks your position. The
 | 02 | Project overview (tech stack) |
 | 03 | The complexity challenge (hexagonal arch) |
 | 04 | Feature delivery pipeline overview |
-| 05 | solution-planner + Feature Brief |
+| 05 | engineering-manager + Feature Brief |
 | 06 | personal-finance-analyst (Phase 1) |
 | 07 | tech-lead (Phase 2 + 7) |
 | 08 | full-stack-dev (Phase 4) |

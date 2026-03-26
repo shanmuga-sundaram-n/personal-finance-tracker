@@ -7,7 +7,7 @@ import jakarta.validation.constraints.Size;
 
 public record RegisterRequestDto(
         @NotBlank @Size(min = 3, max = 50)
-        @Pattern(regexp = "^[a-zA-Z0-9_]+$", message = "Username must contain only letters, numbers, and underscores")
+        @Pattern(regexp = "^[a-z0-9_]{3,50}$", message = "Username must contain only lowercase letters, numbers, and underscores")
         String username,
 
         @NotBlank @Email @Size(max = 254)
