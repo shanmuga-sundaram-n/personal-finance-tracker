@@ -26,8 +26,8 @@ dependencies {
     testImplementation("org.junit.jupiter:junit-jupiter")
 
     // RestAssured
-    testImplementation("io.rest-assured:rest-assured:5.4.0")
-    testImplementation("io.rest-assured:json-path:5.4.0")
+    testImplementation("io.rest-assured:rest-assured:6.0.0")
+    testImplementation("io.rest-assured:json-path:6.0.0")
 
     // Testcontainers
     testImplementation(platform("org.testcontainers:testcontainers-bom:1.19.6"))
