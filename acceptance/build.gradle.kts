@@ -15,7 +15,7 @@ java {
 
 dependencies {
     // Spring Boot Test (full context)
-    testImplementation(platform("org.springframework.boot:spring-boot-dependencies:3.2.2"))
+    testImplementation(platform("org.springframework.boot:spring-boot-dependencies:4.0.5"))
     testImplementation("org.springframework.boot:spring-boot-starter-test")
 
     // Application under test — all source + compiled classes on test classpath
